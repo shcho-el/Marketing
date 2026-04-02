@@ -10,16 +10,19 @@ from datetime import date
 from config import KEYWORDS, SCHEDULE_TIME
 from scraper import run_all_keywords
 from database import init_db, save_results
+from notifier import send_slack
 
 logger = logging.getLogger(__name__)
 
 
 def collect_once() -> None:
-    """키워드 순위 1회 수집 및 저장."""
-    logger.info("===== 순위 수집 시작 (%s) =====", date.today())
+    """키워드 순위 1회 수집 → 저장 → 슬랙 전송."""
+    today = date.today()
+    logger.info("===== 순위 수집 시작 (%s) =====", today)
     try:
         results = run_all_keywords(KEYWORDS)
         save_results(results)
+        send_slack(results, check_date=today)
         logger.info("===== 순위 수집 완료 =====")
     except Exception as e:
         logger.exception("순위 수집 중 오류 발생: %s", e)
@@ -33,10 +36,8 @@ def run_scheduler() -> None:
     """
     init_db()
 
-    # 시작 즉시 1회 실행
     collect_once()
 
-    # 매일 예약
     schedule.every().day.at(SCHEDULE_TIME).do(collect_once)
     logger.info("스케줄러 등록: 매일 %s 자동 수집", SCHEDULE_TIME)
 

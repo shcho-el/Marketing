@@ -22,11 +22,14 @@ logging.basicConfig(
 def cmd_collect():
     from database import init_db, save_results
     from scraper import run_all_keywords
+    from notifier import send_slack
     from config import KEYWORDS
+    from datetime import date
 
     init_db()
     results = run_all_keywords(KEYWORDS)
     save_results(results)
+    send_slack(results, check_date=date.today())
 
     print("\n===== 수집 결과 =====")
     for r in results:
