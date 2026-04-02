@@ -1,105 +1,77 @@
 """
-네이버 블로그 검색 결과에서 특정 키워드의 순위를 추출하는 스크레이퍼
+네이버 블로그 검색 공식 API를 사용하여 키워드 순위를 추출하는 스크레이퍼
+
+네이버 개발자센터 (https://developers.naver.com) 에서 애플리케이션 등록 후
+NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수 또는 .env 파일에 설정 필요
 """
 
+import os
+import re
 import time
 import logging
-import re
-from urllib.parse import quote
+from html import unescape
 
 import requests
-from bs4 import BeautifulSoup
 
 from config import TARGET_BRAND, SEARCH_DEPTH, REQUEST_DELAY
 
 logger = logging.getLogger(__name__)
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Referer": "https://search.naver.com/",
-}
-
-NAVER_BLOG_URL = "https://search.naver.com/search.naver?where=blog&query={query}&start={start}"
+NAVER_API_URL = "https://openapi.naver.com/v1/search/blog.json"
+API_MAX_DISPLAY = 100  # 네이버 API 1회 최대 조회 수
 
 
-def _fetch(url: str) -> BeautifulSoup | None:
-    """URL을 가져와 BeautifulSoup 객체 반환. 실패 시 None 반환."""
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        resp.raise_for_status()
-        resp.encoding = "utf-8"
-        return BeautifulSoup(resp.text, "lxml")
-    except requests.RequestException as e:
-        logger.warning("요청 실패 (%s): %s", url, e)
-        return None
+def _get_api_keys() -> tuple[str, str]:
+    client_id = os.environ.get("NAVER_CLIENT_ID", "")
+    client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
+    if not client_id or not client_secret:
+        raise EnvironmentError(
+            "NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수가 설정되지 않았습니다.\n"
+            ".env 파일을 만들어 값을 입력하거나 환경변수를 직접 설정해 주세요."
+        )
+    return client_id, client_secret
 
 
-def _extract_blog_results(soup: BeautifulSoup) -> list[dict]:
+def _search_blog(keyword: str, start: int, display: int) -> list[dict]:
     """
-    BeautifulSoup 파싱 결과에서 블로그 결과 목록을 추출.
+    네이버 블로그 검색 API 호출.
     반환: [{"title": str, "url": str, "description": str, "blog_name": str}]
     """
-    results = []
+    client_id, client_secret = _get_api_keys()
+    headers = {
+        "X-Naver-Client-Id": client_id,
+        "X-Naver-Client-Secret": client_secret,
+    }
+    params = {
+        "query": keyword,
+        "display": display,
+        "start": start,
+        "sort": "sim",  # 정확도순 (관련성 높은 순)
+    }
+    try:
+        resp = requests.get(NAVER_API_URL, headers=headers, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as e:
+        logger.warning("API 요청 실패 (keyword=%s, start=%d): %s", keyword, start, e)
+        return []
 
-    # 네이버 블로그 결과 컨테이너 후보 셀렉터 (구조 변경 대응)
-    list_items = (
-        soup.select("ul.lst_total > li")
-        or soup.select("div.total_wrap ul > li")
-        or soup.select(".api_subject_bx li")
-        or soup.select("li.bx")
-    )
-
-    for item in list_items:
-        # 제목 추출
-        title_tag = (
-            item.select_one(".api_txt_lines.total_tit a")
-            or item.select_one(".total_tit a")
-            or item.select_one(".title_area a")
-            or item.select_one("a.title")
-            or item.select_one("a[class*='title']")
-        )
-
-        # 설명 추출
-        desc_tag = (
-            item.select_one(".api_txt_lines:not(.total_tit)")
-            or item.select_one(".dsc_area")
-            or item.select_one(".desc")
-        )
-
-        # 블로그명 추출
-        blog_name_tag = (
-            item.select_one(".sub_txt.sub_name")
-            or item.select_one(".name")
-            or item.select_one(".blog_name")
-            or item.select_one(".user_info a")
-        )
-
-        if not title_tag:
-            continue
-
-        title = title_tag.get_text(strip=True)
-        url = title_tag.get("href", "")
-        description = desc_tag.get_text(strip=True) if desc_tag else ""
-        blog_name = blog_name_tag.get_text(strip=True) if blog_name_tag else ""
-
-        results.append({
+    items = []
+    for item in data.get("items", []):
+        # 네이버 API는 HTML 태그와 엔티티가 섞여 있으므로 정리
+        title = unescape(re.sub(r"<[^>]+>", "", item.get("title", "")))
+        description = unescape(re.sub(r"<[^>]+>", "", item.get("description", "")))
+        items.append({
             "title": title,
-            "url": url,
+            "url": item.get("link", ""),
             "description": description,
-            "blog_name": blog_name,
+            "blog_name": item.get("bloggername", ""),
         })
-
-    return results
+    return items
 
 
 def _contains_brand(result: dict, brand: str) -> bool:
-    """결과 항목이 브랜드명을 포함하는지 확인 (대소문자 무시)."""
+    """결과 항목이 브랜드명을 포함하는지 확인."""
     brand_lower = brand.lower()
     fields = [
         result.get("title", ""),
@@ -119,9 +91,9 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
             "keyword": str,
             "brand": str,
             "rank": int | None,   # 순위 (1부터 시작), 미노출이면 None
-            "title": str,         # 해당 결과 제목 (없으면 "")
-            "url": str,           # 해당 결과 URL (없으면 "")
-            "checked_count": int, # 확인한 총 결과 수
+            "title": str,
+            "url": str,
+            "checked_count": int,
         }
     """
     rank = None
@@ -129,22 +101,15 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
     matched_url = ""
     global_rank = 0
 
-    pages_per_check = 10  # 네이버 블로그는 한 페이지 10건
-    start_values = list(range(1, depth + 1, pages_per_check))
+    # API는 1회 최대 100건, start는 1~1000 범위
+    remaining = depth
+    start = 1
 
-    for start in start_values:
-        url = NAVER_BLOG_URL.format(query=quote(keyword), start=start)
-        soup = _fetch(url)
-
-        if soup is None:
-            logger.error("키워드 '%s' start=%d 페이지 로드 실패", keyword, start)
-            break
-
-        items = _extract_blog_results(soup)
+    while remaining > 0 and rank is None:
+        display = min(remaining, API_MAX_DISPLAY)
+        items = _search_blog(keyword, start=start, display=display)
 
         if not items:
-            logger.debug("키워드 '%s' start=%d 결과 없음 또는 파싱 실패", keyword, start)
-            # 결과가 없으면 더 이상 페이지가 없는 것
             break
 
         for item in items:
@@ -155,10 +120,11 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
                 matched_url = item["url"]
                 break
 
-        if rank is not None:
-            break
+        remaining -= len(items)
+        start += len(items)
 
-        time.sleep(REQUEST_DELAY)
+        if rank is None and remaining > 0:
+            time.sleep(REQUEST_DELAY)
 
     return {
         "keyword": keyword,
@@ -171,9 +137,7 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
 
 
 def run_all_keywords(keywords: list[str]) -> list[dict]:
-    """
-    모든 키워드에 대해 순위를 조회하고 결과 리스트를 반환.
-    """
+    """모든 키워드에 대해 순위를 조회하고 결과 리스트를 반환."""
     results = []
     for i, keyword in enumerate(keywords):
         logger.info("[%d/%d] 키워드 조회 중: %s", i + 1, len(keywords), keyword)

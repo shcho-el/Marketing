@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오블리브 키워드 순위 모니터링 — 미리보기</title>
+  <style>
+    :root {
+      --bg: #f4f6f9; --card: #fff; --primary: #03c75a;
+      --header-bg: #1a1a2e; --header-text: #e2e8f0;
+      --border: #e2e8f0; --text: #2d3748; --muted: #718096;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+    header {
+      background: var(--header-bg); color: var(--header-text);
+      padding: 20px 32px; display: flex; align-items: center; justify-content: space-between;
+    }
+    header h1 { font-size: 1.35rem; font-weight: 700; }
+    header .subtitle { font-size: 0.82rem; color: #94a3b8; margin-top: 4px; }
+    .badge-brand { background: var(--primary); color: #fff; padding: 4px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; }
+    .sample-badge { background: #f59e0b; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 10px; }
+
+    main { padding: 28px 32px; }
+
+    .notice {
+      background: #fffbeb; border: 1px solid #f59e0b; border-radius: 10px;
+      padding: 14px 18px; margin-bottom: 22px; font-size: 0.85rem; color: #92400e;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .notice strong { display: block; margin-bottom: 4px; font-size: 0.9rem; }
+
+    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.78rem; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 3px; }
+
+    .table-wrap { background: var(--card); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    thead tr th { background: var(--header-bg); color: var(--header-text); padding: 12px 16px; text-align: center; font-weight: 600; white-space: nowrap; }
+    thead tr th:first-child { text-align: left; min-width: 180px; }
+    tbody tr:hover { background: #f7fafc; }
+    tbody tr td { padding: 11px 16px; border-bottom: 1px solid var(--border); text-align: center; }
+    tbody tr td:first-child { text-align: left; font-weight: 600; }
+
+    .rank-cell { border-radius: 6px; padding: 4px 8px; font-weight: 700; display: inline-block; min-width: 40px; }
+    .r1 { background: #d4edda; color: #155724; }
+    .r5 { background: #d1ecf1; color: #0c5460; }
+    .r10 { background: #fff3cd; color: #856404; }
+    .r20 { background: #f8d7da; color: #842029; }
+    .rn { background: #f0f0f0; color: #888; font-weight: 400; }
+
+    .trend-up { color: #16a34a; font-size: 0.75rem; margin-left: 4px; }
+    .trend-dn { color: #dc2626; font-size: 0.75rem; margin-left: 4px; }
+
+    .setup-box {
+      margin-top: 32px; background: #f0fdf4; border: 1px solid #86efac;
+      border-radius: 12px; padding: 20px 24px;
+    }
+    .setup-box h2 { font-size: 1rem; font-weight: 700; color: #15803d; margin-bottom: 14px; }
+    .step { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+    .step-num { background: #15803d; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .step-body { font-size: 0.85rem; line-height: 1.6; }
+    .step-body code { background: #dcfce7; padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 0.83rem; }
+    a.link { color: #15803d; font-weight: 600; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>네이버 키워드 순위 모니터링 <span class="sample-badge">샘플 미리보기</span></h1>
+    <div class="subtitle">네이버 블로그 상위 30위 기준 · 최근 7일 (샘플 데이터)</div>
+  </div>
+  <span class="badge-brand">오블리브 / 오블리브의원</span>
+</header>
+
+<main>
+  <div class="notice">
+    <span style="font-size:1.2rem">⚠️</span>
+    <div>
+      <strong>이것은 샘플 미리보기입니다</strong>
+      실제 운영 시 네이버 API 키를 설정하고 <code>python main.py all</code>을 실행하면 아래 표에 실제 순위 데이터가 채워집니다.
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#d4edda"></div> 1~3위</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d1ecf1"></div> 4~5위</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fff3cd"></div> 6~10위</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f8d7da"></div> 11위+</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f0f0f0;border:1px solid #ccc"></div> 미노출</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>키워드</th>
+          <th>04-02 (오늘)</th>
+          <th>04-01</th>
+          <th>03-31</th>
+          <th>03-30</th>
+          <th>03-29</th>
+          <th>03-28</th>
+          <th>03-27</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>송도내성발톱</td>
+          <td><span class="rank-cell r1">2위</span><span class="trend-up">▲1</span></td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r5">4위</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+          <td><span class="rank-cell r10">7위</span></td>
+          <td><span class="rank-cell r10">8위</span></td>
+          <td><span class="rank-cell r10">9위</span></td>
+        </tr>
+        <tr>
+          <td>인천내성발톱</td>
+          <td><span class="rank-cell r1">1위</span><span class="trend-up">▲2</span></td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r5">4위</span></td>
+          <td><span class="rank-cell r5">4위</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+          <td><span class="rank-cell r10">6위</span></td>
+        </tr>
+        <tr>
+          <td>인천문제성발톱</td>
+          <td><span class="rank-cell r10">6위</span></td>
+          <td><span class="rank-cell r10">6위</span></td>
+          <td><span class="rank-cell r10">8위</span></td>
+          <td><span class="rank-cell r10">10위</span></td>
+          <td><span class="rank-cell r20">12위</span></td>
+          <td><span class="rank-cell rn">-</span></td>
+          <td><span class="rank-cell rn">-</span></td>
+        </tr>
+        <tr>
+          <td>송도문제성발톱</td>
+          <td><span class="rank-cell r5">4위</span><span class="trend-up">▲1</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+          <td><span class="rank-cell r10">7위</span></td>
+          <td><span class="rank-cell r10">7위</span></td>
+          <td><span class="rank-cell r10">9위</span></td>
+          <td><span class="rank-cell r10">10위</span></td>
+        </tr>
+        <tr>
+          <td>인천내성발톱병원</td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r5">4위</span></td>
+          <td><span class="rank-cell r5">4위</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+          <td><span class="rank-cell r10">6위</span></td>
+        </tr>
+        <tr>
+          <td>인천발톱무좀</td>
+          <td><span class="rank-cell r20">14위</span><span class="trend-dn">▼3</span></td>
+          <td><span class="rank-cell r20">11위</span></td>
+          <td><span class="rank-cell r10">10위</span></td>
+          <td><span class="rank-cell r10">9위</span></td>
+          <td><span class="rank-cell r10">8위</span></td>
+          <td><span class="rank-cell r10">8위</span></td>
+          <td><span class="rank-cell r10">7위</span></td>
+        </tr>
+        <tr>
+          <td>송도발톱무좀</td>
+          <td><span class="rank-cell rn">-</span></td>
+          <td><span class="rank-cell rn">-</span></td>
+          <td><span class="rank-cell r20">18위</span></td>
+          <td><span class="rank-cell r20">15위</span></td>
+          <td><span class="rank-cell r20">13위</span></td>
+          <td><span class="rank-cell r20">11위</span></td>
+          <td><span class="rank-cell r10">10위</span></td>
+        </tr>
+        <tr>
+          <td>문제성발톱병원</td>
+          <td><span class="rank-cell r5">5위</span><span class="trend-up">▲2</span></td>
+          <td><span class="rank-cell r10">7위</span></td>
+          <td><span class="rank-cell r10">8위</span></td>
+          <td><span class="rank-cell r10">9위</span></td>
+          <td><span class="rank-cell r10">9위</span></td>
+          <td><span class="rank-cell r20">11위</span></td>
+          <td><span class="rank-cell r20">12위</span></td>
+        </tr>
+        <tr>
+          <td>문제성발톱</td>
+          <td><span class="rank-cell r1">2위</span></td>
+          <td><span class="rank-cell r1">2위</span></td>
+          <td><span class="rank-cell r1">2위</span></td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r1">3위</span></td>
+          <td><span class="rank-cell r5">4위</span></td>
+          <td><span class="rank-cell r5">5위</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 실제 운영 설정 안내 -->
+  <div class="setup-box">
+    <h2>실제 데이터 연결하기 (3단계)</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>네이버 API 키 발급</strong><br>
+        <a class="link" href="https://developers.naver.com/apps/#/register" target="_blank">developers.naver.com</a>에서 앱 등록 →
+        "검색" API 선택 → Client ID / Secret 발급
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>API 키 설정</strong><br>
+        프로젝트 폴더에 <code>.env</code> 파일 생성:<br><br>
+        <code>NAVER_CLIENT_ID=발급받은_ID</code><br>
+        <code>NAVER_CLIENT_SECRET=발급받은_SECRET</code>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>실행</strong><br>
+        <code>pip install -r requirements.txt</code><br>
+        <code>python main.py all</code> → <code>http://localhost:5000</code> 접속
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>
