@@ -34,15 +34,23 @@ def _rank_emoji(rank) -> str:
 
 
 def _build_message(results: list[dict], check_date: date) -> dict:
-    """슬랙 Block Kit 메시지 생성."""
-    lines = []
-    for r in results:
-        rank = r.get("rank")
-        emoji = _rank_emoji(rank)
-        rank_str = f"{rank}위" if rank else "미노출"
-        lines.append(f"{emoji}  `{r['keyword']}`  →  *{rank_str}*")
+    """슬랙 Block Kit 메시지 생성 (블로그 + 파워링크 구분)."""
+    blog_lines = []
+    power_lines = []
 
-    body = "\n".join(lines)
+    for r in results:
+        kw = r["keyword"]
+
+        blog_rank = r.get("rank")
+        blog_emoji = _rank_emoji(blog_rank)
+        blog_str = f"{blog_rank}위" if blog_rank else "미노출"
+        blog_lines.append(f"{blog_emoji}  `{kw}`  →  *{blog_str}*")
+
+        pl_rank = r.get("powerlink_rank")
+        pl_emoji = _rank_emoji(pl_rank)
+        pl_str = f"{pl_rank}위" if pl_rank else "미노출"
+        power_lines.append(f"{pl_emoji}  `{kw}`  →  *{pl_str}*")
+
     date_str = check_date.strftime("%Y년 %m월 %d일")
 
     return {
@@ -57,7 +65,20 @@ def _build_message(results: list[dict], check_date: date) -> dict:
             },
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": body},
+                "text": {"type": "mrkdwn", "text": "*📝 네이버 블로그*"},
+            },
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "\n".join(blog_lines)},
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "*⚡ 파워링크 (광고)*"},
+            },
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "\n".join(power_lines)},
             },
             {"type": "divider"},
             {
@@ -65,7 +86,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "네이버 블로그 상위 30위 기준 · 오블리브 / 오블리브의원",
+                        "text": "블로그: 상위 30위 기준 · 파워링크: 네이버 통합검색 광고 섹션 · 오블리브 / 오블리브의원",
                     }
                 ],
             },
