@@ -69,7 +69,8 @@ def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
     params = {
         "where": "blog",
         "query": keyword,
-        "sm": "tab_jum",   # 관련도순
+        "sm": "tab_jum",          # 관련도순
+        "nso": "so:r,p:all,a:all",  # 전체 기간
         "start": start,
     }
     try:
