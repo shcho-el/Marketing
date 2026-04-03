@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS rankings (
     date        TEXT    NOT NULL,           -- YYYY-MM-DD
     keyword     TEXT    NOT NULL,
     brand       TEXT    NOT NULL,
-    rank        INTEGER,                    -- NULL = 미노출 (블로그)
+    rank        INTEGER,                    -- NULL = 미노출 (블로그 최상위)
+    ranks_all   TEXT    DEFAULT '',        -- 복수 순위 JSON (예: "[2,5]")
     title       TEXT    DEFAULT '',
     url         TEXT    DEFAULT '',
     checked_count INTEGER DEFAULT 0,
@@ -58,6 +59,8 @@ def init_db() -> None:
             con.execute("ALTER TABLE rankings ADD COLUMN powerlink_rank INTEGER")
         if "powerlink_title" not in cols:
             con.execute("ALTER TABLE rankings ADD COLUMN powerlink_title TEXT DEFAULT ''")
+        if "ranks_all" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN ranks_all TEXT DEFAULT ''")
     logger.info("DB 초기화 완료: %s", DB_PATH)
 
 
@@ -67,6 +70,7 @@ def upsert_ranking(
     keyword: str,
     brand: str,
     rank: int | None,
+    ranks_all: list = None,
     title: str = "",
     url: str = "",
     checked_count: int = 0,
@@ -74,12 +78,15 @@ def upsert_ranking(
     powerlink_title: str = "",
 ) -> None:
     """당일 순위를 저장 (이미 있으면 덮어쓰기)."""
+    import json
+    ranks_json = json.dumps(ranks_all or [], ensure_ascii=False)
     sql = """
         INSERT INTO rankings
-            (date, keyword, brand, rank, title, url, checked_count, powerlink_rank, powerlink_title, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (date, keyword, brand, rank, ranks_all, title, url, checked_count, powerlink_rank, powerlink_title, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(date, keyword, brand) DO UPDATE SET
             rank            = excluded.rank,
+            ranks_all       = excluded.ranks_all,
             title           = excluded.title,
             url             = excluded.url,
             checked_count   = excluded.checked_count,
@@ -93,6 +100,7 @@ def upsert_ranking(
             keyword,
             brand,
             rank,
+            ranks_json,
             title,
             url,
             checked_count,
@@ -112,6 +120,7 @@ def save_results(results: list[dict], check_date: date | None = None) -> None:
             keyword=r["keyword"],
             brand=r["brand"],
             rank=r.get("rank"),
+            ranks_all=r.get("ranks", []),
             title=r.get("title", ""),
             url=r.get("url", ""),
             checked_count=r.get("checked_count", 0),

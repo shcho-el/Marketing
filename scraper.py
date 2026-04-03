@@ -103,14 +103,21 @@ def get_powerlink_rank(keyword: str, brand: str = TARGET_BRAND) -> dict:
         logger.warning("파워링크 요청 실패 (keyword=%s): %s", keyword, e)
         return {"powerlink_rank": None, "powerlink_title": ""}
 
-    # 파워링크 섹션 후보 셀렉터
+    # 파워링크 섹션 후보 셀렉터 (네이버 HTML 구조 변경 대응)
     ad_items = (
         soup.select("#sp_advert li")
         or soup.select(".ad_area li")
         or soup.select("li.ad_item")
         or soup.select(".lst_ad li")
         or soup.select("ul.lst_total.type_ad li")
+        or soup.select("div[class*='ad'] li")
+        or soup.select("li[class*='ad']")
     )
+
+    # 셀렉터로 못 찾으면 전체 텍스트에서 광고 섹션 직접 탐색
+    if not ad_items:
+        all_li = soup.select("li")
+        ad_items = [li for li in all_li if li.find(class_=lambda c: c and "ad" in c.lower())]
 
     for i, item in enumerate(ad_items, 1):
         text = item.get_text().lower()
@@ -138,29 +145,29 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
             "powerlink_title": str,
         }
     """
-    # 블로그 순위
-    rank = None
+    # 블로그 순위 (모든 매칭 위치 수집)
+    matched_ranks = []
     matched_title = ""
     matched_url = ""
     global_rank = 0
     remaining = depth
     start = 1
 
-    while remaining > 0 and rank is None:
+    while remaining > 0:
         display = min(remaining, API_MAX_DISPLAY)
         items = _search_blog(keyword, start=start, display=display)
         if not items:
             break
         for item in items:
             global_rank += 1
-            if _contains_brand(item, brand):
-                rank = global_rank
-                matched_title = item["title"]
-                matched_url = item["url"]
-                break
+            if _contains_brand(item):
+                if not matched_ranks:
+                    matched_title = item["title"]
+                    matched_url = item["url"]
+                matched_ranks.append(global_rank)
         remaining -= len(items)
         start += len(items)
-        if rank is None and remaining > 0:
+        if remaining > 0:
             time.sleep(REQUEST_DELAY)
 
     # 파워링크 순위
@@ -170,7 +177,8 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
     return {
         "keyword": keyword,
         "brand": brand,
-        "rank": rank,
+        "rank": matched_ranks[0] if matched_ranks else None,   # 최상위 순위
+        "ranks": matched_ranks,                                 # 전체 순위 목록
         "title": matched_title,
         "url": matched_url,
         "checked_count": global_rank,
@@ -186,9 +194,11 @@ def run_all_keywords(keywords: list[str]) -> list[dict]:
         logger.info("[%d/%d] 키워드 조회 중: %s", i + 1, len(keywords), keyword)
         result = get_brand_rank(keyword)
         results.append(result)
+        ranks = result.get("ranks", [])
+        ranks_str = ", ".join(f"{r}위" for r in ranks) if ranks else "미노출"
         logger.info(
             "  -> 블로그: %s | 파워링크: %s",
-            f"{result['rank']}위" if result["rank"] else "미노출",
+            ranks_str,
             f"{result['powerlink_rank']}위" if result["powerlink_rank"] else "미노출",
         )
         if i < len(keywords) - 1:

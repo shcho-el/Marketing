@@ -41,9 +41,13 @@ def _build_message(results: list[dict], check_date: date) -> dict:
     for r in results:
         kw = r["keyword"]
 
-        blog_rank = r.get("rank")
-        blog_emoji = _rank_emoji(blog_rank)
-        blog_str = f"{blog_rank}위" if blog_rank else "미노출"
+        blog_ranks = r.get("ranks") or ([r["rank"]] if r.get("rank") else [])
+        if blog_ranks:
+            blog_emoji = _rank_emoji(blog_ranks[0])
+            blog_str = ", ".join(f"{rk}위" for rk in blog_ranks)
+        else:
+            blog_emoji = "⬜"
+            blog_str = "미노출"
         blog_lines.append(f"{blog_emoji}  `{kw}`  →  *{blog_str}*")
 
         pl_rank = r.get("powerlink_rank")
