@@ -15,7 +15,7 @@ from urllib.parse import quote
 import requests
 from bs4 import BeautifulSoup
 
-from config import TARGET_BRAND, SEARCH_DEPTH, REQUEST_DELAY
+from config import TARGET_BRAND, BRAND_ALIASES, SEARCH_DEPTH, REQUEST_DELAY
 
 logger = logging.getLogger(__name__)
 
@@ -78,16 +78,15 @@ def _search_blog(keyword: str, start: int, display: int) -> list[dict]:
     return items
 
 
-def _contains_brand(result: dict, brand: str) -> bool:
-    """결과 항목이 브랜드명을 포함하는지 확인."""
-    brand_lower = brand.lower()
-    fields = [
+def _contains_brand(result: dict, brand: str = None) -> bool:
+    """BRAND_ALIASES 중 하나라도 포함되면 오블리브 콘텐츠로 인식."""
+    fields = " ".join([
         result.get("title", ""),
         result.get("description", ""),
         result.get("blog_name", ""),
         result.get("url", ""),
-    ]
-    return any(brand_lower in f.lower() for f in fields)
+    ]).lower()
+    return any(alias.lower() in fields for alias in BRAND_ALIASES)
 
 
 def get_powerlink_rank(keyword: str, brand: str = TARGET_BRAND) -> dict:
@@ -114,8 +113,8 @@ def get_powerlink_rank(keyword: str, brand: str = TARGET_BRAND) -> dict:
     )
 
     for i, item in enumerate(ad_items, 1):
-        text = item.get_text()
-        if brand.lower() in text.lower():
+        text = item.get_text().lower()
+        if any(alias.lower() in text for alias in BRAND_ALIASES):
             title_tag = item.select_one("a.ad_tit") or item.select_one("a.tit") or item.select_one("a")
             title = title_tag.get_text(strip=True) if title_tag else text[:50]
             return {"powerlink_rank": i, "powerlink_title": title}
