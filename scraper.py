@@ -91,39 +91,69 @@ def _contains_brand(result: dict, brand: str = None) -> bool:
 
 def get_powerlink_rank(keyword: str, brand: str = TARGET_BRAND) -> dict:
     """
-    네이버 통합검색 파워링크(광고) 섹션에서 브랜드 순위 반환.
+    Playwright로 네이버 통합검색을 실제 브라우저에서 열어
+    파워링크(광고) 섹션의 브랜드 순위를 반환.
     반환: {"powerlink_rank": int | None, "powerlink_title": str}
     """
-    url = NAVER_SEARCH_URL.format(query=quote(keyword))
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=10)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
-    except requests.RequestException as e:
-        logger.warning("파워링크 요청 실패 (keyword=%s): %s", keyword, e)
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        logger.warning("playwright 미설치 - 파워링크 건너뜀")
         return {"powerlink_rank": None, "powerlink_title": ""}
 
-    # 파워링크 컨테이너: class에 'pcPowerLink' 포함 (해시 접미사 무시)
-    pl_container = soup.find(class_=lambda c: c and any("pcPowerLink" in cls for cls in c))
+    url = NAVER_SEARCH_URL.format(query=quote(keyword))
 
-    if pl_container:
-        # 컨테이너 내부 개별 광고 항목
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                )
+            )
+            page.goto(url, wait_until="domcontentloaded", timeout=15000)
+            page.wait_for_timeout(2000)  # 광고 섹션 로딩 대기
+
+            html = page.content()
+            browser.close()
+
+        soup = BeautifulSoup(html, "html.parser")
+
+        # 파워링크 컨테이너 탐색
+        pl_container = soup.find(
+            class_=lambda c: c and any("pcPowerLink" in cls for cls in c)
+        )
+        if not pl_container:
+            # 광고 섹션 텍스트로 폴백 탐색
+            pl_container = soup.find(
+                lambda tag: tag.name in ["div", "section", "ul"]
+                and "관련 광고" in tag.get_text()
+            )
+
+        if not pl_container:
+            return {"powerlink_rank": None, "powerlink_title": ""}
+
+        # 개별 광고 항목 추출
         ad_items = (
             pl_container.select("li")
-            or pl_container.select("[class*='_fe_view_power']")
-            or pl_container.select("div[class*='item']")
+            or pl_container.select("[class*='item']")
+            or pl_container.find_all("div", recursive=False)
         )
-    else:
-        ad_items = []
 
-    for i, item in enumerate(ad_items, 1):
-        text = item.get_text().lower()
-        if any(alias.lower() in text for alias in BRAND_ALIASES):
-            title_tag = item.select_one("a")
-            title = title_tag.get_text(strip=True) if title_tag else text[:50]
-            return {"powerlink_rank": i, "powerlink_title": title}
+        for i, item in enumerate(ad_items, 1):
+            text = item.get_text().lower()
+            if any(alias.lower() in text for alias in BRAND_ALIASES):
+                title_tag = item.select_one("a")
+                title = title_tag.get_text(strip=True) if title_tag else text[:50]
+                return {"powerlink_rank": i, "powerlink_title": title}
 
-    return {"powerlink_rank": None, "powerlink_title": ""}
+        return {"powerlink_rank": None, "powerlink_title": ""}
+
+    except Exception as e:
+        logger.warning("파워링크 조회 실패 (keyword=%s): %s", keyword, e)
+        return {"powerlink_rank": None, "powerlink_title": ""}
 
 
 def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_DEPTH) -> dict:
