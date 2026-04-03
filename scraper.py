@@ -76,11 +76,27 @@ def _search_blog(keyword: str, start: int, display: int) -> list[dict]:
     return items
 
 
+_POSTVIEW_RE = re.compile(r"blogId=([^&]+)&logNo=(\d+)", re.IGNORECASE)
+
+
 def _normalize_url(url: str) -> str:
-    """m.blog.naver.com → blog.naver.com 통일, 쿼리스트링 제거."""
-    return url.replace("https://m.blog.naver.com/", "https://blog.naver.com/") \
-              .replace("http://m.blog.naver.com/", "https://blog.naver.com/") \
-              .split("?")[0].rstrip("/")
+    """
+    URL을 https://blog.naver.com/{id}/{no} 형태로 통일.
+    - m.blog.naver.com → blog.naver.com
+    - PostView.naver?blogId=X&logNo=Y → blog.naver.com/X/Y
+    - 쿼리스트링 제거, 후행 슬래시 제거
+    """
+    # PostView.naver 형식 처리
+    if "PostView.naver" in url or "PostView.nhn" in url:
+        m = _POSTVIEW_RE.search(url)
+        if m:
+            return f"https://blog.naver.com/{m.group(1)}/{m.group(2)}"
+    return (
+        url.replace("https://m.blog.naver.com/", "https://blog.naver.com/")
+           .replace("http://m.blog.naver.com/", "https://blog.naver.com/")
+           .split("?")[0]
+           .rstrip("/")
+    )
 
 _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
 
