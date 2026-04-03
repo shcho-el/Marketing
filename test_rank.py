@@ -15,8 +15,10 @@ try:
 except ImportError:
     pass
 
-from scraper import _scrape_blog_page, _TARGET_URLS_NORMALIZED
+from scraper import _scrape_blog_page, _TARGET_URLS_NORMALIZED, _normalize_url, NAVER_BLOG_SEARCH_URL, _HEADERS, _is_post_url
 from config import EXCLUDE_KEYWORDS, RESULTS_PER_PAGE
+from bs4 import BeautifulSoup
+import requests
 
 
 def test_keyword(keyword: str, depth: int = 20):
@@ -56,7 +58,41 @@ def test_keyword(keyword: str, depth: int = 20):
     print(f"{'='*70}\n")
 
 
+def debug_raw_urls(keyword: str):
+    """특정 키워드 1페이지의 모든 blog.naver.com 링크를 raw 그대로 출력."""
+    params = {
+        "where": "blog",
+        "query": keyword,
+        "sm": "tab_jum",
+        "nso": "so:r,p:all,a:all",
+        "start": 1,
+    }
+    resp = requests.get(NAVER_BLOG_SEARCH_URL, headers=_HEADERS, params=params, timeout=10)
+    soup = BeautifulSoup(resp.text, "html.parser")
+    container = soup.find(id="main_pack") or soup.find(id="ct") or soup
+
+    print(f"\n[RAW URL 목록] 키워드: {keyword}")
+    print("-" * 80)
+    seen = set()
+    for a in container.find_all("a", href=True):
+        href = a["href"]
+        if "blog.naver.com" not in href:
+            continue
+        if href in seen:
+            continue
+        seen.add(href)
+        is_post = _is_post_url(href)
+        normalized = _normalize_url(href)
+        matched = normalized in _TARGET_URLS_NORMALIZED
+        print(f"  {'[포스트]' if is_post else '[기타]  '}  {'★매칭' if matched else '      '}  {href}")
+    print()
+
+
 if __name__ == "__main__":
-    keyword = sys.argv[1] if len(sys.argv) > 1 else "송도내성발톱"
-    depth = int(sys.argv[2]) if len(sys.argv) > 2 else 20
-    test_keyword(keyword, depth)
+    if len(sys.argv) >= 2 and sys.argv[1] == "raw":
+        keyword = sys.argv[2] if len(sys.argv) > 2 else "송도내성발톱"
+        debug_raw_urls(keyword)
+    else:
+        keyword = sys.argv[1] if len(sys.argv) > 1 else "송도내성발톱"
+        depth = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+        test_keyword(keyword, depth)
