@@ -14,16 +14,18 @@ logger = logging.getLogger(__name__)
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS rankings (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    date          TEXT    NOT NULL,
-    keyword       TEXT    NOT NULL,
-    brand         TEXT    NOT NULL,
-    rank          INTEGER,
-    ranks_all     TEXT    DEFAULT '',
-    title         TEXT    DEFAULT '',
-    url           TEXT    DEFAULT '',
-    checked_count INTEGER DEFAULT 0,
-    created_at    TEXT    NOT NULL
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    date              TEXT    NOT NULL,
+    keyword           TEXT    NOT NULL,
+    brand             TEXT    NOT NULL,
+    rank              INTEGER,
+    ranks_all         TEXT    DEFAULT '',
+    popular_rank      INTEGER,
+    popular_ranks_all TEXT    DEFAULT '',
+    title             TEXT    DEFAULT '',
+    url               TEXT    DEFAULT '',
+    checked_count     INTEGER DEFAULT 0,
+    created_at        TEXT    NOT NULL
 );
 """
 
@@ -55,6 +57,10 @@ def init_db() -> None:
         cols = [r[1] for r in con.execute("PRAGMA table_info(rankings)").fetchall()]
         if "ranks_all" not in cols:
             con.execute("ALTER TABLE rankings ADD COLUMN ranks_all TEXT DEFAULT ''")
+        if "popular_rank" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN popular_rank INTEGER")
+        if "popular_ranks_all" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN popular_ranks_all TEXT DEFAULT ''")
     logger.info("DB 초기화 완료: %s", DB_PATH)
 
 
@@ -65,23 +71,29 @@ def upsert_ranking(
     brand: str,
     rank: int | None,
     ranks_all: list = None,
+    popular_rank: int | None = None,
+    popular_ranks_all: list = None,
     title: str = "",
     url: str = "",
     checked_count: int = 0,
 ) -> None:
     """당일 순위를 저장 (이미 있으면 덮어쓰기)."""
     ranks_json = json.dumps(ranks_all or [], ensure_ascii=False)
+    popular_ranks_json = json.dumps(popular_ranks_all or [], ensure_ascii=False)
     sql = """
         INSERT INTO rankings
-            (date, keyword, brand, rank, ranks_all, title, url, checked_count, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (date, keyword, brand, rank, ranks_all, popular_rank, popular_ranks_all,
+             title, url, checked_count, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(date, keyword, brand) DO UPDATE SET
-            rank          = excluded.rank,
-            ranks_all     = excluded.ranks_all,
-            title         = excluded.title,
-            url           = excluded.url,
-            checked_count = excluded.checked_count,
-            created_at    = excluded.created_at
+            rank              = excluded.rank,
+            ranks_all         = excluded.ranks_all,
+            popular_rank      = excluded.popular_rank,
+            popular_ranks_all = excluded.popular_ranks_all,
+            title             = excluded.title,
+            url               = excluded.url,
+            checked_count     = excluded.checked_count,
+            created_at        = excluded.created_at
     """
     with _conn() as con:
         con.execute(sql, (
@@ -90,6 +102,8 @@ def upsert_ranking(
             brand,
             rank,
             ranks_json,
+            popular_rank,
+            popular_ranks_json,
             title,
             url,
             checked_count,
@@ -108,6 +122,8 @@ def save_results(results: list[dict], check_date: date | None = None) -> None:
             brand=r["brand"],
             rank=r.get("rank"),
             ranks_all=r.get("ranks", []),
+            popular_rank=r.get("popular_rank"),
+            popular_ranks_all=r.get("popular_ranks", []),
             title=r.get("title", ""),
             url=r.get("url", ""),
             checked_count=r.get("checked_count", 0),

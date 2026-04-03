@@ -9,13 +9,26 @@ import logging
 from html import unescape
 
 import requests
+from bs4 import BeautifulSoup
 
 from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY
 
 logger = logging.getLogger(__name__)
 
 NAVER_API_URL = "https://openapi.naver.com/v1/search/blog.json"
+NAVER_SEARCH_URL = "https://search.naver.com/search.naver"
 API_MAX_DISPLAY = 100
+
+_SEARCH_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Referer": "https://www.naver.com/",
+}
 
 
 def _get_api_keys() -> tuple[str, str]:
@@ -78,6 +91,77 @@ def _contains_brand(result: dict) -> bool:
     return result_url in _TARGET_URLS_NORMALIZED
 
 
+def get_popular_rank(keyword: str) -> dict:
+    """
+    네이버 통합검색 '인기글' 구좌에서 브랜드 URL 순위를 반환.
+
+    반환:
+        {
+            "popular_rank": int | None,
+            "popular_ranks": list[int],
+        }
+    """
+    params = {"query": keyword, "where": "nexearch"}
+    try:
+        resp = requests.get(
+            NAVER_SEARCH_URL,
+            headers=_SEARCH_HEADERS,
+            params=params,
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        logger.warning("인기글 요청 실패 (keyword=%s): %s", keyword, e)
+        return {"popular_rank": None, "popular_ranks": []}
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    # 인기글 섹션 탐색: 제목에 "인기글" 텍스트를 포함하는 컨테이너 찾기
+    popular_section = None
+    for tag in soup.find_all(["section", "div", "li"]):
+        heading = tag.find(
+            lambda t: t.name in ("h2", "h3", "h4", "strong", "span")
+            and t.get_text(strip=True) == "인기글",
+            recursive=False,
+        )
+        if heading:
+            popular_section = tag
+            break
+
+    # 폴백: 전체에서 "인기글" 헤딩 탐색 후 부모 사용
+    if not popular_section:
+        heading_tag = soup.find(
+            lambda t: t.name in ("h2", "h3", "h4", "strong", "span")
+            and t.get_text(strip=True) == "인기글"
+        )
+        if heading_tag:
+            popular_section = heading_tag.find_parent(["section", "div", "li"])
+
+    if not popular_section:
+        logger.debug("인기글 구좌 없음 (keyword=%s)", keyword)
+        return {"popular_rank": None, "popular_ranks": []}
+
+    matched_ranks = []
+    rank = 0
+    seen_urls: set[str] = set()
+    for a in popular_section.find_all("a", href=True):
+        href = a["href"]
+        if "blog.naver.com" not in href:
+            continue
+        normalized = _normalize_url(href)
+        if normalized in seen_urls:
+            continue
+        seen_urls.add(normalized)
+        rank += 1
+        if normalized in _TARGET_URLS_NORMALIZED:
+            matched_ranks.append(rank)
+
+    return {
+        "popular_rank": matched_ranks[0] if matched_ranks else None,
+        "popular_ranks": matched_ranks,
+    }
+
+
 def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_DEPTH) -> dict:
     """
     네이버 블로그 검색에서 브랜드가 포함된 모든 순위를 반환.
@@ -86,8 +170,10 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
         {
             "keyword": str,
             "brand": str,
-            "rank": int | None,    # 최상위 순위
-            "ranks": list[int],    # 전체 매칭 순위 목록
+            "rank": int | None,         # 블로그 구좌 최상위 순위
+            "ranks": list[int],          # 블로그 구좌 전체 순위
+            "popular_rank": int | None,  # 인기글 구좌 최상위 순위
+            "popular_ranks": list[int],  # 인기글 구좌 전체 순위
             "title": str,
             "url": str,
             "checked_count": int,
@@ -117,11 +203,15 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
         if remaining > 0:
             time.sleep(REQUEST_DELAY)
 
+    popular = get_popular_rank(keyword)
+
     return {
         "keyword": keyword,
         "brand": brand,
         "rank": matched_ranks[0] if matched_ranks else None,
         "ranks": matched_ranks,
+        "popular_rank": popular["popular_rank"],
+        "popular_ranks": popular["popular_ranks"],
         "title": matched_title,
         "url": matched_url,
         "checked_count": global_rank,
@@ -137,7 +227,9 @@ def run_all_keywords(keywords: list[str]) -> list[dict]:
         results.append(result)
         ranks = result.get("ranks", [])
         ranks_str = ", ".join(f"{r}위" for r in ranks) if ranks else "미노출"
-        logger.info("  -> 블로그: %s", ranks_str)
+        popular_ranks = result.get("popular_ranks", [])
+        popular_str = ", ".join(f"{r}위" for r in popular_ranks) if popular_ranks else "미노출"
+        logger.info("  -> 블로그: %s | 인기글: %s", ranks_str, popular_str)
         if i < len(keywords) - 1:
             time.sleep(REQUEST_DELAY)
 
