@@ -231,15 +231,13 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
         if remaining > 0:
             time.sleep(REQUEST_DELAY)
 
-    popular = get_popular_rank(keyword)
-
     return {
         "keyword": keyword,
         "brand": brand,
         "rank": matched_ranks[0] if matched_ranks else None,
         "ranks": matched_ranks,
-        "popular_rank": popular["popular_rank"],
-        "popular_ranks": popular["popular_ranks"],
+        "popular_rank": None,
+        "popular_ranks": [],
         "title": matched_title,
         "url": matched_url,
         "checked_count": global_rank,
@@ -255,9 +253,7 @@ def run_all_keywords(keywords: list[str]) -> list[dict]:
         results.append(result)
         ranks = result.get("ranks", [])
         ranks_str = ", ".join(f"{r}위" for r in ranks) if ranks else "미노출"
-        popular_ranks = result.get("popular_ranks", [])
-        popular_str = ", ".join(f"{r}위" for r in popular_ranks) if popular_ranks else "미노출"
-        logger.info("  -> 블로그: %s | 인기글: %s", ranks_str, popular_str)
+        logger.info("  -> 블로그: %s", ranks_str)
         if i < len(keywords) - 1:
             time.sleep(REQUEST_DELAY)
 

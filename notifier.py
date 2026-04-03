@@ -39,13 +39,9 @@ def _rank_emoji(rank) -> str:
 
 def _build_message(results: list[dict], check_date: date) -> dict:
     """슬랙 Block Kit 메시지 생성."""
-    blog_lines = []
-    popular_lines = []
-
+    lines = []
     for r in results:
         kw = r["keyword"]
-
-        # 블로그 구좌
         blog_ranks = r.get("ranks") or ([r["rank"]] if r.get("rank") else [])
         if blog_ranks:
             emoji = _rank_emoji(blog_ranks[0])
@@ -53,17 +49,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
         else:
             emoji = "⬜"
             rank_str = "미노출"
-        blog_lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
-
-        # 인기글 구좌
-        pop_ranks = r.get("popular_ranks") or ([r["popular_rank"]] if r.get("popular_rank") else [])
-        if pop_ranks:
-            p_emoji = _rank_emoji(pop_ranks[0])
-            p_str = ", ".join(f"{rk}위" for rk in pop_ranks)
-        else:
-            p_emoji = "⬜"
-            p_str = "미노출"
-        popular_lines.append(f"{p_emoji}  `{kw}`  →  *{p_str}*")
+        lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
 
     date_str = check_date.strftime("%Y년 %m월 %d일")
 
@@ -73,26 +59,13 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": f"📊 오블리브 네이버 순위 ({date_str})",
+                    "text": f"📊 오블리브 네이버 블로그 순위 ({date_str})",
                     "emoji": True,
                 },
             },
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": "*📝 블로그 구좌*"},
-            },
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "\n".join(blog_lines)},
-            },
-            {"type": "divider"},
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "*🔥 인기글 구좌*"},
-            },
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "\n".join(popular_lines)},
+                "text": {"type": "mrkdwn", "text": "\n".join(lines)},
             },
             {"type": "divider"},
             {
@@ -100,7 +73,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "블로그: 상위 30위 기준 · 인기글: 네이버 통합검색 인기글 구좌",
+                        "text": "네이버 블로그 탭 기준 상위 30위 · 오블리브",
                     }
                 ],
             },
