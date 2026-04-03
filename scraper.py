@@ -96,28 +96,32 @@ def get_powerlink_rank(keyword: str, brand: str = TARGET_BRAND) -> dict:
     반환: {"powerlink_rank": int | None, "powerlink_title": str}
     """
     try:
-        from playwright.sync_api import sync_playwright
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
+        from webdriver_manager.chrome import ChromeDriverManager
     except ImportError:
-        logger.warning("playwright 미설치 - 파워링크 건너뜀")
+        logger.warning("selenium 미설치 - 파워링크 건너뜀")
         return {"powerlink_rank": None, "powerlink_title": ""}
 
     url = NAVER_SEARCH_URL.format(query=quote(keyword))
 
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page(
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                )
-            )
-            page.goto(url, wait_until="domcontentloaded", timeout=15000)
-            page.wait_for_timeout(2000)  # 광고 섹션 로딩 대기
-
-            html = page.content()
-            browser.close()
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument(
+            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        )
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+        driver.get(url)
+        time.sleep(2)  # 광고 섹션 로딩 대기
+        html = driver.page_source
+        driver.quit()
 
         soup = BeautifulSoup(html, "html.parser")
 

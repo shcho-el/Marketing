@@ -3,4 +3,5 @@ beautifulsoup4==4.12.3
 schedule==1.2.1
 flask==3.0.2
 python-dotenv==1.0.1
-playwright==1.44.0
+selenium==4.21.0
+webdriver-manager==4.0.1
