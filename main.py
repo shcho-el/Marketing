@@ -33,8 +33,14 @@ def cmd_collect():
 
     print("\n===== 수집 결과 =====")
     for r in results:
-        rank_str = f"{r['rank']}위" if r["rank"] else "미노출"
+        ranks = r.get("ranks", [])
+        rank_str = ", ".join(f"{rk}위" for rk in ranks) if ranks else "미노출"
+        url_str = r.get("url", "")
+        title_str = r.get("title", "")
         print(f"  {r['keyword']:<20} → {rank_str}")
+        if url_str:
+            print(f"    URL  : {url_str}")
+            print(f"    제목 : {title_str}")
     print("====================\n")
 
 
