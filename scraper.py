@@ -11,7 +11,7 @@ from html import unescape
 import requests
 from bs4 import BeautifulSoup
 
-from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY
+from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +107,15 @@ def _contains_brand(result: dict) -> bool:
     return result_url in _TARGET_URLS_NORMALIZED
 
 
+def _is_excluded(result: dict) -> bool:
+    """제목 또는 본문에 경쟁사 키워드가 포함되면 True (제외 대상)."""
+    text = " ".join([
+        unescape(result.get("title", "")),
+        unescape(result.get("description", "")),
+    ])
+    return any(kw in text for kw in EXCLUDE_KEYWORDS)
+
+
 def get_popular_rank(keyword: str) -> dict:
     """
     네이버 통합검색 '인기글' 구좌에서 브랜드 URL 순위를 반환.
@@ -170,7 +179,10 @@ def get_popular_rank(keyword: str) -> dict:
         seen_urls.add(normalized)
         rank += 1
         if normalized in _TARGET_URLS_NORMALIZED:
-            matched_ranks.append(rank)
+            # 링크 주변 텍스트에서 경쟁사 키워드 확인
+            card_text = a.get_text(" ", strip=True)
+            if not any(kw in card_text for kw in EXCLUDE_KEYWORDS):
+                matched_ranks.append(rank)
 
     return {
         "popular_rank": matched_ranks[0] if matched_ranks else None,
@@ -209,7 +221,7 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
             break
         for item in items:
             global_rank += 1
-            if _contains_brand(item):
+            if _contains_brand(item) and not _is_excluded(item):
                 if not matched_ranks:
                     matched_title = item["title"]
                     matched_url = item["url"]
