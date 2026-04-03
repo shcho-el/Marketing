@@ -170,22 +170,30 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
     matched_url = ""
     global_rank = 0
     page_start = 1
+    seen_urls: set[str] = set()  # 페이지 간 중복 방지
 
     while global_rank < depth:
         items = _scrape_blog_page(keyword, start=page_start)
         if not items:
             break
-        for item in items:
+
+        new_items = [it for it in items if it["url"] not in seen_urls]
+        if not new_items:
+            break  # 더 이상 새 결과 없으면 중단
+
+        for item in new_items:
             if global_rank >= depth:
                 break
+            seen_urls.add(item["url"])
             global_rank += 1
             if _contains_brand(item) and not _is_excluded(item):
                 if not matched_ranks:
                     matched_title = item["title"]
                     matched_url = item["url"]
                 matched_ranks.append(global_rank)
+
         page_start += RESULTS_PER_PAGE
-        if global_rank < depth and items:
+        if global_rank < depth and new_items:
             time.sleep(REQUEST_DELAY)
 
     return {

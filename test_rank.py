@@ -30,15 +30,23 @@ def test_keyword(keyword: str, depth: int = 20):
 
     global_rank = 0
     page_start = 1
+    seen_urls: set = set()
 
     while global_rank < depth:
         items = _scrape_blog_page(keyword, start=page_start)
         if not items:
             print("  (결과 없음 또는 스크래핑 실패)")
             break
-        for item in items:
+
+        new_items = [it for it in items if it["url"] not in seen_urls]
+        if not new_items:
+            print(f"  (더 이상 새 결과 없음, 총 {global_rank}개)")
+            break
+
+        for item in new_items:
             if global_rank >= depth:
                 break
+            seen_urls.add(item["url"])
             global_rank += 1
             is_match = item["url"] in _TARGET_URLS_NORMALIZED
             excluded = any(kw in item["title"] + item["description"] for kw in EXCLUDE_KEYWORDS)
