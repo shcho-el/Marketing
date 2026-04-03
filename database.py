@@ -2,6 +2,7 @@
 SQLite 기반 순위 데이터 저장소
 """
 
+import json
 import sqlite3
 import logging
 from datetime import date, datetime
@@ -13,18 +14,16 @@ logger = logging.getLogger(__name__)
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS rankings (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    date        TEXT    NOT NULL,           -- YYYY-MM-DD
-    keyword     TEXT    NOT NULL,
-    brand       TEXT    NOT NULL,
-    rank        INTEGER,                    -- NULL = 미노출 (블로그 최상위)
-    ranks_all   TEXT    DEFAULT '',        -- 복수 순위 JSON (예: "[2,5]")
-    title       TEXT    DEFAULT '',
-    url         TEXT    DEFAULT '',
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    date          TEXT    NOT NULL,
+    keyword       TEXT    NOT NULL,
+    brand         TEXT    NOT NULL,
+    rank          INTEGER,
+    ranks_all     TEXT    DEFAULT '',
+    title         TEXT    DEFAULT '',
+    url           TEXT    DEFAULT '',
     checked_count INTEGER DEFAULT 0,
-    powerlink_rank  INTEGER,               -- NULL = 미노출 (파워링크)
-    powerlink_title TEXT    DEFAULT '',
-    created_at  TEXT    NOT NULL
+    created_at    TEXT    NOT NULL
 );
 """
 
@@ -49,16 +48,11 @@ def _conn():
 
 
 def init_db() -> None:
-    """데이터베이스 및 테이블 초기화 (기존 DB 마이그레이션 포함)."""
+    """데이터베이스 및 테이블 초기화."""
     with _conn() as con:
         con.execute(CREATE_TABLE_SQL)
         con.execute(CREATE_INDEX_SQL)
-        # 기존 DB에 파워링크 컬럼 추가 (없으면)
         cols = [r[1] for r in con.execute("PRAGMA table_info(rankings)").fetchall()]
-        if "powerlink_rank" not in cols:
-            con.execute("ALTER TABLE rankings ADD COLUMN powerlink_rank INTEGER")
-        if "powerlink_title" not in cols:
-            con.execute("ALTER TABLE rankings ADD COLUMN powerlink_title TEXT DEFAULT ''")
         if "ranks_all" not in cols:
             con.execute("ALTER TABLE rankings ADD COLUMN ranks_all TEXT DEFAULT ''")
     logger.info("DB 초기화 완료: %s", DB_PATH)
@@ -74,25 +68,20 @@ def upsert_ranking(
     title: str = "",
     url: str = "",
     checked_count: int = 0,
-    powerlink_rank: int | None = None,
-    powerlink_title: str = "",
 ) -> None:
     """당일 순위를 저장 (이미 있으면 덮어쓰기)."""
-    import json
     ranks_json = json.dumps(ranks_all or [], ensure_ascii=False)
     sql = """
         INSERT INTO rankings
-            (date, keyword, brand, rank, ranks_all, title, url, checked_count, powerlink_rank, powerlink_title, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (date, keyword, brand, rank, ranks_all, title, url, checked_count, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(date, keyword, brand) DO UPDATE SET
-            rank            = excluded.rank,
-            ranks_all       = excluded.ranks_all,
-            title           = excluded.title,
-            url             = excluded.url,
-            checked_count   = excluded.checked_count,
-            powerlink_rank  = excluded.powerlink_rank,
-            powerlink_title = excluded.powerlink_title,
-            created_at      = excluded.created_at
+            rank          = excluded.rank,
+            ranks_all     = excluded.ranks_all,
+            title         = excluded.title,
+            url           = excluded.url,
+            checked_count = excluded.checked_count,
+            created_at    = excluded.created_at
     """
     with _conn() as con:
         con.execute(sql, (
@@ -104,8 +93,6 @@ def upsert_ranking(
             title,
             url,
             checked_count,
-            powerlink_rank,
-            powerlink_title,
             datetime.now().isoformat(timespec="seconds"),
         ))
 
@@ -124,19 +111,13 @@ def save_results(results: list[dict], check_date: date | None = None) -> None:
             title=r.get("title", ""),
             url=r.get("url", ""),
             checked_count=r.get("checked_count", 0),
-            powerlink_rank=r.get("powerlink_rank"),
-            powerlink_title=r.get("powerlink_title", ""),
         )
     logger.info("%d건 저장 완료 (날짜: %s)", len(results), check_date)
 
 
 def get_recent_rankings(days: int = 7) -> list[dict]:
-    """
-    최근 N일치 순위 데이터를 반환.
-    반환: [{"date", "keyword", "brand", "rank", "title", "url"}, ...]
-    """
     sql = """
-        SELECT date, keyword, brand, rank, title, url
+        SELECT date, keyword, brand, rank, ranks_all, title, url
         FROM rankings
         WHERE date >= date('now', ?)
         ORDER BY date DESC, keyword ASC
@@ -147,7 +128,6 @@ def get_recent_rankings(days: int = 7) -> list[dict]:
 
 
 def get_dates() -> list[str]:
-    """저장된 날짜 목록 (최신순)."""
     with _conn() as con:
         rows = con.execute(
             "SELECT DISTINCT date FROM rankings ORDER BY date DESC"
@@ -156,16 +136,6 @@ def get_dates() -> list[str]:
 
 
 def get_pivot(days: int = 14) -> dict:
-    """
-    키워드 × 날짜 피벗 테이블 반환.
-    {
-      "dates": ["2025-04-02", ...],           # 최신순
-      "rows": [
-          {"keyword": "...", "ranks": {"2025-04-02": 3, "2025-04-01": None, ...}},
-          ...
-      ]
-    }
-    """
     data = get_recent_rankings(days)
     dates = sorted({r["date"] for r in data}, reverse=True)
     keywords_order: list[str] = []

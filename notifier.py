@@ -24,8 +24,12 @@ def _get_webhook_url() -> str:
 def _rank_emoji(rank) -> str:
     if rank is None:
         return "⬜"
-    if rank <= 3:
-        return "🥇" if rank == 1 else ("🥈" if rank == 2 else "🥉")
+    if rank == 1:
+        return "🥇"
+    if rank == 2:
+        return "🥈"
+    if rank == 3:
+        return "🥉"
     if rank <= 5:
         return "🟢"
     if rank <= 10:
@@ -34,26 +38,18 @@ def _rank_emoji(rank) -> str:
 
 
 def _build_message(results: list[dict], check_date: date) -> dict:
-    """슬랙 Block Kit 메시지 생성 (블로그 + 파워링크 구분)."""
-    blog_lines = []
-    power_lines = []
-
+    """슬랙 Block Kit 메시지 생성."""
+    lines = []
     for r in results:
         kw = r["keyword"]
-
         blog_ranks = r.get("ranks") or ([r["rank"]] if r.get("rank") else [])
         if blog_ranks:
-            blog_emoji = _rank_emoji(blog_ranks[0])
-            blog_str = ", ".join(f"{rk}위" for rk in blog_ranks)
+            emoji = _rank_emoji(blog_ranks[0])
+            rank_str = ", ".join(f"{rk}위" for rk in blog_ranks)
         else:
-            blog_emoji = "⬜"
-            blog_str = "미노출"
-        blog_lines.append(f"{blog_emoji}  `{kw}`  →  *{blog_str}*")
-
-        pl_rank = r.get("powerlink_rank")
-        pl_emoji = _rank_emoji(pl_rank)
-        pl_str = f"{pl_rank}위" if pl_rank else "미노출"
-        power_lines.append(f"{pl_emoji}  `{kw}`  →  *{pl_str}*")
+            emoji = "⬜"
+            rank_str = "미노출"
+        lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
 
     date_str = check_date.strftime("%Y년 %m월 %d일")
 
@@ -63,26 +59,13 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": f"📊 오블리브 키워드 순위 ({date_str})",
+                    "text": f"📊 오블리브 네이버 블로그 순위 ({date_str})",
                     "emoji": True,
                 },
             },
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": "*📝 네이버 블로그*"},
-            },
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "\n".join(blog_lines)},
-            },
-            {"type": "divider"},
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "*⚡ 파워링크 (광고)*"},
-            },
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "\n".join(power_lines)},
+                "text": {"type": "mrkdwn", "text": "\n".join(lines)},
             },
             {"type": "divider"},
             {
@@ -90,7 +73,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "블로그: 상위 30위 기준 · 파워링크: 네이버 통합검색 광고 섹션 · 오블리브 / 오블리브의원",
+                        "text": "네이버 블로그 상위 30위 기준 · 오블리브 / 오블리브의원",
                     }
                 ],
             },
@@ -99,10 +82,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
 
 
 def send_slack(results: list[dict], check_date: date | None = None) -> bool:
-    """
-    슬랙으로 순위 결과 전송.
-    성공 시 True, 실패 시 False 반환.
-    """
+    """슬랙으로 순위 결과 전송. 성공 시 True, 실패 시 False 반환."""
     if check_date is None:
         check_date = date.today()
 
