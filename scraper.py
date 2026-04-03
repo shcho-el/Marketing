@@ -10,7 +10,7 @@ from html import unescape
 
 import requests
 
-from config import TARGET_BRAND, BRAND_ALIASES, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY
+from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY
 
 logger = logging.getLogger(__name__)
 
@@ -73,20 +73,9 @@ _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
 
 
 def _contains_brand(result: dict) -> bool:
-    """
-    1순위: TARGET_URLS에 등록된 URL과 일치하면 오블리브 콘텐츠
-    2순위: BRAND_ALIASES 포함 여부 (폴백)
-    """
+    """TARGET_URLS에 등록된 URL과 정확히 일치할 때만 오블리브 콘텐츠로 인식."""
     result_url = _normalize_url(result.get("url", ""))
-    if result_url in _TARGET_URLS_NORMALIZED:
-        return True
-
-    fields = " ".join([
-        result.get("title", ""),
-        result.get("description", ""),
-        result.get("blog_name", ""),
-    ]).lower()
-    return any(alias.lower() in fields for alias in BRAND_ALIASES)
+    return result_url in _TARGET_URLS_NORMALIZED
 
 
 def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_DEPTH) -> dict:
