@@ -103,26 +103,23 @@ def get_powerlink_rank(keyword: str, brand: str = TARGET_BRAND) -> dict:
         logger.warning("파워링크 요청 실패 (keyword=%s): %s", keyword, e)
         return {"powerlink_rank": None, "powerlink_title": ""}
 
-    # 파워링크 섹션 후보 셀렉터 (네이버 HTML 구조 변경 대응)
-    ad_items = (
-        soup.select("#sp_advert li")
-        or soup.select(".ad_area li")
-        or soup.select("li.ad_item")
-        or soup.select(".lst_ad li")
-        or soup.select("ul.lst_total.type_ad li")
-        or soup.select("div[class*='ad'] li")
-        or soup.select("li[class*='ad']")
-    )
+    # 파워링크 컨테이너: class에 'pcPowerLink' 포함 (해시 접미사 무시)
+    pl_container = soup.find(class_=lambda c: c and any("pcPowerLink" in cls for cls in c))
 
-    # 셀렉터로 못 찾으면 전체 텍스트에서 광고 섹션 직접 탐색
-    if not ad_items:
-        all_li = soup.select("li")
-        ad_items = [li for li in all_li if li.find(class_=lambda c: c and "ad" in c.lower())]
+    if pl_container:
+        # 컨테이너 내부 개별 광고 항목
+        ad_items = (
+            pl_container.select("li")
+            or pl_container.select("[class*='_fe_view_power']")
+            or pl_container.select("div[class*='item']")
+        )
+    else:
+        ad_items = []
 
     for i, item in enumerate(ad_items, 1):
         text = item.get_text().lower()
         if any(alias.lower() in text for alias in BRAND_ALIASES):
-            title_tag = item.select_one("a.ad_tit") or item.select_one("a.tit") or item.select_one("a")
+            title_tag = item.select_one("a")
             title = title_tag.get_text(strip=True) if title_tag else text[:50]
             return {"powerlink_rank": i, "powerlink_title": title}
 
