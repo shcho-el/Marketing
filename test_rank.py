@@ -69,9 +69,9 @@ def test_keyword(keyword: str, depth: int = 20):
 def debug_raw_urls(keyword: str):
     """특정 키워드 1페이지의 모든 blog.naver.com 링크를 raw 그대로 출력."""
     params = {
-        "where": "blog",
+        "where": "m_blog",
         "query": keyword,
-        "sm": "tab_jum",
+        "sm": "mtp_hty.top",
         "nso": "so:r,p:all,a:all",
         "start": 1,
     }

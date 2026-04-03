@@ -14,18 +14,18 @@ from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLU
 
 logger = logging.getLogger(__name__)
 
-NAVER_BLOG_SEARCH_URL = "https://search.naver.com/search.naver"
+NAVER_BLOG_SEARCH_URL = "https://m.search.naver.com/search.naver"
 RESULTS_PER_PAGE = 10  # 네이버 블로그 탭 한 페이지 결과 수
 
 _HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Chrome/124.0.6367.82 Mobile Safari/537.36"
     ),
-    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8",
+    "Accept-Language": "ko-KR,ko;q=0.9",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Referer": "https://www.naver.com/",
+    "Referer": "https://m.naver.com/",
 }
 
 _POSTVIEW_RE = re.compile(r"blogId=([^&]+)&logNo=(\d+)", re.IGNORECASE)
@@ -67,9 +67,9 @@ def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
     start=1 → 1~10위, start=11 → 11~20위, start=21 → 21~30위
     """
     params = {
-        "where": "blog",
+        "where": "m_blog",
         "query": keyword,
-        "sm": "tab_jum",          # 관련도순
+        "sm": "mtp_hty.top",      # 관련도순 (모바일)
         "nso": "so:r,p:all,a:all",  # 전체 기간
         "start": start,
     }
