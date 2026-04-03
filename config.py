@@ -21,19 +21,34 @@ KEYWORDS = [
     "문제성발톱",
 ]
 
-# 아래 중 하나라도 포함되면 오블리브 콘텐츠로 인식
+TARGET_BRAND = "오블리브"  # 슬랙/DB 표시용
+
+# 오블리브 콘텐츠로 확정된 블로그 포스트 URL 목록
+# (m.blog.naver.com / blog.naver.com 자동 통합)
+TARGET_URLS = [
+    "https://blog.naver.com/rosee_log/224223118377",
+    "https://blog.naver.com/dltkdgo1029/224236941854",
+    "https://blog.naver.com/y0000uj/224237174148",
+    "https://blog.naver.com/l_n_y/224230390901",
+    "https://blog.naver.com/lllillillioo/224230515556",
+    "https://blog.naver.com/chai_beauty/224231665056",
+    "https://blog.naver.com/allaboutcanada/224237092430",
+    "https://blog.naver.com/castqueen/224236895517",
+    "https://blog.naver.com/five911/224163758009",
+    "https://blog.naver.com/apeach0124/224182712683",
+    "https://blog.naver.com/dmswls3330/224198309025",
+    "https://blog.naver.com/asegh9502/224188502607",
+    "https://blog.naver.com/bpony1020/224214794949",
+    "https://blog.naver.com/codkfhdns/224232499423",
+    "https://blog.naver.com/vkfdnjf03/224134925724",
+    "https://blog.naver.com/kimanam1/224155665586",
+]
+
+# URL 매칭 실패 시 폴백용 브랜드명 (보조 수단)
 BRAND_ALIASES = [
     "오블리브",
     "오블리브의원",
-    "송도발톱전문클리닉",
-    "인천내성발톱병원",
-    "문제성발톱병원",
-    "송도문제성발톱병원",
-    "인천내성발톱무좀병원",
-    "인천송도발톱무좀",
 ]
-
-TARGET_BRAND = "오블리브"  # 슬랙/DB 표시용
 
 # 검색 결과 몇 위까지 확인할지 (블로그 기준)
 SEARCH_DEPTH = 30

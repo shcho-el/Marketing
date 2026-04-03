@@ -10,7 +10,7 @@ from html import unescape
 
 import requests
 
-from config import TARGET_BRAND, BRAND_ALIASES, SEARCH_DEPTH, REQUEST_DELAY
+from config import TARGET_BRAND, BRAND_ALIASES, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY
 
 logger = logging.getLogger(__name__)
 
@@ -63,13 +63,28 @@ def _search_blog(keyword: str, start: int, display: int) -> list[dict]:
     return items
 
 
+def _normalize_url(url: str) -> str:
+    """m.blog.naver.com → blog.naver.com 통일, 쿼리스트링 제거."""
+    return url.replace("https://m.blog.naver.com/", "https://blog.naver.com/") \
+              .replace("http://m.blog.naver.com/", "https://blog.naver.com/") \
+              .split("?")[0].rstrip("/")
+
+_TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
+
+
 def _contains_brand(result: dict) -> bool:
-    """BRAND_ALIASES 중 하나라도 포함되면 오블리브 콘텐츠로 인식."""
+    """
+    1순위: TARGET_URLS에 등록된 URL과 일치하면 오블리브 콘텐츠
+    2순위: BRAND_ALIASES 포함 여부 (폴백)
+    """
+    result_url = _normalize_url(result.get("url", ""))
+    if result_url in _TARGET_URLS_NORMALIZED:
+        return True
+
     fields = " ".join([
         result.get("title", ""),
         result.get("description", ""),
         result.get("blog_name", ""),
-        result.get("url", ""),
     ]).lower()
     return any(alias.lower() in fields for alias in BRAND_ALIASES)
 
