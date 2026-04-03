@@ -1,12 +1,11 @@
 """
-네이버 블로그 검색 공식 API를 사용하여 키워드 순위를 추출하는 스크레이퍼
+네이버 블로그 탭 HTML 직접 스크래핑으로 키워드 순위를 추출하는 스크레이퍼
+(실제 사용자가 검색해서 보는 화면 기준)
 """
 
-import os
 import re
 import time
 import logging
-from html import unescape
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,11 +14,10 @@ from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLU
 
 logger = logging.getLogger(__name__)
 
-NAVER_API_URL = "https://openapi.naver.com/v1/search/blog.json"
-NAVER_SEARCH_URL = "https://search.naver.com/search.naver"
-API_MAX_DISPLAY = 100
+NAVER_BLOG_SEARCH_URL = "https://search.naver.com/search.naver"
+RESULTS_PER_PAGE = 10  # 네이버 블로그 탭 한 페이지 결과 수
 
-_SEARCH_HEADERS = {
+_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -30,53 +28,8 @@ _SEARCH_HEADERS = {
     "Referer": "https://www.naver.com/",
 }
 
-
-def _get_api_keys() -> tuple[str, str]:
-    client_id = os.environ.get("NAVER_CLIENT_ID", "")
-    client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
-    if not client_id or not client_secret:
-        raise EnvironmentError(
-            "NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 환경변수가 설정되지 않았습니다.\n"
-            ".env 파일을 만들어 값을 입력하거나 환경변수를 직접 설정해 주세요."
-        )
-    return client_id, client_secret
-
-
-def _search_blog(keyword: str, start: int, display: int) -> list[dict]:
-    """네이버 블로그 검색 API 호출."""
-    client_id, client_secret = _get_api_keys()
-    headers = {
-        "X-Naver-Client-Id": client_id,
-        "X-Naver-Client-Secret": client_secret,
-    }
-    params = {
-        "query": keyword,
-        "display": display,
-        "start": start,
-        "sort": "sim",
-    }
-    try:
-        resp = requests.get(NAVER_API_URL, headers=headers, params=params, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-    except requests.RequestException as e:
-        logger.warning("API 요청 실패 (keyword=%s, start=%d): %s", keyword, start, e)
-        return []
-
-    items = []
-    for item in data.get("items", []):
-        title = unescape(re.sub(r"<[^>]+>", "", item.get("title", "")))
-        description = unescape(re.sub(r"<[^>]+>", "", item.get("description", "")))
-        items.append({
-            "title": title,
-            "url": item.get("link", ""),
-            "description": description,
-            "blog_name": item.get("bloggername", ""),
-        })
-    return items
-
-
 _POSTVIEW_RE = re.compile(r"blogId=([^&]+)&logNo=(\d+)", re.IGNORECASE)
+_POST_URL_RE = re.compile(r"https://blog\.naver\.com/[^/]+/\d+")
 
 
 def _normalize_url(url: str) -> str:
@@ -86,7 +39,6 @@ def _normalize_url(url: str) -> str:
     - PostView.naver?blogId=X&logNo=Y → blog.naver.com/X/Y
     - 쿼리스트링 제거, 후행 슬래시 제거
     """
-    # PostView.naver 형식 처리
     if "PostView.naver" in url or "PostView.nhn" in url:
         m = _POSTVIEW_RE.search(url)
         if m:
@@ -98,110 +50,115 @@ def _normalize_url(url: str) -> str:
            .rstrip("/")
     )
 
+
 _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
 
 
-def _contains_brand(result: dict) -> bool:
-    """TARGET_URLS에 등록된 URL과 정확히 일치할 때만 오블리브 콘텐츠로 인식."""
-    result_url = _normalize_url(result.get("url", ""))
-    return result_url in _TARGET_URLS_NORMALIZED
+def _is_post_url(url: str) -> bool:
+    """블로그 포스트 URL 여부 확인 (blog.naver.com/{id}/{숫자} 형식)."""
+    normalized = _normalize_url(url)
+    parts = normalized.replace("https://blog.naver.com/", "").split("/")
+    return len(parts) == 2 and parts[1].isdigit() and len(parts[1]) > 6
 
 
-def _is_excluded(result: dict) -> bool:
-    """제목 또는 본문에 경쟁사 키워드가 포함되면 True (제외 대상)."""
-    text = " ".join([
-        unescape(result.get("title", "")),
-        unescape(result.get("description", "")),
-    ])
-    return any(kw in text for kw in EXCLUDE_KEYWORDS)
-
-
-def get_popular_rank(keyword: str) -> dict:
+def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
     """
-    네이버 통합검색 '인기글' 구좌에서 브랜드 URL 순위를 반환.
-
-    반환:
-        {
-            "popular_rank": int | None,
-            "popular_ranks": list[int],
-        }
+    네이버 블로그 탭 한 페이지를 스크래핑하여 결과 목록 반환.
+    start=1 → 1~10위, start=11 → 11~20위, start=21 → 21~30위
     """
-    params = {"query": keyword, "where": "nexearch"}
+    params = {
+        "where": "blog",
+        "query": keyword,
+        "sm": "tab_jum",   # 관련도순
+        "start": start,
+    }
     try:
         resp = requests.get(
-            NAVER_SEARCH_URL,
-            headers=_SEARCH_HEADERS,
+            NAVER_BLOG_SEARCH_URL,
+            headers=_HEADERS,
             params=params,
             timeout=10,
         )
         resp.raise_for_status()
     except requests.RequestException as e:
-        logger.warning("인기글 요청 실패 (keyword=%s): %s", keyword, e)
-        return {"popular_rank": None, "popular_ranks": []}
+        logger.warning("블로그 탭 요청 실패 (keyword=%s, start=%d): %s", keyword, start, e)
+        return []
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # 인기글 섹션 탐색: 제목에 "인기글" 텍스트를 포함하는 컨테이너 찾기
-    popular_section = None
-    for tag in soup.find_all(["section", "div", "li"]):
-        heading = tag.find(
-            lambda t: t.name in ("h2", "h3", "h4", "strong", "span")
-            and t.get_text(strip=True) == "인기글",
-            recursive=False,
-        )
-        if heading:
-            popular_section = tag
-            break
+    # 메인 결과 영역 한정 (사이드바/헤더 링크 제외)
+    container = (
+        soup.find(id="main_pack")
+        or soup.find(id="ct")
+        or soup.find(class_="lst_total")
+        or soup
+    )
 
-    # 폴백: 전체에서 "인기글" 헤딩 탐색 후 부모 사용
-    if not popular_section:
-        heading_tag = soup.find(
-            lambda t: t.name in ("h2", "h3", "h4", "strong", "span")
-            and t.get_text(strip=True) == "인기글"
-        )
-        if heading_tag:
-            popular_section = heading_tag.find_parent(["section", "div", "li"])
+    items = []
+    seen: set[str] = set()
 
-    if not popular_section:
-        logger.debug("인기글 구좌 없음 (keyword=%s)", keyword)
-        return {"popular_rank": None, "popular_ranks": []}
-
-    matched_ranks = []
-    rank = 0
-    seen_urls: set[str] = set()
-    for a in popular_section.find_all("a", href=True):
+    for a in container.find_all("a", href=True):
         href = a["href"]
         if "blog.naver.com" not in href:
             continue
-        normalized = _normalize_url(href)
-        if normalized in seen_urls:
+        if not _is_post_url(href):
             continue
-        seen_urls.add(normalized)
-        rank += 1
-        if normalized in _TARGET_URLS_NORMALIZED:
-            # 링크 주변 텍스트에서 경쟁사 키워드 확인
-            card_text = a.get_text(" ", strip=True)
-            if not any(kw in card_text for kw in EXCLUDE_KEYWORDS):
-                matched_ranks.append(rank)
+        normalized = _normalize_url(href)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
 
-    return {
-        "popular_rank": matched_ranks[0] if matched_ranks else None,
-        "popular_ranks": matched_ranks,
-    }
+        # 제목: 링크 텍스트 또는 가장 가까운 제목 요소
+        title = a.get_text(" ", strip=True)
+        if not title:
+            parent = a.find_parent(["li", "div", "article"])
+            if parent:
+                h = parent.find(["strong", "span", "em", "b"])
+                title = h.get_text(" ", strip=True) if h else ""
+
+        # 설명: 주변 텍스트 블록
+        description = ""
+        parent = a.find_parent(["li", "div", "article"])
+        if parent:
+            dsc = parent.find(
+                class_=lambda c: c and any(x in c for x in ("dsc", "desc", "text", "summary"))
+            )
+            if dsc:
+                description = dsc.get_text(" ", strip=True)
+
+        items.append({
+            "title": title,
+            "url": normalized,
+            "description": description,
+        })
+
+    return items
+
+
+def _contains_brand(result: dict) -> bool:
+    """TARGET_URLS에 등록된 URL과 정확히 일치할 때만 오블리브 콘텐츠로 인식."""
+    return result.get("url", "") in _TARGET_URLS_NORMALIZED
+
+
+def _is_excluded(result: dict) -> bool:
+    """제목 또는 본문에 경쟁사 키워드가 포함되면 True (제외 대상)."""
+    text = result.get("title", "") + " " + result.get("description", "")
+    return any(kw in text for kw in EXCLUDE_KEYWORDS)
 
 
 def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_DEPTH) -> dict:
     """
-    네이버 블로그 검색에서 브랜드가 포함된 모든 순위를 반환.
+    네이버 블로그 탭(관련도순) 기준 순위 반환.
+    실제 사용자가 검색해서 보는 화면과 동일한 기준.
 
     반환:
         {
             "keyword": str,
             "brand": str,
-            "rank": int | None,         # 블로그 구좌 최상위 순위
-            "ranks": list[int],          # 블로그 구좌 전체 순위
-            "popular_rank": int | None,  # 인기글 구좌 최상위 순위
-            "popular_ranks": list[int],  # 인기글 구좌 전체 순위
+            "rank": int | None,   # 최상위 순위
+            "ranks": list[int],   # 전체 매칭 순위 목록
+            "popular_rank": None,
+            "popular_ranks": [],
             "title": str,
             "url": str,
             "checked_count": int,
@@ -211,24 +168,23 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
     matched_title = ""
     matched_url = ""
     global_rank = 0
-    remaining = depth
-    start = 1
+    page_start = 1
 
-    while remaining > 0:
-        display = min(remaining, API_MAX_DISPLAY)
-        items = _search_blog(keyword, start=start, display=display)
+    while global_rank < depth:
+        items = _scrape_blog_page(keyword, start=page_start)
         if not items:
             break
         for item in items:
+            if global_rank >= depth:
+                break
             global_rank += 1
             if _contains_brand(item) and not _is_excluded(item):
                 if not matched_ranks:
                     matched_title = item["title"]
                     matched_url = item["url"]
                 matched_ranks.append(global_rank)
-        remaining -= len(items)
-        start += len(items)
-        if remaining > 0:
+        page_start += RESULTS_PER_PAGE
+        if global_rank < depth and items:
             time.sleep(REQUEST_DELAY)
 
     return {

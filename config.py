@@ -122,6 +122,9 @@ BRAND_ALIASES = [
 # 검색 결과 몇 위까지 확인할지 (블로그 기준)
 SEARCH_DEPTH = 30
 
+# 네이버 블로그 탭 한 페이지당 결과 수
+RESULTS_PER_PAGE = 10
+
 # 각 요청 간 딜레이 (초) - 네이버 차단 방지
 REQUEST_DELAY = 2.0
 

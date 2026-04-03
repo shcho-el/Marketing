@@ -1,5 +1,6 @@
 """
 키워드별 상위 결과 전체 출력 (디버깅용)
+실제 사용자 검색 화면(네이버 블로그 탭 관련도순) 기준
 
 사용법:
   python test_rank.py 송도내성발톱 20
@@ -7,8 +8,6 @@
 """
 
 import sys
-import re
-from html import unescape
 
 try:
     from dotenv import load_dotenv
@@ -16,30 +15,30 @@ try:
 except ImportError:
     pass
 
-from scraper import _search_blog, _normalize_url, _TARGET_URLS_NORMALIZED
-from config import EXCLUDE_KEYWORDS
+from scraper import _scrape_blog_page, _TARGET_URLS_NORMALIZED
+from config import EXCLUDE_KEYWORDS, RESULTS_PER_PAGE
 
 
 def test_keyword(keyword: str, depth: int = 20):
-    print(f"\n{'='*60}")
-    print(f"  키워드: {keyword}  (상위 {depth}위 조회)")
-    print(f"{'='*60}")
-    print(f"{'순위':>4}  {'매칭':^4}  {'제목':<35}  URL")
-    print(f"{'-'*100}")
+    print(f"\n{'='*70}")
+    print(f"  키워드: [{keyword}]  상위 {depth}위  (네이버 블로그 탭 관련도순)")
+    print(f"{'='*70}")
+    print(f"{'순위':>4}  {'구분':^6}  {'제목':<35}  URL")
+    print(f"{'-'*110}")
 
-    fetched = 0
-    start = 1
-    rank = 0
+    global_rank = 0
+    page_start = 1
 
-    while fetched < depth:
-        display = min(depth - fetched, 100)
-        items = _search_blog(keyword, start=start, display=display)
+    while global_rank < depth:
+        items = _scrape_blog_page(keyword, start=page_start)
         if not items:
+            print("  (결과 없음 또는 스크래핑 실패)")
             break
         for item in items:
-            rank += 1
-            normalized = _normalize_url(item["url"])
-            is_match = normalized in _TARGET_URLS_NORMALIZED
+            if global_rank >= depth:
+                break
+            global_rank += 1
+            is_match = item["url"] in _TARGET_URLS_NORMALIZED
             excluded = any(kw in item["title"] + item["description"] for kw in EXCLUDE_KEYWORDS)
 
             if is_match and excluded:
@@ -49,13 +48,12 @@ def test_keyword(keyword: str, depth: int = 20):
             else:
                 tag = ""
 
-            title = item["title"][:33]
-            print(f"{rank:>4}  {tag:^6}  {title:<35}  {item['url']}")
+            title = item["title"][:33] if item["title"] else "(제목없음)"
+            print(f"{global_rank:>4}  {tag:^6}  {title:<35}  {item['url']}")
 
-        fetched += len(items)
-        start += len(items)
+        page_start += RESULTS_PER_PAGE
 
-    print(f"{'='*60}\n")
+    print(f"{'='*70}\n")
 
 
 if __name__ == "__main__":
