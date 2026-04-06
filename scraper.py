@@ -1,44 +1,26 @@
 """
-네이버 블로그 탭 HTML 직접 스크래핑으로 키워드 순위를 추출하는 스크레이퍼
-(실제 사용자가 검색해서 보는 화면 기준)
+Selenium으로 네이버 블로그 탭을 실제 브라우저와 동일하게 렌더링하여
+키워드 순위를 추출하는 스크레이퍼
 """
 
 import re
 import time
 import logging
+from contextlib import contextmanager
 
-import requests
 from bs4 import BeautifulSoup
 
 from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
-NAVER_BLOG_SEARCH_URL = "https://m.search.naver.com/search.naver"
-RESULTS_PER_PAGE = 10  # 네이버 블로그 탭 한 페이지 결과 수
-
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.6367.82 Mobile Safari/537.36"
-    ),
-    "Accept-Language": "ko-KR,ko;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Referer": "https://m.naver.com/",
-}
+NAVER_BLOG_SEARCH_URL = "https://search.naver.com/search.naver"
+RESULTS_PER_PAGE = 10
 
 _POSTVIEW_RE = re.compile(r"blogId=([^&]+)&logNo=(\d+)", re.IGNORECASE)
-_POST_URL_RE = re.compile(r"https://blog\.naver\.com/[^/]+/\d+")
 
 
 def _normalize_url(url: str) -> str:
-    """
-    URL을 https://blog.naver.com/{id}/{no} 형태로 통일.
-    - m.blog.naver.com → blog.naver.com
-    - PostView.naver?blogId=X&logNo=Y → blog.naver.com/X/Y
-    - 쿼리스트링 제거, 후행 슬래시 제거
-    """
     if "PostView.naver" in url or "PostView.nhn" in url:
         m = _POSTVIEW_RE.search(url)
         if m:
@@ -55,43 +37,76 @@ _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
 
 
 def _is_post_url(url: str) -> bool:
-    """블로그 포스트 URL 여부 확인 (blog.naver.com/{id}/{숫자} 형식)."""
     normalized = _normalize_url(url)
     parts = normalized.replace("https://blog.naver.com/", "").split("/")
     return len(parts) == 2 and parts[1].isdigit() and len(parts[1]) > 6
 
 
-def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
-    """
-    네이버 블로그 탭 한 페이지를 스크래핑하여 결과 목록 반환.
-    start=1 → 1~10위, start=11 → 11~20위, start=21 → 21~30위
-    """
-    params = {
-        "where": "m_blog",
-        "query": keyword,
-        "sm": "mtp_hty.top",      # 관련도순 (모바일)
-        "nso": "so:r,p:all,a:all",  # 전체 기간
-        "start": start,
-    }
+def _contains_brand(result: dict) -> bool:
+    return result.get("url", "") in _TARGET_URLS_NORMALIZED
+
+
+def _is_excluded(result: dict) -> bool:
+    text = result.get("title", "") + " " + result.get("description", "")
+    return any(kw in text for kw in EXCLUDE_KEYWORDS)
+
+
+@contextmanager
+def _browser():
+    """헤드리스 Chrome 드라이버를 생성하고 사용 후 종료."""
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+    options.add_argument("--lang=ko-KR")
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    )
+
+    driver = None
     try:
-        resp = requests.get(
-            NAVER_BLOG_SEARCH_URL,
-            headers=_HEADERS,
-            params=params,
-            timeout=10,
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+            from selenium.webdriver.chrome.service import Service
+            driver = webdriver.Chrome(
+                service=Service(ChromeDriverManager().install()),
+                options=options,
+            )
+        except Exception:
+            driver = webdriver.Chrome(options=options)
+
+        driver.execute_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        logger.warning("블로그 탭 요청 실패 (keyword=%s, start=%d): %s", keyword, start, e)
-        return []
+        yield driver
+    finally:
+        if driver:
+            driver.quit()
 
-    soup = BeautifulSoup(resp.text, "html.parser")
 
-    # 메인 결과 영역 한정 (사이드바/헤더 링크 제외)
+def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
+    """네이버 블로그 탭 한 페이지를 Selenium으로 렌더링 후 결과 반환."""
+    url = (
+        f"{NAVER_BLOG_SEARCH_URL}"
+        f"?where=blog&query={keyword}"
+        f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
+    )
+    driver.get(url)
+    time.sleep(2.5)  # JS 렌더링 대기
+
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+
     container = (
         soup.find(id="main_pack")
         or soup.find(id="ct")
-        or soup.find(class_="lst_total")
         or soup
     )
 
@@ -109,7 +124,6 @@ def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
             continue
         seen.add(normalized)
 
-        # 제목: 링크 텍스트 또는 가장 가까운 제목 요소
         title = a.get_text(" ", strip=True)
         if not title:
             parent = a.find_parent(["li", "div", "article"])
@@ -117,7 +131,6 @@ def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
                 h = parent.find(["strong", "span", "em", "b"])
                 title = h.get_text(" ", strip=True) if h else ""
 
-        # 설명: 주변 텍스트 블록
         description = ""
         parent = a.find_parent(["li", "div", "article"])
         if parent:
@@ -136,50 +149,22 @@ def _scrape_blog_page(keyword: str, start: int = 1) -> list[dict]:
     return items
 
 
-def _contains_brand(result: dict) -> bool:
-    """TARGET_URLS에 등록된 URL과 정확히 일치할 때만 오블리브 콘텐츠로 인식."""
-    return result.get("url", "") in _TARGET_URLS_NORMALIZED
-
-
-def _is_excluded(result: dict) -> bool:
-    """제목 또는 본문에 경쟁사 키워드가 포함되면 True (제외 대상)."""
-    text = result.get("title", "") + " " + result.get("description", "")
-    return any(kw in text for kw in EXCLUDE_KEYWORDS)
-
-
-def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_DEPTH) -> dict:
-    """
-    네이버 블로그 탭(관련도순) 기준 순위 반환.
-    실제 사용자가 검색해서 보는 화면과 동일한 기준.
-
-    반환:
-        {
-            "keyword": str,
-            "brand": str,
-            "rank": int | None,   # 최상위 순위
-            "ranks": list[int],   # 전체 매칭 순위 목록
-            "popular_rank": None,
-            "popular_ranks": [],
-            "title": str,
-            "url": str,
-            "checked_count": int,
-        }
-    """
+def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: int = SEARCH_DEPTH) -> dict:
     matched_ranks = []
     matched_title = ""
     matched_url = ""
     global_rank = 0
     page_start = 1
-    seen_urls: set[str] = set()  # 페이지 간 중복 방지
+    seen_urls: set[str] = set()
 
     while global_rank < depth:
-        items = _scrape_blog_page(keyword, start=page_start)
+        items = _scrape_blog_page(driver, keyword, start=page_start)
         if not items:
             break
 
         new_items = [it for it in items if it["url"] not in seen_urls]
         if not new_items:
-            break  # 더 이상 새 결과 없으면 중단
+            break
 
         for item in new_items:
             if global_rank >= depth:
@@ -212,14 +197,15 @@ def get_brand_rank(keyword: str, brand: str = TARGET_BRAND, depth: int = SEARCH_
 def run_all_keywords(keywords: list[str]) -> list[dict]:
     """모든 키워드에 대해 블로그 순위를 조회하고 결과 리스트를 반환."""
     results = []
-    for i, keyword in enumerate(keywords):
-        logger.info("[%d/%d] 키워드 조회 중: %s", i + 1, len(keywords), keyword)
-        result = get_brand_rank(keyword)
-        results.append(result)
-        ranks = result.get("ranks", [])
-        ranks_str = ", ".join(f"{r}위" for r in ranks) if ranks else "미노출"
-        logger.info("  -> 블로그: %s", ranks_str)
-        if i < len(keywords) - 1:
-            time.sleep(REQUEST_DELAY)
+    with _browser() as driver:
+        for i, keyword in enumerate(keywords):
+            logger.info("[%d/%d] 키워드 조회 중: %s", i + 1, len(keywords), keyword)
+            result = get_brand_rank(keyword, driver=driver)
+            results.append(result)
+            ranks = result.get("ranks", [])
+            ranks_str = ", ".join(f"{r}위" for r in ranks) if ranks else "미노출"
+            logger.info("  -> 블로그: %s", ranks_str)
+            if i < len(keywords) - 1:
+                time.sleep(REQUEST_DELAY)
 
     return results
