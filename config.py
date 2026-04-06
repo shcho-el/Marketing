@@ -121,7 +121,7 @@ BRAND_ALIASES = [
 ]
 
 # 검색 결과 몇 위까지 확인할지 (블로그 기준)
-SEARCH_DEPTH = 30
+SEARCH_DEPTH = 20
 
 # 네이버 블로그 탭 한 페이지당 결과 수
 RESULTS_PER_PAGE = 10
