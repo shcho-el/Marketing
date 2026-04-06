@@ -38,8 +38,15 @@ def run_scheduler() -> None:
 
     collect_once()
 
-    schedule.every().day.at(SCHEDULE_TIME).do(collect_once)
-    logger.info("스케줄러 등록: 매일 %s 자동 수집", SCHEDULE_TIME)
+    for day in [
+        schedule.every().monday,
+        schedule.every().tuesday,
+        schedule.every().wednesday,
+        schedule.every().thursday,
+        schedule.every().friday,
+    ]:
+        day.at(SCHEDULE_TIME).do(collect_once)
+    logger.info("스케줄러 등록: 평일(월~금) %s 자동 수집", SCHEDULE_TIME)
 
     while True:
         schedule.run_pending()
