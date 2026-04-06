@@ -124,12 +124,20 @@ def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
             continue
         seen.add(normalized)
 
-        title = a.get_text(" ", strip=True)
-        if not title:
+        # 제목: 링크 텍스트에서 breadcrumb(blog.naver.com › ...) 제외
+        raw_title = a.get_text(" ", strip=True)
+        if "blog.naver.com" in raw_title or len(raw_title) < 5:
+            # 부모에서 제목 요소 탐색
             parent = a.find_parent(["li", "div", "article"])
+            title = ""
             if parent:
-                h = parent.find(["strong", "span", "em", "b"])
-                title = h.get_text(" ", strip=True) if h else ""
+                for tag in parent.find_all(["strong", "em", "span", "h2", "h3"]):
+                    text = tag.get_text(" ", strip=True)
+                    if text and "blog.naver.com" not in text and len(text) > 5:
+                        title = text
+                        break
+        else:
+            title = raw_title
 
         description = ""
         parent = a.find_parent(["li", "div", "article"])
