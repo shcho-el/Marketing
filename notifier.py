@@ -73,7 +73,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "네이버 블로그 탭 기준 상위 30위 · 오블리브",
+                        "text": "네이버 블로그 탭 기준 상위 20위 · 오블리브",
                     }
                 ],
             },
