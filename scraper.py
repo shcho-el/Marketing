@@ -93,17 +93,17 @@ def _browser():
 
 
 def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
-    """네이버 블로그 탭 한 페이지를 Selenium으로 렌더링 후 결과 반환."""
+    """네이버 블로그 탭 한 페이지를 Selenium으로 렌더링 후 결과 반환.
+    결과 카드(li) 단위로 카운트하여 실제 브라우저 순위와 일치시킴."""
     url = (
         f"{NAVER_BLOG_SEARCH_URL}"
         f"?where=blog&query={keyword}"
         f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
     )
     driver.get(url)
-    time.sleep(1.5)  # JS 렌더링 대기
+    time.sleep(1.5)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
-
     container = (
         soup.find(id="main_pack")
         or soup.find(id="ct")
@@ -111,48 +111,63 @@ def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
     )
 
     items = []
-    seen: set[str] = set()
+    seen_urls: set[str] = set()
 
-    for a in container.find_all("a", href=True):
-        href = a["href"]
-        if "blog.naver.com" not in href:
-            continue
-        if not _is_post_url(href):
-            continue
-        normalized = _normalize_url(href)
-        if normalized in seen:
-            continue
-        seen.add(normalized)
+    # 결과 카드(li) 단위로 파싱 — 각 카드에서 대표 포스트 링크 1개만 추출
+    result_cards = container.find_all("li", class_=lambda c: c and "bx" in c.split())
 
-        # 제목: 링크 텍스트에서 breadcrumb(blog.naver.com › ...) 제외
-        raw_title = a.get_text(" ", strip=True)
-        if "blog.naver.com" in raw_title or len(raw_title) < 5:
-            # 부모에서 제목 요소 탐색
-            parent = a.find_parent(["li", "div", "article"])
-            title = ""
-            if parent:
-                for tag in parent.find_all(["strong", "em", "span", "h2", "h3"]):
-                    text = tag.get_text(" ", strip=True)
-                    if text and "blog.naver.com" not in text and len(text) > 5:
-                        title = text
-                        break
-        else:
-            title = raw_title
+    if result_cards:
+        for card in result_cards:
+            found = False
+            for a in card.find_all("a", href=True):
+                href = a["href"]
+                if "blog.naver.com" not in href:
+                    continue
+                if not _is_post_url(href):
+                    continue
+                normalized = _normalize_url(href)
+                if normalized in seen_urls:
+                    continue
+                seen_urls.add(normalized)
 
-        description = ""
-        parent = a.find_parent(["li", "div", "article"])
-        if parent:
-            dsc = parent.find(
-                class_=lambda c: c and any(x in c for x in ("dsc", "desc", "text", "summary"))
-            )
-            if dsc:
-                description = dsc.get_text(" ", strip=True)
+                raw_title = a.get_text(" ", strip=True)
+                if "blog.naver.com" in raw_title or len(raw_title) < 5:
+                    title = ""
+                    for tag in card.find_all(["strong", "em", "span", "h2", "h3"]):
+                        text = tag.get_text(" ", strip=True)
+                        if text and "blog.naver.com" not in text and len(text) > 5:
+                            title = text
+                            break
+                else:
+                    title = raw_title
 
-        items.append({
-            "title": title,
-            "url": normalized,
-            "description": description,
-        })
+                description = ""
+                dsc = card.find(
+                    class_=lambda c: c and any(x in c for x in ("dsc", "desc", "text", "summary"))
+                )
+                if dsc:
+                    description = dsc.get_text(" ", strip=True)
+
+                items.append({"title": title, "url": normalized, "description": description})
+                found = True
+                break  # 카드당 대표 링크 1개만
+
+            if not found:
+                # 포스트 링크 없는 카드도 순위 슬롯으로 카운트 (자리 유지)
+                items.append({"title": "", "url": "", "description": ""})
+    else:
+        # 폴백: li.bx 없을 경우 기존 방식
+        for a in container.find_all("a", href=True):
+            href = a["href"]
+            if "blog.naver.com" not in href or not _is_post_url(href):
+                continue
+            normalized = _normalize_url(href)
+            if normalized in seen_urls:
+                continue
+            seen_urls.add(normalized)
+            raw_title = a.get_text(" ", strip=True)
+            title = "" if "blog.naver.com" in raw_title or len(raw_title) < 5 else raw_title
+            items.append({"title": title, "url": normalized, "description": ""})
 
     return items
 
