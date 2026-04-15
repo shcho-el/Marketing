@@ -136,7 +136,7 @@ SEARCH_DEPTH = 20
 RESULTS_PER_PAGE = 10
 
 # 각 요청 간 딜레이 (초) - 네이버 차단 방지
-REQUEST_DELAY = 2.0
+REQUEST_DELAY = 1.0
 
 # 데이터 저장 경로
 DB_PATH = "rankings.db"

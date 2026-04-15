@@ -100,7 +100,7 @@ def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
         f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
     )
     driver.get(url)
-    time.sleep(2.5)  # JS 렌더링 대기
+    time.sleep(1.5)  # JS 렌더링 대기
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
