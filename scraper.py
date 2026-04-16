@@ -8,8 +8,6 @@ import time
 import logging
 from contextlib import contextmanager
 
-from bs4 import BeautifulSoup
-
 from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
 
 logger = logging.getLogger(__name__)
@@ -108,8 +106,8 @@ def _browser():
 
 
 def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
-    """네이버 블로그 탭 한 페이지를 Selenium으로 렌더링 후 결과 반환.
-    결과 카드(li) 단위로 카운트하여 실제 브라우저 순위와 일치시킴."""
+    """네이버 블로그 탭 한 페이지를 Selenium 라이브 DOM으로 파싱.
+    page_source 스냅샷은 JS 렌더링 결과를 누락하므로 find_elements를 사용."""
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.common.by import By
@@ -121,104 +119,50 @@ def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
     )
     driver.get(url)
 
-    # JS 렌더링 완료 대기
+    # 블로그 포스트 링크가 DOM에 나타날 때까지 대기
     try:
-        WebDriverWait(driver, 12).until(
+        WebDriverWait(driver, 15).until(
             EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "#main_pack li, #ct li, .lst_total li, .blog_list li")
+                (By.CSS_SELECTOR, "a[href*='blog.naver.com/']")
             )
         )
-        time.sleep(0.8)
+        time.sleep(1.0)
     except Exception:
-        time.sleep(3.0)
-
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    container = (
-        soup.find(id="main_pack")
-        or soup.find(id="ct")
-        or soup
-    )
+        time.sleep(4.0)
 
     items = []
     seen_urls: set[str] = set()
 
-    # 전략 1: li.bx (기존 네이버 블로그탭 카드)
-    result_cards = container.find_all("li", class_=lambda c: c and "bx" in c.split())
+    try:
+        anchors = driver.find_elements(By.CSS_SELECTOR, "a[href*='blog.naver.com/']")
+    except Exception:
+        logger.warning("Selenium find_elements 실패: %s (start=%d)", keyword, start)
+        return []
 
-    # 전략 2: ul.lst_total > li
-    if not result_cards:
-        for ul_cls in ["lst_total", "type_blog", "blog_list"]:
-            lst = container.find("ul", class_=lambda c: c and ul_cls in (c or "").split())
-            if lst:
-                result_cards = lst.find_all("li", recursive=False)
-                if result_cards:
-                    break
+    for a_elem in anchors:
+        try:
+            href = a_elem.get_attribute("href") or ""
+        except Exception:
+            continue
 
-    # 전략 3: .total_wrap 안의 개별 항목
-    if not result_cards:
-        result_cards = container.find_all("div", class_=lambda c: c and "total_wrap" in (c or ""))
+        if not href or not _is_post_url(href):
+            continue
 
-    # 전략 4: .api_subject_bx 기반
-    if not result_cards:
-        result_cards = container.find_all(
-            ["li", "div"], class_=lambda c: c and "api_subject_bx" in (c or "")
-        )
+        normalized = _normalize_url(href)
+        if normalized in seen_urls:
+            continue
+        seen_urls.add(normalized)
 
-    def _extract_card(card) -> dict | None:
-        for a in card.find_all("a", href=True):
-            href = a["href"]
-            if "blog.naver.com" not in href:
-                continue
-            if not _is_post_url(href):
-                continue
-            normalized = _normalize_url(href)
-            if normalized in seen_urls:
-                continue
-            seen_urls.add(normalized)
-
-            raw_title = a.get_text(" ", strip=True)
-            if "blog.naver.com" in raw_title or len(raw_title) < 5:
+        try:
+            title = a_elem.text.strip()
+            if not title or len(title) < 5 or "blog.naver.com" in title:
                 title = ""
-                for tag in card.find_all(["strong", "em", "span", "h2", "h3"]):
-                    text = tag.get_text(" ", strip=True)
-                    if text and "blog.naver.com" not in text and len(text) > 5:
-                        title = text
-                        break
-            else:
-                title = raw_title
+        except Exception:
+            title = ""
 
-            description = ""
-            dsc = card.find(
-                class_=lambda c: c and any(x in c for x in ("dsc", "desc", "text", "summary"))
-            )
-            if dsc:
-                description = dsc.get_text(" ", strip=True)
+        items.append({"title": title, "url": normalized, "description": ""})
 
-            return {"title": title, "url": normalized, "description": description}
-        return None
-
-    if result_cards:
-        for card in result_cards:
-            entry = _extract_card(card)
-            if entry:
-                items.append(entry)
-            else:
-                items.append({"title": "", "url": "", "description": ""})
-    else:
-        # 최후 폴백: 페이지 전체에서 블로그 포스트 링크만 순서대로 추출
-        logger.warning("결과 카드 선택자 모두 실패, 전체 링크 스캔으로 폴백: %s (start=%d)", keyword, start)
-        for a in container.find_all("a", href=True):
-            href = a["href"]
-            if "blog.naver.com" not in href or not _is_post_url(href):
-                continue
-            normalized = _normalize_url(href)
-            if normalized in seen_urls:
-                continue
-            seen_urls.add(normalized)
-            raw_title = a.get_text(" ", strip=True)
-            title = "" if "blog.naver.com" in raw_title or len(raw_title) < 5 else raw_title
-            items.append({"title": title, "url": normalized, "description": ""})
-
+    logger.debug("페이지 수집: %s start=%d → %d개", keyword, start, len(items))
     return items
 
 
