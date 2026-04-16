@@ -23,7 +23,6 @@ def dump_debug(keyword: str):
     with _browser() as driver:
         driver.get(url)
 
-        # Wait for page load
         try:
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
@@ -72,20 +71,52 @@ def dump_debug(keyword: str):
         )
         print(f".api_subject_bx: {len(api_bx)}개")
 
-        print("\n=== 페이지 내 모든 링크 (blog.naver.com 포함) ===")
-        blog_links = []
-        for a in soup.find_all("a", href=True):
-            href = a["href"]
-            if "blog.naver.com" in href or "naver.com" in href:
-                blog_links.append(href)
-        if blog_links:
-            for link in blog_links[:30]:
-                is_post = _is_post_url(link)
-                print(f"  {'[포스트]' if is_post else '[기타]  '} {link}")
-            if len(blog_links) > 30:
-                print(f"  ... 외 {len(blog_links)-30}개")
-        else:
-            print("  (없음 - 봇 차단 또는 빈 페이지일 가능성)")
+        # li.bx 카드 내부 링크 분석
+        print(f"\n=== li.bx 카드 내부 a 태그 분석 ===")
+        for i, card in enumerate(li_bx):
+            print(f"\n--- card {i+1} ---")
+            for a in card.find_all("a"):
+                href = a.get("href", "(없음)")
+                onclick = a.get("onclick", "")
+                data_url = a.get("data-url", "")
+                text = a.get_text(" ", strip=True)[:40]
+                print(f"  href={href[:100]}  text={text}")
+                if onclick:
+                    print(f"     onclick={onclick[:120]}")
+                if data_url:
+                    print(f"     data-url={data_url[:120]}")
+
+        # data 속성에서 blog.naver.com 또는 logNo 검색
+        print(f"\n=== 모든 요소 data-* 속성 중 blog/logNo 포함 ===")
+        found_data = 0
+        for elem in soup.find_all(True):
+            for attr, val in elem.attrs.items():
+                if not isinstance(val, str):
+                    continue
+                if ("blog.naver.com" in val or "logNo" in val) and attr != "href":
+                    print(f"  <{elem.name}> {attr}={val[:120]}")
+                    found_data += 1
+        if not found_data:
+            print("  (없음)")
+
+        # Selenium DOM에서 직접 a 태그 href 확인
+        print(f"\n=== Selenium DOM: blog.naver.com 포함 링크 ===")
+        from selenium.webdriver.common.by import By
+        all_anchors = driver.find_elements(By.TAG_NAME, "a")
+        sel_found = 0
+        for a in all_anchors:
+            try:
+                href = a.get_attribute("href") or ""
+                data_url = a.get_attribute("data-url") or ""
+                if "blog.naver.com" in href or "blog.naver.com" in data_url:
+                    print(f"  href={href[:100]}")
+                    if data_url:
+                        print(f"     data-url={data_url[:100]}")
+                    sel_found += 1
+            except Exception:
+                pass
+        if not sel_found:
+            print("  (없음)")
 
         print(f"\n=== 페이지 제목 ===")
         title_tag = soup.find("title")
