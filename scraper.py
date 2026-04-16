@@ -18,16 +18,28 @@ NAVER_BLOG_SEARCH_URL = "https://search.naver.com/search.naver"
 RESULTS_PER_PAGE = 10
 
 _POSTVIEW_RE = re.compile(r"blogId=([^&]+)&logNo=(\d+)", re.IGNORECASE)
+_LOGNO_RE = re.compile(r"logNo=(\d+)", re.IGNORECASE)
+_BLOGID_PATH_RE = re.compile(r"blog\.naver\.com/([^/?]+)", re.IGNORECASE)
 
 
 def _normalize_url(url: str) -> str:
+    # PostView 형식: PostView.naver?blogId=xxx&logNo=yyy
     if "PostView.naver" in url or "PostView.nhn" in url:
         m = _POSTVIEW_RE.search(url)
         if m:
             return f"https://blog.naver.com/{m.group(1)}/{m.group(2)}"
+
+    # 리다이렉트 형식: blog.naver.com/username?Redirect=Log&logNo=yyy
+    if "logNo=" in url and "blog.naver.com" in url:
+        bid = _BLOGID_PATH_RE.search(url)
+        lno = _LOGNO_RE.search(url)
+        if bid and lno:
+            return f"https://blog.naver.com/{bid.group(1)}/{lno.group(1)}"
+
     return (
         url.replace("https://m.blog.naver.com/", "https://blog.naver.com/")
            .replace("http://m.blog.naver.com/", "https://blog.naver.com/")
+           .replace("http://blog.naver.com/", "https://blog.naver.com/")
            .split("?")[0]
            .rstrip("/")
     )
@@ -37,6 +49,9 @@ _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
 
 
 def _is_post_url(url: str) -> bool:
+    # logNo= 파라미터 포함 리다이렉트 URL도 포스트로 인정
+    if "logNo=" in url and "blog.naver.com" in url:
+        return bool(_LOGNO_RE.search(url))
     normalized = _normalize_url(url)
     parts = normalized.replace("https://blog.naver.com/", "").split("/")
     return len(parts) == 2 and parts[1].isdigit() and len(parts[1]) > 6
