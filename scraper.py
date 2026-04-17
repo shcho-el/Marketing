@@ -119,16 +119,21 @@ def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
     )
     driver.get(url)
 
-    # 블로그 포스트 링크가 DOM에 나타날 때까지 대기
+    # 실제 블로그 포스트 링크가 DOM에 나타날 때까지 대기
+    # (내비게이션의 blog.naver.com 링크와 구별: 포스트 URL에만 숫자 logNo 포함)
+    def _post_links_loaded(d):
+        elems = d.find_elements(By.CSS_SELECTOR, "a[href*='blog.naver.com/']")
+        for e in elems[:30]:
+            href = e.get_attribute("href") or ""
+            if _is_post_url(href):
+                return True
+        return False
+
     try:
-        WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "a[href*='blog.naver.com/']")
-            )
-        )
-        time.sleep(1.0)
+        WebDriverWait(driver, 15).until(_post_links_loaded)
+        time.sleep(0.5)
     except Exception:
-        time.sleep(4.0)
+        time.sleep(5.0)
 
     items = []
     seen_urls: set[str] = set()
