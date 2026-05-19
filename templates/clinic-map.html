@@ -4,488 +4,176 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>송도오블리브의원 오시는 길</title>
-
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
 
-    body {
-      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-      background: #f4f6fb;
-      color: #222;
-    }
+    #map { width: 100%; height: 100vh; }
 
-    /* ── Header ─────────────────────────────────── */
-    .header {
-      background: linear-gradient(135deg, #1a3c6e 0%, #2d6bbf 100%);
+    /* 상단 타이틀 바 */
+    .top-bar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(26, 60, 110, 0.93);
+      backdrop-filter: blur(6px);
       color: #fff;
-      text-align: center;
-      padding: 28px 16px 22px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
     }
-    .header .logo {
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      opacity: .75;
-      margin-bottom: 6px;
-    }
-    .header h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .header p {
-      font-size: 13px;
-      opacity: .85;
+    .top-bar h1 { font-size: 16px; font-weight: 700; }
+    .top-bar p  { font-size: 12px; opacity: .8; margin-top: 2px; }
+
+    /* 하단 정보 패널 */
+    .bottom-panel {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
+      display: grid; grid-template-columns: 1fr 1fr;
     }
 
-    /* ── Legend chips ────────────────────────────── */
-    .legend-bar {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
+    .panel {
       padding: 14px 16px;
-      background: #fff;
-      border-bottom: 1px solid #e0e5ee;
+      backdrop-filter: blur(8px);
     }
-    .chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 50px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .2s;
-    }
-    .chip:hover { opacity: .8; }
-    .chip .dot {
-      width: 13px; height: 13px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .chip-a { background: #e8f0ff; color: #1a3c6e; }
-    .chip-a .dot { background: #2d6bbf; }
-    .chip-b { background: #fff0e8; color: #7a3000; }
-    .chip-b .dot { background: #e05c00; }
+    .panel-a { background: rgba(26, 60, 110, 0.88); color: #fff; }
+    .panel-b { background: rgba(122, 48, 0, 0.88); color: #fff; }
 
-    /* ── Map ─────────────────────────────────────── */
-    #map {
-      width: 100%;
-      height: 380px;
+    .panel-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      opacity: .75; margin-bottom: 6px;
     }
+    .panel-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+    .panel-floor { font-size: 11px; opacity: .8; line-height: 1.7; }
 
-    /* ── Cards ───────────────────────────────────── */
-    .cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      padding: 16px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
-
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,.09);
-    }
-    .card-header {
-      padding: 14px 18px 12px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .card-header .badge {
-      font-size: 22px;
-      font-weight: 900;
-      line-height: 1;
-      background: rgba(255,255,255,.22);
-      border-radius: 8px;
-      padding: 4px 10px;
-    }
-    .card-header-info h2 { font-size: 15px; font-weight: 700; }
-    .card-header-info p  { font-size: 11px; opacity: .85; margin-top: 2px; }
-
-    .card-a .card-header { background: linear-gradient(135deg, #1a3c6e, #2d6bbf); }
-    .card-b .card-header { background: linear-gradient(135deg, #7a3000, #e05c00); }
-
-    .card-body { padding: 14px 18px 16px; }
-
-    .floor-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f2f7;
-    }
-    .floor-row:last-child { border-bottom: none; padding-bottom: 0; }
-
-    .floor-tag {
-      flex-shrink: 0;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 9px;
-      border-radius: 6px;
-      min-width: 36px;
-      text-align: center;
-    }
-    .card-a .floor-tag { background: #e8f0ff; color: #1a3c6e; }
-    .card-b .floor-tag { background: #fff0e8; color: #7a3000; }
-
-    .floor-clinic strong { display: block; font-size: 14px; font-weight: 700; color: #1a1a2e; }
-    .floor-clinic span   { font-size: 12px; color: #666; line-height: 1.5; }
-
-    .addr-box {
-      margin-top: 12px;
-      background: #f7f8fc;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: #444;
-      line-height: 1.7;
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-    }
-    .addr-box .pin { font-size: 16px; flex-shrink: 0; }
-
-    .nav-btns {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
+    .panel-nav {
+      display: flex; gap: 6px; margin-top: 10px;
     }
     .nav-btn {
-      flex: 1;
-      text-align: center;
-      padding: 9px 4px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: opacity .2s;
+      flex: 1; text-align: center; padding: 7px 4px;
+      border-radius: 6px; font-size: 11px; font-weight: 700;
+      text-decoration: none; cursor: pointer;
+      border: none; font-family: inherit;
     }
-    .nav-btn:hover { opacity: .8; }
     .btn-kakao { background: #FEE500; color: #3A1D1D; }
     .btn-naver { background: #03C75A; color: #fff; }
-    .btn-copy  { background: #eef1f8; color: #333; cursor: pointer; border: none; font-family: inherit; font-size: 12px; font-weight: 600; }
 
-    /* ── Distance notice ─────────────────────────── */
-    .distance-notice {
-      max-width: 900px;
-      margin: 0 auto 4px;
-      padding: 0 16px;
+    /* 팝업 커스텀 */
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18) !important;
     }
-    .distance-notice .inner {
-      background: #fff8e1;
-      border-left: 4px solid #f5a623;
-      border-radius: 0 10px 10px 0;
-      padding: 10px 14px;
-      font-size: 12.5px;
-      color: #5a3e00;
-      line-height: 1.7;
+    .leaflet-popup-content { margin: 14px 16px !important; }
+    .popup-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .popup-row { font-size: 12px; line-height: 2; display: flex; gap: 6px; align-items: center; }
+    .popup-fl {
+      display: inline-block; padding: 1px 7px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
     }
-
-    /* ── Footer ─────────────────────────────────── */
-    .footer {
-      text-align: center;
-      padding: 24px 16px;
-      font-size: 11.5px;
-      color: #999;
-    }
-    .footer a { color: #2d6bbf; text-decoration: none; }
-
-    /* ── Leaflet popup custom ────────────────────── */
-    .leaflet-popup-content-wrapper { border-radius: 12px !important; }
-    .custom-popup h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-    .custom-popup ul { list-style: none; padding: 0; font-size: 12px; line-height: 2; }
-    .custom-popup .fl { display: inline-block; background: #e8f0ff; color: #1a3c6e; border-radius: 4px; padding: 0 6px; font-weight: 700; margin-right: 4px; font-size: 11px; }
-    .custom-popup .fl-b { background: #fff0e8; color: #7a3000; }
+    .fl-a { background: #dce8ff; color: #1a3c6e; }
+    .fl-b { background: #ffe8d6; color: #7a3000; }
   </style>
 </head>
 <body>
 
-<!-- ── Header ─────────────────────────────────────── -->
-<div class="header">
-  <div class="logo">Songdo Obliv Clinic · 오시는 길</div>
-  <h1>인천 송도오블리브의원</h1>
-  <p>두 건물에 나뉘어 운영됩니다 · 방문 전 위치를 꼭 확인해 주세요</p>
-</div>
-
-<!-- ── Legend ─────────────────────────────────────── -->
-<div class="legend-bar">
-  <div class="chip chip-a" onclick="flyTo('a')">
-    <span class="dot"></span> A동 · 아인타워대로 132번길 34
-  </div>
-  <div class="chip chip-b" onclick="flyTo('b')">
-    <span class="dot"></span> B동 · 테크노파크로 113 프리스페이스
+<!-- 상단 타이틀 -->
+<div class="top-bar">
+  <div>
+    <h1>🏥 인천 송도오블리브의원 오시는 길</h1>
+    <p>두 건물로 운영됩니다 · 예약하신 클리닉 위치를 확인하세요</p>
   </div>
 </div>
 
-<!-- ── Map ────────────────────────────────────────── -->
+<!-- 지도 -->
 <div id="map"></div>
 
-<!-- ── Distance notice ────────────────────────────── -->
-<div class="distance-notice">
-  <div class="inner">
-    📍 두 건물은 <strong>도보 약 8~10분</strong> 거리입니다. 예약하신 클리닉 건물을 먼저 확인하세요.
+<!-- 하단 패널 -->
+<div class="bottom-panel">
+  <div class="panel panel-a">
+    <div class="panel-label">🔵 A동</div>
+    <div class="panel-name">아인타워대로 132번길 34</div>
+    <div class="panel-floor">
+      3층 · 피부체형 &amp; 롱래스팅클리닉<br>
+      2층 · 문제성발톱클리닉
+    </div>
+    <div class="panel-nav">
+      <a class="nav-btn btn-kakao" href="https://map.kakao.com/link/search/인천 연수구 아인타워대로 132번길 34" target="_blank">카카오맵</a>
+      <a class="nav-btn btn-naver" href="https://map.naver.com/v5/search/인천 연수구 아인타워대로 132번길 34" target="_blank">네이버맵</a>
+    </div>
+  </div>
+  <div class="panel panel-b">
+    <div class="panel-label">🟠 B동</div>
+    <div class="panel-name">테크노파크로 113 프리스페이스</div>
+    <div class="panel-floor">
+      5층 · 비수술재생치료클리닉 (정수 5층)<br>
+      2층 · 비수술재생치료클리닉 (접수·상담)
+    </div>
+    <div class="panel-nav">
+      <a class="nav-btn btn-kakao" href="https://map.kakao.com/link/search/인천 연수구 테크노파크로 113 프리스페이스" target="_blank">카카오맵</a>
+      <a class="nav-btn btn-naver" href="https://map.naver.com/v5/search/인천 연수구 테크노파크로 113 프리스페이스" target="_blank">네이버맵</a>
+    </div>
   </div>
 </div>
-
-<!-- ── Cards ──────────────────────────────────────── -->
-<div class="cards">
-
-  <!-- Card A -->
-  <div class="card card-a">
-    <div class="card-header">
-      <div class="badge">A</div>
-      <div class="card-header-info">
-        <h2>아인타워대로 132번길 34</h2>
-        <p>인천 연수구 · 2·3층 운영</p>
-      </div>
-    </div>
-    <div class="card-body">
-      <div class="floor-row">
-        <span class="floor-tag">3층</span>
-        <div class="floor-clinic">
-          <strong>피부체형 &amp; 롱래스팅클리닉</strong>
-          <span>피부 관리 · 체형 교정 · 롱래스팅 시술</span>
-        </div>
-      </div>
-      <div class="floor-row">
-        <span class="floor-tag">2층</span>
-        <div class="floor-clinic">
-          <strong>문제성발톱클리닉</strong>
-          <span>내성발톱 · 변형발톱 · 발톱 교정</span>
-        </div>
-      </div>
-
-      <div class="addr-box">
-        <span class="pin">📌</span>
-        <span>인천광역시 연수구<br>아인타워대로 132번길 34, 2·3층</span>
-      </div>
-
-      <div class="nav-btns">
-        <a class="nav-btn btn-kakao"
-           href="https://map.kakao.com/link/search/인천 연수구 아인타워대로 132번길 34"
-           target="_blank">카카오맵</a>
-        <a class="nav-btn btn-naver"
-           href="https://map.naver.com/v5/search/인천 연수구 아인타워대로 132번길 34"
-           target="_blank">네이버맵</a>
-        <button class="nav-btn btn-copy" onclick="copyAddr('인천광역시 연수구 아인타워대로 132번길 34')">주소복사</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card B -->
-  <div class="card card-b">
-    <div class="card-header">
-      <div class="badge">B</div>
-      <div class="card-header-info">
-        <h2>테크노파크로 113 프리스페이스</h2>
-        <p>인천 연수구 · 2·5층 운영</p>
-      </div>
-    </div>
-    <div class="card-body">
-      <div class="floor-row">
-        <span class="floor-tag">5층</span>
-        <div class="floor-clinic">
-          <strong>비수술재생치료클리닉</strong>
-          <span>주사치료 · 재생치료 · 비수술 프로그램 (정수 5층)</span>
-        </div>
-      </div>
-      <div class="floor-row">
-        <span class="floor-tag">2층</span>
-        <div class="floor-clinic">
-          <strong>비수술재생치료클리닉</strong>
-          <span>접수 · 상담 · 처치실</span>
-        </div>
-      </div>
-
-      <div class="addr-box">
-        <span class="pin">📌</span>
-        <span>인천광역시 연수구<br>테크노파크로 113, 프리스페이스 2·5층</span>
-      </div>
-
-      <div class="nav-btns">
-        <a class="nav-btn btn-kakao"
-           href="https://map.kakao.com/link/search/인천 연수구 테크노파크로 113 프리스페이스"
-           target="_blank">카카오맵</a>
-        <a class="nav-btn btn-naver"
-           href="https://map.naver.com/v5/search/인천 연수구 테크노파크로 113 프리스페이스"
-           target="_blank">네이버맵</a>
-        <button class="nav-btn btn-copy" onclick="copyAddr('인천광역시 연수구 테크노파크로 113 프리스페이스')">주소복사</button>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /cards -->
-
-<!-- ── Floor guide visual ─────────────────────────── -->
-<div style="max-width:900px;margin:4px auto 0;padding:0 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
-  <!-- Building A visual -->
-  <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.09);">
-    <div style="background:#1a3c6e;color:#fff;padding:10px 16px;font-size:13px;font-weight:700;">🏢 A동 층별 안내</div>
-    <div style="padding:12px 16px;">
-      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed #e8ecf5;">
-        <div style="background:#2d6bbf;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;min-width:36px;text-align:center;">3F</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;">피부체형 &amp; 롱래스팅클리닉</div>
-          <div style="font-size:11px;color:#777;margin-top:2px;">엘리베이터 → 3층</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed #e8ecf5;">
-        <div style="background:#5b8fd6;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;min-width:36px;text-align:center;">2F</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;">문제성발톱클리닉</div>
-          <div style="font-size:11px;color:#777;margin-top:2px;">엘리베이터 → 2층</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;">
-        <div style="background:#e0e5ee;color:#888;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;min-width:36px;text-align:center;">1F</div>
-        <div style="font-size:12px;color:#999;">건물 입구 · 로비</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Building B visual -->
-  <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.09);">
-    <div style="background:#7a3000;color:#fff;padding:10px 16px;font-size:13px;font-weight:700;">🏢 B동 층별 안내</div>
-    <div style="padding:12px 16px;">
-      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed #f5e8e0;">
-        <div style="background:#e05c00;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;min-width:36px;text-align:center;">5F</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;">비수술재생치료클리닉</div>
-          <div style="font-size:11px;color:#777;margin-top:2px;">정수 5층 · 시술실</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed #f5e8e0;">
-        <div style="background:#e07030;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;min-width:36px;text-align:center;">2F</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;">비수술재생치료클리닉</div>
-          <div style="font-size:11px;color:#777;margin-top:2px;">접수 · 상담</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;padding:8px 0;">
-        <div style="background:#e0e5ee;color:#888;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:900;min-width:36px;text-align:center;">1F</div>
-        <div style="font-size:12px;color:#999;">건물 입구 · 로비</div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ── Footer ─────────────────────────────────────── -->
-<div class="footer">
-  <p>문의 전화 전 예약하신 클리닉 건물을 확인해 주세요.</p>
-  <p style="margin-top:6px;">© 인천 송도오블리브의원</p>
-</div>
-
-<!-- ── Toast ──────────────────────────────────────── -->
-<div id="toast" style="
-  display:none; position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
-  background:#333; color:#fff; padding:10px 22px; border-radius:50px;
-  font-size:13px; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.25);
-">주소가 복사되었습니다 ✅</div>
 
 <script>
-  /* ── Leaflet map ──────────────────────────────────── */
-  const coordA = [37.38778, 126.64897]; // 아인타워대로 132번길 34
-  const coordB = [37.37983, 126.65747]; // 테크노파크로 113 프리스페이스
+  const coordA = [37.38778, 126.64897];
+  const coordB = [37.37983, 126.65747];
 
-  const map = L.map('map', { zoomControl: true }).fitBounds([coordA, coordB], { padding: [60, 60] });
+  const map = L.map('map', { zoomControl: false })
+    .fitBounds([coordA, coordB], { padding: [90, 60] });
+
+  L.control.zoom({ position: 'topright' }).addTo(map);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '© OpenStreetMap',
     maxZoom: 19
   }).addTo(map);
 
-  /* custom icon factory */
-  function makeIcon(letter, color) {
+  function makeIcon(letter, bg) {
     return L.divIcon({
       className: '',
       html: `<div style="
-        background:${color}; color:#fff; font-size:15px; font-weight:900;
-        width:38px; height:38px; border-radius:50% 50% 50% 0;
+        background:${bg}; color:#fff; font-size:16px; font-weight:900;
+        width:42px; height:42px; border-radius:50% 50% 50% 0;
         transform:rotate(-45deg); display:flex; align-items:center; justify-content:center;
-        box-shadow:0 3px 10px rgba(0,0,0,.3); border:2px solid rgba(255,255,255,.7);
+        box-shadow:0 4px 12px rgba(0,0,0,.35); border:2px solid rgba(255,255,255,.8);
       "><span style="transform:rotate(45deg)">${letter}</span></div>`,
-      iconSize: [38, 38],
-      iconAnchor: [19, 38],
-      popupAnchor: [0, -40]
+      iconSize: [42, 42],
+      iconAnchor: [21, 42],
+      popupAnchor: [0, -46]
     });
   }
 
-  const markerA = L.marker(coordA, { icon: makeIcon('A', '#2d6bbf') }).addTo(map);
-  markerA.bindPopup(`
-    <div class="custom-popup">
-      <h3>🔵 A동 · 아인타워대로 132번길 34</h3>
-      <ul>
-        <li><span class="fl">3F</span> 피부체형 &amp; 롱래스팅클리닉</li>
-        <li><span class="fl">2F</span> 문제성발톱클리닉</li>
-      </ul>
-    </div>
-  `, { maxWidth: 220 });
+  L.marker(coordA, { icon: makeIcon('A', '#2d6bbf') }).addTo(map)
+    .bindPopup(`
+      <div class="popup-title">🔵 A동 · 아인타워대로 132번길 34</div>
+      <div class="popup-row"><span class="popup-fl fl-a">3F</span> 피부체형 &amp; 롱래스팅클리닉</div>
+      <div class="popup-row"><span class="popup-fl fl-a">2F</span> 문제성발톱클리닉</div>
+    `, { maxWidth: 230 }).openPopup();
 
-  const markerB = L.marker(coordB, { icon: makeIcon('B', '#e05c00') }).addTo(map);
-  markerB.bindPopup(`
-    <div class="custom-popup">
-      <h3>🟠 B동 · 테크노파크로 113 프리스페이스</h3>
-      <ul>
-        <li><span class="fl fl-b">5F</span> 비수술재생치료클리닉 (정수5층)</li>
-        <li><span class="fl fl-b">2F</span> 비수술재생치료클리닉 (접수·상담)</li>
-      </ul>
-    </div>
-  `, { maxWidth: 240 });
+  L.marker(coordB, { icon: makeIcon('B', '#e05c00') }).addTo(map)
+    .bindPopup(`
+      <div class="popup-title">🟠 B동 · 테크노파크로 113 프리스페이스</div>
+      <div class="popup-row"><span class="popup-fl fl-b">5F</span> 비수술재생치료클리닉 (정수 5층)</div>
+      <div class="popup-row"><span class="popup-fl fl-b">2F</span> 비수술재생치료클리닉 (접수·상담)</div>
+    `, { maxWidth: 250 });
 
-  /* dashed line between buildings */
-  L.polyline([coordA, coordB], {
-    color: '#888', weight: 2, dashArray: '6 6', opacity: .6
-  }).addTo(map);
+  /* 두 건물 사이 점선 */
+  L.polyline([coordA, coordB], { color: '#aaa', weight: 2, dashArray: '6 5', opacity: .7 }).addTo(map);
 
-  /* midpoint label */
-  const midLat = (coordA[0] + coordB[0]) / 2;
-  const midLng = (coordA[1] + coordB[1]) / 2;
-  L.marker([midLat, midLng], {
+  /* 도보 거리 라벨 */
+  const mid = [(coordA[0] + coordB[0]) / 2, (coordA[1] + coordB[1]) / 2];
+  L.marker(mid, {
     icon: L.divIcon({
       className: '',
       html: `<div style="
         background:#fff8e1; border:1px solid #f5a623; border-radius:20px;
-        padding:3px 10px; font-size:11px; font-weight:700; color:#5a3e00;
-        white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,.15);
-      ">🚶 도보 약 8~10분</div>`,
-      iconSize: [120, 24],
-      iconAnchor: [60, 12]
-    })
+        padding:3px 11px; font-size:11px; font-weight:700; color:#5a3e00;
+        white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.15);
+      ">🚶‍♂️ 도보 약 8~10분</div>`,
+      iconSize: [130, 26],
+      iconAnchor: [65, 13]
+    }),
+    interactive: false
   }).addTo(map);
-
-  /* open popups on load */
-  markerA.openPopup();
-
-  /* fly-to from legend chips */
-  function flyTo(id) {
-    if (id === 'a') { map.flyTo(coordA, 17, { duration: 1 }); setTimeout(() => markerA.openPopup(), 900); }
-    else            { map.flyTo(coordB, 17, { duration: 1 }); setTimeout(() => markerB.openPopup(), 900); }
-  }
-
-  /* copy address */
-  function copyAddr(addr) {
-    navigator.clipboard.writeText(addr).then(() => {
-      const t = document.getElementById('toast');
-      t.style.display = 'block';
-      setTimeout(() => t.style.display = 'none', 2000);
-    });
-  }
 </script>
 </body>
 </html>
