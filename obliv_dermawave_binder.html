@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오블리브의원 | 더마웨이브 상담 바인더</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap');
+
+    :root {
+      --dark-orange: #C45A1A;
+      --medium-orange: #D97036;
+      --light-orange: #F0956A;
+      --pale-orange: #FAE8DC;
+      --cream: #FDF6F0;
+      --brown-dark: #2C1A0E;
+      --brown-mid: #5C3317;
+      --brown-light: #8B5B3A;
+      --white: #FFFFFF;
+      --gray-light: #F5F5F5;
+      --gray-mid: #CCCCCC;
+      --gray-text: #666666;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #EDE0D4;
+      color: var(--brown-dark);
+    }
+
+    /* ──────────── PAGE WRAPPER ──────────── */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: var(--white);
+      margin: 12mm auto;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      page-break-after: always;
+    }
+
+    /* ──────────── COVER PAGE ──────────── */
+    .cover {
+      background: var(--brown-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 297mm;
+      position: relative;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(196,90,26,0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 15% 80%, rgba(217,112,54,0.25) 0%, transparent 55%);
+    }
+
+    .cover-inner {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 0 20mm;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      border: 1px solid var(--medium-orange);
+      color: var(--medium-orange);
+      font-size: 9px;
+      letter-spacing: 4px;
+      padding: 5px 16px;
+      margin-bottom: 22px;
+      text-transform: uppercase;
+    }
+
+    .cover-clinic-name {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 38px;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 8px;
+      margin-bottom: 6px;
+    }
+
+    .cover-clinic-sub {
+      font-size: 11px;
+      color: var(--light-orange);
+      letter-spacing: 6px;
+      margin-bottom: 48px;
+    }
+
+    .cover-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--medium-orange), transparent);
+      margin: 0 auto 48px;
+    }
+
+    .cover-title {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 26px;
+      color: var(--white);
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+
+    .cover-subtitle {
+      font-size: 11px;
+      color: var(--gray-mid);
+      letter-spacing: 3px;
+      margin-bottom: 60px;
+    }
+
+    .cover-tags {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cover-tag {
+      background: rgba(196,90,26,0.2);
+      border: 1px solid rgba(196,90,26,0.5);
+      color: var(--light-orange);
+      font-size: 9px;
+      letter-spacing: 2px;
+      padding: 5px 12px;
+    }
+
+    .cover-footer {
+      position: absolute;
+      bottom: 18mm;
+      width: 100%;
+      text-align: center;
+      color: rgba(255,255,255,0.3);
+      font-size: 9px;
+      letter-spacing: 3px;
+    }
+
+    /* ──────────── SECTION HEADER ──────────── */
+    .section-header {
+      background: var(--dark-orange);
+      padding: 12mm 16mm 10mm;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-header::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .section-header .eyebrow {
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--light-orange);
+      margin-bottom: 6px;
+    }
+
+    .section-header h1 {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 22px;
+      color: var(--white);
+      font-weight: 600;
+      letter-spacing: 2px;
+    }
+
+    .section-header p {
+      font-size: 10px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+    }
+
+    /* ──────────── GENERIC CONTENT AREA ──────────── */
+    .content-area {
+      padding: 10mm 16mm 12mm;
+    }
+
+    /* ──────────── TWO-COLUMN GRID ──────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8mm;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6mm;
+    }
+
+    /* ──────────── FEATURE CARD ──────────── */
+    .feature-card {
+      border: 1px solid var(--pale-orange);
+      border-top: 3px solid var(--dark-orange);
+      padding: 6mm 7mm;
+      background: var(--cream);
+    }
+
+    .feature-card .icon {
+      width: 32px;
+      height: 32px;
+      background: var(--dark-orange);
+      color: var(--white);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .feature-card h3 {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--dark-orange);
+      margin-bottom: 5px;
+      letter-spacing: 0.5px;
+    }
+
+    .feature-card p {
+      font-size: 9.5px;
+      color: var(--gray-text);
+      line-height: 1.7;
+    }
+
+    /* ──────────── HIGHLIGHT BOX ──────────── */
+    .highlight-box {
+      background: linear-gradient(135deg, var(--dark-orange) 0%, var(--brown-mid) 100%);
+      padding: 8mm 10mm;
+      color: var(--white);
+      margin-bottom: 7mm;
+    }
+
+    .highlight-box h2 {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .highlight-box p {
+      font-size: 9.5px;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* ──────────── TARGET LIST ──────────── */
+    .target-list {
+      list-style: none;
+      margin: 0;
+    }
+
+    .target-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px dashed var(--pale-orange);
+      font-size: 10px;
+      line-height: 1.5;
+      color: var(--brown-dark);
+    }
+
+    .target-list li:last-child { border-bottom: none; }
+
+    .target-list li::before {
+      content: '◆';
+      color: var(--dark-orange);
+      font-size: 7px;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ──────────── TREATMENT CARD ──────────── */
+    .treatment-card {
+      border: 1px solid var(--pale-orange);
+      margin-bottom: 7mm;
+      overflow: hidden;
+    }
+
+    .treatment-card-header {
+      background: var(--dark-orange);
+      padding: 5mm 8mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .treatment-card-header h2 {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 14px;
+      color: var(--white);
+      letter-spacing: 1px;
+    }
+
+    .treatment-card-header .duration-badge {
+      background: rgba(255,255,255,0.2);
+      color: var(--white);
+      font-size: 9px;
+      padding: 3px 10px;
+      letter-spacing: 1px;
+    }
+
+    .treatment-card-body {
+      padding: 6mm 8mm;
+      background: var(--cream);
+    }
+
+    .treatment-card-body p {
+      font-size: 10px;
+      line-height: 1.8;
+      color: var(--gray-text);
+      margin-bottom: 6mm;
+    }
+
+    .effect-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .effect-tag {
+      background: var(--white);
+      border: 1px solid var(--medium-orange);
+      color: var(--dark-orange);
+      font-size: 9px;
+      padding: 3px 9px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ──────────── HANDPIECE SECTION ──────────── */
+    .handpiece-item {
+      display: flex;
+      gap: 6mm;
+      align-items: flex-start;
+      padding: 5mm 0;
+      border-bottom: 1px solid var(--pale-orange);
+    }
+
+    .handpiece-item:last-child { border-bottom: none; }
+
+    .handpiece-label {
+      background: var(--dark-orange);
+      color: var(--white);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      height: fit-content;
+    }
+
+    .handpiece-info h4 {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--brown-mid);
+      margin-bottom: 3px;
+    }
+
+    .handpiece-info p {
+      font-size: 9.5px;
+      color: var(--gray-text);
+      line-height: 1.6;
+    }
+
+    /* ──────────── QA SECTION ──────────── */
+    .qa-item {
+      margin-bottom: 6mm;
+      border-left: 3px solid var(--dark-orange);
+      padding-left: 5mm;
+    }
+
+    .qa-item .q {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--dark-orange);
+      margin-bottom: 4px;
+    }
+
+    .qa-item .a {
+      font-size: 10px;
+      color: var(--gray-text);
+      line-height: 1.8;
+    }
+
+    /* ──────────── SECTION DIVIDER ──────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--dark-orange), var(--pale-orange));
+      margin: 7mm 0;
+    }
+
+    /* ──────────── SECTION TITLE ──────────── */
+    .section-title {
+      font-family: 'Noto Serif KR', serif;
+      font-size: 14px;
+      color: var(--brown-mid);
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 5mm;
+      padding-bottom: 3mm;
+      border-bottom: 2px solid var(--dark-orange);
+      display: inline-block;
+    }
+
+    /* ──────────── SIDE ACCENT ──────────── */
+    .page-accent {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--dark-orange), var(--medium-orange), var(--light-orange));
+    }
+
+    /* ──────────── FOOTER ──────────── */
+    .page-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: 16mm;
+      right: 16mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--pale-orange);
+      padding-top: 4mm;
+    }
+
+    .page-footer span {
+      font-size: 8px;
+      color: var(--gray-mid);
+      letter-spacing: 2px;
+    }
+
+    .page-footer .dot {
+      width: 5px;
+      height: 5px;
+      background: var(--dark-orange);
+      border-radius: 50%;
+    }
+
+    /* ──────────── PRINT ──────────── */
+    @media print {
+      body { background: white; }
+      .page { margin: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════ PAGE 1: COVER ═══════════════════════════════════ -->
+  <div class="page cover">
+    <div class="cover-inner">
+      <div class="cover-badge">CONSULTATION BINDER</div>
+      <div class="cover-clinic-name">오블리브의원</div>
+      <div class="cover-clinic-sub">O B L I V  C L I N I C</div>
+      <div class="cover-divider"></div>
+      <div class="cover-title">더마웨이브 트리트먼트</div>
+      <div class="cover-subtitle">DERMAWAVE TREATMENT GUIDE</div>
+      <div class="cover-tags">
+        <span class="cover-tag">RF 고주파</span>
+        <span class="cover-tag">근막 리모델링</span>
+        <span class="cover-tag">비침습 시술</span>
+        <span class="cover-tag">페이스 &amp; 바디</span>
+      </div>
+    </div>
+    <div class="cover-footer">OBLIV CLINIC · DERMAWAVE · CONFIDENTIAL</div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAGE 2: OVERVIEW ═══════════════════════════════════ -->
+  <div class="page">
+    <div class="page-accent"></div>
+    <div class="section-header">
+      <div class="eyebrow">OVERVIEW</div>
+      <h1>더마웨이브란?</h1>
+      <p>고주파·저주파 복합 에너지와 그라스톤 괄사를 결합한 근막 리모델링 솔루션</p>
+    </div>
+
+    <div class="content-area">
+      <div class="highlight-box">
+        <h2>TUPS HL Frequency Dermawave</h2>
+        <p>
+          RF 고주파 심부열과 중저주파 전기 자극을 이용하여 피부와 전신을 관리하는 복합 솔루션입니다.
+          괄사 도구를 이용해 근막을 리모델링하고 고주파·저주파 에너지로 세포 활성화를 촉진시켜
+          얼굴과 바디의 탄력을 근원적으로 개선합니다.
+          진피층과 SMAS층 근막 이완을 유도하여 근육과 지방을 재배치하는 효과가 탁월하며,
+          마취 없이 통증과 부작용이 매우 적어 누구나 편안하게 받을 수 있습니다.
+        </p>
+      </div>
+
+      <p class="section-title">핵심 특장점</p>
+
+      <div class="two-col" style="margin-top:4mm;">
+        <div class="feature-card">
+          <div class="icon">●</div>
+          <h3>피부 근원 케어</h3>
+          <p>피부 세포 활성화 및 근막 리모델링으로 페이스·바디 문제의 근원부터 해결하여 몸의 밸런스를 되찾고 시술 효과를 장기간 유지합니다.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">◆</div>
+          <h3>스마트 복합 테라피</h3>
+          <p>RET RF 주파 &amp; 괄사와 LF 주파 &amp; 글러브 전극을 동시에 사용할 수 있어 짧은 시간 안에 최대 관리 효율을 달성합니다.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">▲</div>
+          <h3>100% 비침습 시술</h3>
+          <p>마취·통증 없이 피부 표면에 손상을 주지 않으면서 진피층까지 에너지를 전달하여 탄력 개선, 리프팅, 셀룰라이트 분해, 통증 완화 효과를 제공합니다.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">■</div>
+          <h3>신뢰성 높은 기기</h3>
+          <p>국내 의료기기 제조사 생산, KC 안전인증 완료. 의료기기와 동일한 사양으로 기기 안정성 및 안전성을 확보하였습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>오블리브의원</span>
+      <div class="dot"></div>
+      <span>OBLIV CLINIC · DERMAWAVE</span>
+      <div class="dot"></div>
+      <span>01</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAGE 3: MECHANISM ═══════════════════════════════════ -->
+  <div class="page">
+    <div class="page-accent"></div>
+    <div class="section-header">
+      <div class="eyebrow">MECHANISM</div>
+      <h1>시술 원리</h1>
+      <p>고주파(RF) + 저주파(LF) + 그라스톤 괄사의 3중 복합 작용</p>
+    </div>
+
+    <div class="content-area">
+      <div class="three-col" style="margin-bottom:8mm;">
+        <div class="feature-card">
+          <h3>RF 고주파 (모노폴라)</h3>
+          <p>2~9 MHz 심부열 에너지로 진피층·SMAS층에 도달하여 콜라겐·엘라스틴 재생을 촉진합니다.</p>
+        </div>
+        <div class="feature-card">
+          <h3>저주파 (LF) 전기 자극</h3>
+          <p>중저주파 전기 자극으로 근육을 선택적으로 수축시키고 신경·근막 기능을 활성화합니다.</p>
+        </div>
+        <div class="feature-card">
+          <h3>그라스톤 괄사 도구</h3>
+          <p>스테인리스 스틸 기구로 유착된 근막을 물리적으로 이완하여 조직 기능을 근원적으로 개선합니다.</p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="section-title">핸드피스 타입 안내</p>
+
+      <div style="margin-top:4mm;">
+        <div class="handpiece-item">
+          <div class="handpiece-label">D2 TYPE</div>
+          <div class="handpiece-info">
+            <h4>물고기형 — 페이스·데콜테·손·발·다리</h4>
+            <p>얼굴 윤곽 정리, 부종 완화, 리프팅에 특화된 타입으로 섬세한 부위에 정확하게 적용합니다.</p>
+          </div>
+        </div>
+        <div class="handpiece-item">
+          <div class="handpiece-label">D3 TYPE</div>
+          <div class="handpiece-info">
+            <h4>반달형 — 승모근·어깨·팔·복부·다리</h4>
+            <p>슬리밍 및 림프 순환, 근막 이완에 최적화된 타입으로 중간 크기 부위를 효과적으로 커버합니다.</p>
+          </div>
+        </div>
+        <div class="handpiece-item">
+          <div class="handpiece-label">D4 TYPE</div>
+          <div class="handpiece-info">
+            <h4>뱀부형 — 승모근·등·옆구리·어깨·다리</h4>
+            <p>넓은 근막 범위의 림프 순환과 근막 이완에 특화된 타입으로 광범위 부위를 효율적으로 관리합니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="highlight-box" style="margin-top:0;">
+        <h2>기대 효과</h2>
+        <p>건강한 근막 형성 &nbsp;·&nbsp; 슬리밍 / 쉐이핑 &nbsp;·&nbsp; 주름 개선 &nbsp;·&nbsp; 체중 감량 증진 &nbsp;·&nbsp; 부종 / 셀룰라이트 완화</p>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>오블리브의원</span>
+      <div class="dot"></div>
+      <span>OBLIV CLINIC · DERMAWAVE</span>
+      <div class="dot"></div>
+      <span>02</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAGE 4: TARGET ═══════════════════════════════════ -->
+  <div class="page">
+    <div class="page-accent"></div>
+    <div class="section-header">
+      <div class="eyebrow">RECOMMENDATION</div>
+      <h1>이런 분께 추천합니다</h1>
+      <p>더마웨이브 트리트먼트 추천 고객 유형</p>
+    </div>
+
+    <div class="content-area">
+      <div class="two-col">
+        <div>
+          <p class="section-title">추천 대상</p>
+          <ul class="target-list" style="margin-top:4mm;">
+            <li>수술 없이 자연스러운 탄력과 리프팅을 원하시는 분</li>
+            <li>1회 관리만으로도 즉각적인 효과가 필요하신 분</li>
+            <li>일상생활에 지장 없는 관리를 원하시는 분</li>
+            <li>신체 순환 저하로 붓기가 잘 빠지지 않으시는 분</li>
+            <li>몸에 에너지가 부족하고 만성 피로에 시달리는 분</li>
+            <li>셀룰라이트 완화 및 군살 정리가 필요하신 분</li>
+            <li>피부과 시술(성형 포함) 이후 빠른 회복이 필요한 분</li>
+            <li>다이어트로 인한 탄력 저하가 고민이신 분</li>
+          </ul>
+        </div>
+        <div>
+          <p class="section-title">관리 가능 부위</p>
+          <div style="margin-top:4mm; display:flex; flex-direction:column; gap:4mm;">
+            <div class="feature-card">
+              <h3>페이스 &amp; 데콜테</h3>
+              <p>얼굴 리프팅 · 쉐이핑 · 안색 개선 · 주름 완화</p>
+            </div>
+            <div class="feature-card">
+              <h3>상체 전면</h3>
+              <p>복부 슬리밍 · 골반 교정 · 부유방 제거 · 팔뚝라인 정리</p>
+            </div>
+            <div class="feature-card">
+              <h3>상체 후면</h3>
+              <p>척추(거북목) 교정 · 승모근 완화 · 등 군살 정리</p>
+            </div>
+            <div class="feature-card">
+              <h3>하체</h3>
+              <p>다리 부종 완화 · 슬리밍 · 셀룰라이트 제거 · 피부 토닝</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>오블리브의원</span>
+      <div class="dot"></div>
+      <span>OBLIV CLINIC · DERMAWAVE</span>
+      <div class="dot"></div>
+      <span>03</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAGE 5: TREATMENTS ═══════════════════════════════════ -->
+  <div class="page">
+    <div class="page-accent"></div>
+    <div class="section-header">
+      <div class="eyebrow">TREATMENT MENU</div>
+      <h1>트리트먼트 프로그램</h1>
+      <p>부위별 맞춤 시술 — 관리 효과 및 시간 안내</p>
+    </div>
+
+    <div class="content-area">
+
+      <div class="treatment-card">
+        <div class="treatment-card-header">
+          <h2>페이스 &amp; 데콜테 트리트먼트</h2>
+          <span class="duration-badge">약 20분</span>
+        </div>
+        <div class="treatment-card-body">
+          <p>
+            고주파를 통해 진피층의 콜라겐과 탄력섬유를 활성화시키고 림프에 쌓인 노폐물을
+            배출시켜 얼굴 라인을 매끄럽게 정리합니다. 입체적인 볼륨감을 부여하여 자연스러운
+            안티에이징 효과를 완성합니다.
+          </p>
+          <div class="effect-tags">
+            <span class="effect-tag">페이스 리프팅</span>
+            <span class="effect-tag">쉐이핑</span>
+            <span class="effect-tag">안색 개선</span>
+            <span class="effect-tag">볼륨 부여</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="treatment-card">
+        <div class="treatment-card-header">
+          <h2>상체 전면 트리트먼트</h2>
+          <span class="duration-badge">약 30분</span>
+        </div>
+        <div class="treatment-card-body">
+          <p>
+            체내에 쌓인 냉기를 배출하고 코어의 힘을 길러 장기적으로 면역력을 올리며
+            셀룰라이트를 감소시켜 건강한 신체를 가꿉니다. 디톡스·복부 슬리밍·부유방 제거·
+            팔뚝라인 정리·생리증후군 완화에 효과적입니다.
+          </p>
+          <div class="effect-tags">
+            <span class="effect-tag">복부 슬리밍</span>
+            <span class="effect-tag">골반 교정</span>
+            <span class="effect-tag">부유방 제거</span>
+            <span class="effect-tag">팔뚝라인 정리</span>
+            <span class="effect-tag">면역력 증강</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="treatment-card">
+        <div class="treatment-card-header">
+          <h2>상체 후면 트리트먼트</h2>
+          <span class="duration-badge">약 30분</span>
+        </div>
+        <div class="treatment-card-body">
+          <p>
+            기립근을 강화하고 틀어진 몸의 중심을 바로잡습니다. 만성적인 어깨결림과 승모근
+            솟음을 완화시켜 신체 전반에 유연함과 편안함을 주고 라인을 정리하여 한결 가벼운
+            신체를 가꾸는 데 도움을 줍니다.
+          </p>
+          <div class="effect-tags">
+            <span class="effect-tag">척추 교정</span>
+            <span class="effect-tag">승모근 완화</span>
+            <span class="effect-tag">라운드숄더 개선</span>
+            <span class="effect-tag">군살 정리</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="page-footer">
+      <span>오블리브의원</span>
+      <div class="dot"></div>
+      <span>OBLIV CLINIC · DERMAWAVE</span>
+      <div class="dot"></div>
+      <span>04</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAGE 6: TREATMENTS cont. ═══════════════════════════════════ -->
+  <div class="page">
+    <div class="page-accent"></div>
+    <div class="section-header">
+      <div class="eyebrow">TREATMENT MENU</div>
+      <h1>트리트먼트 프로그램</h1>
+      <p>하체 · 전신 — 관리 효과 및 시간 안내</p>
+    </div>
+
+    <div class="content-area">
+
+      <div class="treatment-card">
+        <div class="treatment-card-header">
+          <h2>하체 트리트먼트</h2>
+          <span class="duration-badge">약 40분</span>
+        </div>
+        <div class="treatment-card-body">
+          <p>
+            고착된 근막을 풀어주고 림프의 순환을 도와 붓기를 제거합니다. 비대해진 셀룰라이트를
+            감소시켜 보다 가볍고 매끈해진 하체를 가꾸는 데 도움을 줍니다.
+          </p>
+          <div class="effect-tags">
+            <span class="effect-tag">다리 부종 완화</span>
+            <span class="effect-tag">슬리밍</span>
+            <span class="effect-tag">셀룰라이트 제거</span>
+            <span class="effect-tag">피부 토닝</span>
+            <span class="effect-tag">착색 완화</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="treatment-card">
+        <div class="treatment-card-header">
+          <h2>전신 트리트먼트</h2>
+          <span class="duration-badge">약 90분</span>
+        </div>
+        <div class="treatment-card-body">
+          <p>
+            근막·림프·혈관·셀룰라이트를 모두 자극하여 유착된 근막을 재배열하고 피하지방층의
+            지방세포를 감소시킵니다. 림프와 혈관의 흐름을 개선시켜 체온을 높이고 염증을
+            완화하여 몸속부터 근원적인 변화를 일으킵니다.
+          </p>
+          <div class="effect-tags">
+            <span class="effect-tag">신체 순환 개선</span>
+            <span class="effect-tag">전신 슬리밍</span>
+            <span class="effect-tag">신체 에너지 강화</span>
+            <span class="effect-tag">근막 재배열</span>
+            <span class="effect-tag">염증 완화</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="highlight-box" style="margin-top:0;">
+        <h2>트리트먼트 요약</h2>
+        <p>
+          페이스&amp;데콜테 <strong>20분</strong> &nbsp;·&nbsp;
+          상체전면 <strong>30분</strong> &nbsp;·&nbsp;
+          상체후면 <strong>30분</strong> &nbsp;·&nbsp;
+          하체 <strong>40분</strong> &nbsp;·&nbsp;
+          전신 <strong>90분</strong>
+          <br><br>
+          효과의 지속을 위해 <strong>주 2~3회 시술, 10회 이상</strong>을 권장드립니다.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="page-footer">
+      <span>오블리브의원</span>
+      <div class="dot"></div>
+      <span>OBLIV CLINIC · DERMAWAVE</span>
+      <div class="dot"></div>
+      <span>05</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ PAGE 7: Q&A ═══════════════════════════════════ -->
+  <div class="page">
+    <div class="page-accent"></div>
+    <div class="section-header">
+      <div class="eyebrow">Q &amp; A</div>
+      <h1>자주 묻는 질문</h1>
+      <p>상담 시 환자분들이 가장 많이 문의하시는 내용을 정리했습니다</p>
+    </div>
+
+    <div class="content-area">
+
+      <div class="qa-item">
+        <div class="q">Q. 시술 시간은 얼마나 걸리나요?</div>
+        <div class="a">
+          일반적으로 부위당 15~30분 소요됩니다. 하나의 장비로 고주파·MFR 툴·저주파·매직글러브 시술이
+          모두 가능하므로 기존 대비 짧은 시간 안에 복합 시술을 받으실 수 있습니다.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="q">Q. 시술 효과는 바로 나타나나요?</div>
+        <div class="a">
+          네, 1회 시술만으로도 즉각적인 효과를 확인하실 수 있습니다.
+          효과의 지속과 극대화를 위해 주 2~3회, 총 10회 이상의 시술을 권장드립니다.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="q">Q. 통증이 있거나 일상생활에 지장이 있나요?</div>
+        <div class="a">
+          일반 고주파와 달리 더마웨이브는 심부열 에너지를 활용하기 때문에 통증 없이
+          부드럽고 편안한 관리가 가능합니다. 시술 직후 바로 일상생활로 복귀하실 수 있습니다.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="q">Q. 부작용은 없나요?</div>
+        <div class="a">
+          더마웨이브는 비침습적 시술이며, 근막유착 해소·혈액 및 림프 순환 증진을 통해
+          신체의 자연치유능력을 극대화하는 방식으로 부작용은 거의 없습니다.
+          다만 근막 유착이 오래된 부위는 유착 해소 과정에서 피부 표면이 약간 붉어질 수 있으나
+          시간이 지나면서 자연스럽게 사라집니다.
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="highlight-box" style="margin-top:0;">
+        <h2>상담 안내</h2>
+        <p>
+          담당 의료진과의 1:1 상담을 통해 고객님의 체형·피부 상태에 최적화된 트리트먼트
+          플랜을 제안해 드립니다. 궁금하신 사항은 언제든지 오블리브의원 상담팀으로
+          문의해 주시기 바랍니다.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="page-footer">
+      <span>오블리브의원</span>
+      <div class="dot"></div>
+      <span>OBLIV CLINIC · DERMAWAVE</span>
+      <div class="dot"></div>
+      <span>06</span>
+    </div>
+  </div>
+
+</body>
+</html>
