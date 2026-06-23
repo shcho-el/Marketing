@@ -111,6 +111,16 @@ TARGET_URLS = [
     "https://blog.naver.com/221022-/224251928402",
     "https://blog.naver.com/nangmanbeom/224260456485",
     "https://blog.naver.com/marodaing/224262455936",
+    "https://blog.naver.com/mazipp/224284349769",
+    "https://blog.naver.com/niceparo/224276702538",
+    "https://blog.naver.com/dkfmawa/224323143017",
+    "https://blog.naver.com/jd0036/224275753022",
+    "https://blog.naver.com/lee203507/224297282766",
+    "https://blog.naver.com/bbni99/224293451135",
+    "https://blog.naver.com/hilty74/224311085245",
+    "https://blog.naver.com/ahnbyul/224310725100",
+    "https://blog.naver.com/baeena95/224269897906",
+    "https://blog.naver.com/kbkd75/224309656568",
 ]
 
 # 포스트 제목/내용에 이 단어가 포함되면 경쟁사 콘텐츠로 간주하여 제외
