@@ -18,17 +18,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # Runs without the github-pages environment so it isn't blocked by the
+  # environment's branch protection. Switches the Pages source to GitHub
+  # Actions (build_type=workflow) so the deploy job below is permitted.
+  configure:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Configure Pages
+      - name: Enable Pages (GitHub Actions source)
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+  build:
+    needs: configure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Assemble site
         run: |
           mkdir -p _site
@@ -37,6 +42,14 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
