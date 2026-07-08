@@ -209,6 +209,32 @@
 
   footer.foot { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); font-size: .76rem; color: var(--ink-faint); text-align: center; line-height: 1.7; }
 
+  /* ── Team sync status + setup ── */
+  .head-tools { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .sync-pill {
+    font-size: .74rem; font-weight: 700; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--line-strong); white-space: nowrap; display: inline-flex; gap: 6px; align-items: center;
+  }
+  .sync-pill.ok { background: var(--good-bg); color: var(--good-ink); border-color: transparent; }
+  .sync-pill.local { background: var(--surface-2); color: var(--ink-soft); }
+  .sync-pill.connecting { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+  .sync-pill.err { background: var(--crit-bg); color: var(--crit-ink); border-color: transparent; }
+
+  .setup { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .setup > summary { cursor: pointer; padding: 14px 18px; font-weight: 700; font-size: .9rem; list-style: none; display: flex; align-items: center; gap: 9px; }
+  .setup > summary::-webkit-details-marker { display: none; }
+  .setup > summary .tag { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: var(--accent); padding: 3px 8px; border-radius: 6px; }
+  .setup > summary .chev { margin-left: auto; color: var(--ink-faint); transition: transform .2s; }
+  .setup[open] > summary { border-bottom: 1px solid var(--line); }
+  .setup[open] > summary .chev { transform: rotate(180deg); }
+  .setup .body { padding: 16px 20px 20px; font-size: .85rem; color: var(--ink-soft); line-height: 1.7; }
+  .setup ol { margin: 4px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 9px; }
+  .setup ol ul { margin: 4px 0 0; }
+  .setup code { font-family: var(--mono); font-size: .78rem; background: var(--surface-2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 5px; color: var(--accent-ink); word-break: break-all; }
+  .setup a { color: var(--accent); font-weight: 600; }
+  .setup pre { margin: 8px 0 0; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: .76rem; color: var(--ink); line-height: 1.5; }
+  .setup .warn-note { margin-top: 14px; background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 10px 13px; font-size: .8rem; }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -222,7 +248,10 @@
       <p class="lede">상호명과 대표자가 바뀌면 환자가 가장 먼저 확인하는 지도·포털부터
         대행사 정산까지 손봐야 합니다. 채널별 <b>수정 방법</b>과 <b>주의사항</b>을 정리하고, 완료 여부를 직접 체크하세요.</p>
     </div>
-    <button class="theme-btn" id="themeBtn" aria-label="테마 전환">◐ 테마</button>
+    <div class="head-tools">
+      <span class="sync-pill local" id="syncStatus">○ 개인 저장 모드</span>
+      <button class="theme-btn" id="themeBtn" aria-label="테마 전환">◐ 테마</button>
+    </div>
   </header>
 
   <section class="change" aria-label="변경 정보 요약">
@@ -238,6 +267,28 @@
       <div class="row"><label>대표자</label><input id="a-ceo" placeholder="신규 대표자명 입력"></div>
     </div>
   </section>
+
+  <details class="setup" id="setupGuide">
+    <summary><span class="tag">팀 공유</span> 여러 명이 같은 진행 상황을 실시간으로 함께 체크하려면 (무료 · 5분 설정)<span class="chev">▾</span></summary>
+    <div class="body">
+      기본은 <b>개인 저장 모드</b>(내 브라우저에만 저장)입니다. 아래로 Firebase 실시간 DB를 연결하면
+      링크를 공유받은 팀원 모두가 <b>같은 체크·입력값을 실시간으로 공유</b>합니다.
+      <ol>
+        <li><a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> 접속 → 구글 계정 로그인 → <b>프로젝트 만들기</b> (무료)</li>
+        <li>왼쪽 메뉴 <b>빌드 → Realtime Database</b> → <b>데이터베이스 만들기</b> → 위치 선택 → <b>테스트 모드로 시작</b></li>
+        <li>프로젝트 설정(⚙️) → <b>내 앱 → 웹앱(&lt;/&gt;) 추가</b> → 표시되는 <code>firebaseConfig</code> 값 복사</li>
+        <li>이 파일 상단 스크립트의 <code>FIREBASE_CONFIG</code> 에 붙여넣기 (특히 <code>databaseURL</code> 필수) 후 저장·푸시</li>
+        <li>끝! 상단 표시가 <b>“● 팀 공유 연결됨”</b> 으로 바뀌고, 링크를 받은 모든 팀원이 실시간으로 함께 체크합니다.</li>
+      </ol>
+      <div class="warn-note"><b>보안:</b> ‘테스트 모드’ 규칙은 누구나 읽기·쓰기가 가능합니다(30일 후 만료). 실제 운영 시 아래처럼
+        <code>boards</code> 경로로만 제한하는 규칙을 권장합니다.</div>
+      <pre>{
+  "rules": {
+    "boards": { ".read": true, ".write": true }
+  }
+}</pre>
+    </div>
+  </details>
 
   <section class="kpis" aria-label="진행 현황">
     <div class="kpi progress">
@@ -278,12 +329,29 @@
   <main id="board"></main>
 
   <footer class="foot">
-    체크 상태와 상호/대표자 정보는 이 브라우저에만 저장됩니다 · 서류 심사 기간(네이버·카카오 1~3일, 구글 재인증 별도)을 감안해 일정을 잡으세요.<br>
+    팀 공유 설정 시 체크·입력값이 실시간 동기화되며, 미설정 시 이 브라우저에만 저장됩니다 · 서류 심사 기간(네이버·카카오 1~3일, 구글 재인증 별도)을 감안해 일정을 잡으세요.<br>
     오블리브의원 · 사업자 정보 변경 운영 체크리스트
   </footer>
 </div>
 
 <script>
+/* ════════════════════════════════════════════════════════════════
+   팀 공유 설정 (Firebase Realtime Database) — 무료
+   Firebase 콘솔 > 프로젝트 설정 > '내 앱'의 구성값을 아래에 붙여넣으면
+   링크를 공유받은 모든 팀원이 실시간으로 같은 체크를 공유합니다.
+   · databaseURL 만 채워도 동작합니다.
+   · 비워두면 '개인 저장 모드'(이 브라우저에만 저장)로 정상 작동합니다.
+   설정 방법은 페이지 상단의 '팀 공유' 안내를 참고하세요.
+   ════════════════════════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",   // 예: https://obliv-xxxx-default-rtdb.firebasedatabase.app
+  projectId: "",
+  appId: ""
+};
+const BOARD_ID = "obliv-migration";   // 팀이 함께 쓰는 보드 이름 (자유롭게 변경 가능)
+
 const CHECK = '<svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.3 2.3L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const DATA = [
@@ -370,16 +438,78 @@ const DATA = [
 ];
 
 const PR_LABEL = { crit: "긴급", warn: "높음", mid: "중간" };
-const store = {
-  get: () => { try { return JSON.parse(localStorage.getItem('obliv-migrate')||'{}'); } catch { return {}; } },
-  set: (o) => localStorage.setItem('obliv-migrate', JSON.stringify(o)),
-};
-let state = store.get();
+
+// ── 로컬 캐시 (즉시 로드 + 오프라인 대비) ──
+const LS_KEY = 'obliv-migrate';
+const lsGet = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; } };
+const lsSet = (o) => { try { localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch {} };
+
+let state = lsGet();
 if (!state.checks) state.checks = {};
 if (!state.fields) state.fields = {};
 
 const board = document.getElementById('board');
 let curFilter = 'all';
+
+// ── 팀 공유(Firebase) 동기화 계층 ──
+const TEAM = !!(FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL);
+let remote = null;   // { db, ref, set, onValue }
+
+function setStatus(kind, text) {
+  const el = document.getElementById('syncStatus');
+  if (el) { el.className = 'sync-pill ' + kind; el.textContent = text; }
+}
+
+async function initTeam() {
+  try {
+    setStatus('connecting', '● 팀 공유 연결 중…');
+    const appMod = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
+    const dbMod  = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js');
+    const app = appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = dbMod.getDatabase(app);
+    remote = { db, ref: dbMod.ref, set: dbMod.set, onValue: dbMod.onValue };
+    const boardRef = dbMod.ref(db, 'boards/' + BOARD_ID);
+    dbMod.onValue(boardRef, (snap) => {
+      const v = snap.val() || {};
+      state.checks = v.checks || {};
+      state.fields = v.fields || {};
+      lsSet(state);
+      render();
+      syncFieldInputs();
+      setStatus('ok', '● 팀 공유 연결됨 · 실시간 동기화');
+    }, (err) => {
+      console.error(err);
+      setStatus('err', '⚠ 연결 오류 — 로컬 저장으로 전환');
+    });
+  } catch (e) {
+    console.error(e);
+    remote = null;
+    setStatus('err', '⚠ 연결 실패 — 로컬 저장으로 전환');
+  }
+}
+
+function persistCheck(id, val) {
+  state.checks[id] = val;
+  lsSet(state);
+  if (remote) remote.set(remote.ref(remote.db, `boards/${BOARD_ID}/checks/${id}`), val).catch(() => {});
+}
+function persistField(id, val) {
+  state.fields[id] = val;
+  lsSet(state);
+  if (remote) remote.set(remote.ref(remote.db, `boards/${BOARD_ID}/fields/${id}`), val).catch(() => {});
+}
+function resetAll() {
+  state.checks = {};
+  lsSet(state);
+  if (remote) remote.set(remote.ref(remote.db, `boards/${BOARD_ID}/checks`), null).catch(() => {});
+  render();
+}
+function syncFieldInputs() {
+  ['b-name','b-ceo','a-name','a-ceo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && document.activeElement !== el) el.value = state.fields[id] || '';
+  });
+}
 
 function render() {
   board.innerHTML = '';
@@ -440,8 +570,7 @@ function render() {
 function bindChecks() {
   board.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', () => {
-      state.checks[cb.dataset.id] = cb.checked;
-      store.set(state);
+      persistCheck(cb.dataset.id, cb.checked);
       render();
     });
   });
@@ -473,11 +602,16 @@ function updateKPIs() {
   fill.style.stroke = pct === 100 ? 'var(--good)' : 'var(--accent)';
 }
 
-// change-info fields
+// change-info fields (입력 후 짧게 대기했다가 저장/동기화)
 ['b-name','b-ceo','a-name','a-ceo'].forEach(id => {
   const el = document.getElementById(id);
   el.value = state.fields[id] || '';
-  el.addEventListener('input', () => { state.fields[id] = el.value; store.set(state); });
+  let t;
+  el.addEventListener('input', () => {
+    const v = el.value;
+    clearTimeout(t);
+    t = setTimeout(() => persistField(id, v), 400);
+  });
 });
 
 // filters
@@ -492,9 +626,10 @@ document.querySelectorAll('.filters button').forEach(b => {
 
 // reset
 document.getElementById('resetBtn').addEventListener('click', () => {
-  if (confirm('모든 체크 상태를 초기화할까요? (상호·대표자 입력값은 유지)')) {
-    state.checks = {}; store.set(state); render();
-  }
+  const msg = remote
+    ? '팀 전체의 체크 상태를 초기화합니다. 모든 팀원 화면에서도 사라집니다. 계속할까요? (상호·대표자 입력값은 유지)'
+    : '모든 체크 상태를 초기화할까요? (상호·대표자 입력값은 유지)';
+  if (confirm(msg)) resetAll();
 });
 
 // theme toggle
@@ -506,10 +641,18 @@ tbtn.addEventListener('click', () => {
     || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark';
   root.setAttribute('data-theme', next);
-  state.theme = next; store.set(state);
+  state.theme = next; lsSet(state);
 });
 
+// ── boot ──
 render();
+if (TEAM) {
+  initTeam();
+} else {
+  setStatus('local', '○ 개인 저장 모드 · 이 브라우저에만 저장');
+  const g = document.getElementById('setupGuide');
+  if (g) g.open = true;
+}
 </script>
 </body>
 </html>
