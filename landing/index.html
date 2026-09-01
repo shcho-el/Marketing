@@ -49,6 +49,7 @@
          미드 브론즈 #be631d / 앰버 #c9761f / 딥 브론즈 #8f4f14 / 블랙 #131110 */
     --cta:#a15b26;
     --cta-2:#b96e33;
+    --cta-ink:#fff;          /* CTA 면 위 글자색. 밝은 CTA 로 바꿀 땐 어두운 값으로 */
 
     --accent:var(--jongno);
     --accent-2:var(--jongno-2);
@@ -93,14 +94,14 @@
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:15px 28px;border-radius:999px;font-weight:600;font-size:15.5px;
     transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease}
-  .btn--fill{background:var(--cta);color:#fff;box-shadow:0 10px 24px -12px rgba(19,17,16,.7)}
+  .btn--fill{background:var(--cta);color:var(--cta-ink);box-shadow:0 10px 24px -12px rgba(19,17,16,.7)}
   .btn--fill:hover{background:var(--cta-2);transform:translateY(-1px)}
   .btn--line{border:1px solid var(--line);background:#fff;color:var(--ink)}
   .btn--line:hover{border-color:var(--accent);color:var(--accent)}
   .btn--ghost{border:1px solid rgba(255,255,255,.4);color:#fff}
   .btn--ghost:hover{background:rgba(255,255,255,.13)}
   .btn-sm{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:999px;
-    background:var(--cta);color:#fff;font-size:14px;font-weight:600}
+    background:var(--cta);color:var(--cta-ink);font-size:14px;font-weight:600}
   .btn-sm:hover{background:var(--cta-2)}
 
   /* ---------- hero ---------- */
@@ -172,7 +173,7 @@
   .cbar__agree input{width:17px;height:17px;accent-color:var(--accent);flex:none}
   .cbar__agree button{font-size:12.5px;color:var(--ink-3);text-decoration:underline;text-underline-offset:2px}
   .cbar__agree button:hover{color:var(--accent)}
-  .cbar__submit{height:52px;padding:0 34px;border-radius:12px;background:var(--cta);color:#fff;
+  .cbar__submit{height:52px;padding:0 34px;border-radius:12px;background:var(--cta);color:var(--cta-ink);
     font-size:16px;font-weight:700;letter-spacing:-.02em;transition:background .18s ease,transform .18s ease}
   .cbar__submit:hover{background:var(--cta-2);transform:translateY(-1px)}
   .cbar__policy{display:none;margin:16px 0 0;padding:16px 18px;background:var(--sand);border-radius:12px;
@@ -227,17 +228,17 @@
   .more:hover{color:var(--accent);border-color:var(--accent)}
 
   /* ---------- reserve ---------- */
-  .reserve{background:var(--cta);color:#fff;border-radius:24px;padding:64px 48px;display:grid;
+  .reserve{background:var(--cta);color:var(--cta-ink);border-radius:24px;padding:64px 48px;display:grid;
     grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
   @media (max-width:900px){.reserve{grid-template-columns:1fr;padding:44px 26px;gap:30px}}
   .reserve h2{margin:16px 0 0;font-size:clamp(24px,3.4vw,34px);font-weight:700;letter-spacing:-.03em;line-height:1.4}
-  .reserve .sec__label{color:rgba(255,255,255,.7)}
-  .reserve p{margin:16px 0 0;color:rgba(255,255,255,.84);font-size:15.5px}
+  .reserve .sec__label{color:color-mix(in srgb, var(--cta-ink) 72%, transparent)}
+  .reserve p{margin:16px 0 0;color:color-mix(in srgb, var(--cta-ink) 84%, transparent);font-size:15.5px}
   .reserve__acts{display:flex;flex-direction:column;gap:12px}
-  .reserve__acts .btn:first-child{width:100%;background:#fff;color:var(--cta)}
-  .reserve__acts .btn:first-child:hover{background:#efedea}
+  .reserve__acts .btn:first-child{width:100%;background:var(--cta-ink);color:var(--cta)}
+  .reserve__acts .btn:first-child:hover{background:color-mix(in srgb, var(--cta-ink) 88%, var(--cta))}
   .reserve__acts .btn{width:100%}
-  .reserve__note{font-size:13px;color:rgba(255,255,255,.62);margin:4px 0 0;text-align:center}
+  .reserve__note{font-size:13px;color:color-mix(in srgb, var(--cta-ink) 62%, transparent);margin:4px 0 0;text-align:center}
 
   /* ---------- location ---------- */
   .locs{display:grid;grid-template-columns:1fr 1fr;gap:22px}
@@ -268,7 +269,7 @@
     font-size:13px;line-height:1.65;color:var(--ink-2)}
   .loc__acts{margin-top:auto;padding:0 30px 30px;display:flex;flex-wrap:wrap;gap:10px}
   .loc__acts .btn{flex:1 1 auto;padding:13px 20px;font-size:14.5px}
-  .loc__acts .btn--fill{background:var(--cta);box-shadow:none}
+  .loc__acts .btn--fill{background:var(--cta);color:var(--cta-ink);box-shadow:none}
   .loc__acts .btn--fill:hover{filter:brightness(.92)}
   .loc__acts .btn--line:hover{border-color:var(--key);color:var(--key)}
   .todo{color:#b3261e;font-weight:600}
@@ -292,7 +293,7 @@
     background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
   .bar a,.bar button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:50px;border-radius:12px;font-size:15px;font-weight:600}
   .bar .b1{border:1px solid var(--line);background:#fff;color:var(--ink)}
-  .bar .b2{background:var(--cta);color:#fff;flex:1.35}
+  .bar .b2{background:var(--cta);color:var(--cta-ink);flex:1.35}
   @media (max-width:900px){ .bar{display:flex} }
 
   /* ---------- reveal ---------- */
