@@ -46,10 +46,15 @@
     /* 기본 CTA(버튼·예약 박스) 컬러. 두 지점 키컬러의 중간 색상값에서 잡아
        오리진 브라운은 어두운 톤, 호라이즌 테라코타는 밝은 톤으로 읽히게 함.
        다른 톤으로 바꿀 때는 이 두 줄만 교체하면 페이지 전체가 따라갑니다.
-         미드 브론즈 #be631d / 앰버 #c9761f / 딥 브론즈 #8f4f14 / 블랙 #131110 */
-    --cta:#a15b26;
-    --cta-2:#b96e33;
-    --cta-ink:#fff;          /* CTA 면 위 글자색. 밝은 CTA 로 바꿀 땐 어두운 값으로 */
+         밝은 CTA 라 면 자체 대비가 낮으므로, 버튼·박스에 테두리(--cta-line)와
+         그림자를 함께 줘서 형태로 인지되게 했습니다. 어두운 톤으로 바꿀 땐
+         --cta-ink 를 #fff 로 되돌리면 테두리는 자연히 눈에 띄지 않습니다.
+         대안: 카라멜 #a15b26 / 웜 차콜 #33302c / 미드 브론즈 #be631d */
+    --cta:#f4f1ea;
+    --cta-2:#e8e3d8;
+    --cta-ink:#1f1c18;       /* CTA 면 위 글자색 */
+    --cta-line:color-mix(in srgb, var(--cta-ink) 86%, var(--cta));       /* 버튼 테두리 */
+    --cta-line-soft:color-mix(in srgb, var(--cta-ink) 14%, var(--cta));  /* 패널 테두리 */
 
     --accent:var(--jongno);
     --accent-2:var(--jongno-2);
@@ -94,14 +99,20 @@
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:15px 28px;border-radius:999px;font-weight:600;font-size:15.5px;
     transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease}
-  .btn--fill{background:var(--cta);color:var(--cta-ink);box-shadow:0 10px 24px -12px rgba(19,17,16,.7)}
+  .btn--fill{background:var(--cta);color:var(--cta-ink);border:1.5px solid var(--cta-line);
+    font-weight:700;box-shadow:0 8px 18px -12px rgba(23,20,15,.5)}
   .btn--fill:hover{background:var(--cta-2);transform:translateY(-1px)}
   .btn--line{border:1px solid var(--line);background:#fff;color:var(--ink)}
   .btn--line:hover{border-color:var(--accent);color:var(--accent)}
   .btn--ghost{border:1px solid rgba(255,255,255,.4);color:#fff}
   .btn--ghost:hover{background:rgba(255,255,255,.13)}
+  /* 예약 박스 안에서는 CTA 명도에 맞춰 반전 (밝은 CTA 면 어두운 글자·테두리) */
+  .reserve .btn--ghost{border-color:color-mix(in srgb, var(--cta-ink) 34%, transparent);
+    color:color-mix(in srgb, var(--cta-ink) 88%, transparent)}
+  .reserve .btn--ghost:hover{background:color-mix(in srgb, var(--cta-ink) 8%, transparent);
+    border-color:color-mix(in srgb, var(--cta-ink) 58%, transparent)}
   .btn-sm{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:999px;
-    background:var(--cta);color:var(--cta-ink);font-size:14px;font-weight:600}
+    background:var(--cta);color:var(--cta-ink);border:1.5px solid var(--cta-line);font-size:14px;font-weight:700}
   .btn-sm:hover{background:var(--cta-2)}
 
   /* ---------- hero ---------- */
@@ -138,8 +149,6 @@
   .hero p.sub{margin:26px 0 0;font-size:clamp(15px,2.2vw,17.5px);color:rgba(255,255,255,.82);max-width:640px;
     text-shadow:0 1px 14px rgba(0,0,0,.6)}
   .hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:38px}
-  .hero__cta .btn--fill{background:#fff;color:var(--cta);box-shadow:0 12px 30px -14px rgba(0,0,0,.85)}
-  .hero__cta .btn--fill:hover{background:#efedea}
 
 
   @media (max-width:760px){
@@ -173,8 +182,8 @@
   .cbar__agree input{width:17px;height:17px;accent-color:var(--accent);flex:none}
   .cbar__agree button{font-size:12.5px;color:var(--ink-3);text-decoration:underline;text-underline-offset:2px}
   .cbar__agree button:hover{color:var(--accent)}
-  .cbar__submit{height:52px;padding:0 34px;border-radius:12px;background:var(--cta);color:var(--cta-ink);
-    font-size:16px;font-weight:700;letter-spacing:-.02em;transition:background .18s ease,transform .18s ease}
+  .cbar__submit{height:52px;padding:0 34px;border-radius:12px;background:var(--cta);color:var(--cta-ink);border:1.5px solid var(--cta-line);
+    box-shadow:0 6px 16px -10px rgba(23,20,15,.45);font-size:16px;font-weight:700;letter-spacing:-.02em;transition:background .18s ease,transform .18s ease}
   .cbar__submit:hover{background:var(--cta-2);transform:translateY(-1px)}
   .cbar__policy{display:none;margin:16px 0 0;padding:16px 18px;background:var(--sand);border-radius:12px;
     font-size:12.5px;line-height:1.75;color:var(--ink-2)}
@@ -228,7 +237,8 @@
   .more:hover{color:var(--accent);border-color:var(--accent)}
 
   /* ---------- reserve ---------- */
-  .reserve{background:var(--cta);color:var(--cta-ink);border-radius:24px;padding:64px 48px;display:grid;
+  .reserve{background:var(--cta);color:var(--cta-ink);border:1px solid var(--cta-line-soft);
+    box-shadow:0 2px 4px rgba(23,20,15,.04), 0 30px 60px -40px rgba(23,20,15,.45);border-radius:24px;padding:64px 48px;display:grid;
     grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
   @media (max-width:900px){.reserve{grid-template-columns:1fr;padding:44px 26px;gap:30px}}
   .reserve h2{margin:16px 0 0;font-size:clamp(24px,3.4vw,34px);font-weight:700;letter-spacing:-.03em;line-height:1.4}
@@ -257,20 +267,27 @@
   .loc dd{margin:0;color:var(--ink)}
   .loc dd a:hover{color:var(--key)}
   .loc dd .muted{color:var(--ink-2);font-size:14px;display:block;margin-top:4px}
-  .loc__hours{padding:0 30px 28px}
-  .loc__hours > b{display:block;font-size:13.5px;font-weight:600;color:var(--ink-3);margin-bottom:15px}
-  .hrs{display:grid;gap:16px}
-  .hrs__g{border-left:2px solid var(--key);padding-left:15px}
-  .hrs__g > b{display:block;font-size:14px;font-weight:700;letter-spacing:-.02em;color:var(--key);margin-bottom:8px}
-  .loc .hrs__g dl{margin:0;padding:0;grid-template-columns:72px 1fr;gap:5px 10px;font-size:14px}
-  .hrs__g dt{color:var(--ink-3);font-weight:500;font-size:13.5px;padding-top:0}
-  .hrs__g dd{color:var(--ink);font-variant-numeric:tabular-nums}
-  .hrs__note{margin:18px 0 0;padding:12px 14px;background:var(--sand);border-radius:10px;
+  .loc dd .subaddr{display:block;margin-top:10px;padding:9px 12px;background:var(--key-soft);
+    border-radius:9px;font-size:13.5px;line-height:1.55;color:var(--ink)}
+  .loc dd .subaddr b{display:block;font-size:12px;font-weight:700;letter-spacing:.02em;
+    color:var(--key);margin-bottom:3px}
+  .loc__hours{padding:0 30px 26px}
+  .loc__hours > b{display:block;font-size:13.5px;font-weight:600;color:var(--ink-3);margin-bottom:12px}
+  .hrs{display:grid;gap:8px}
+  .hrs__g{display:grid;grid-template-columns:124px 1fr;align-items:baseline;gap:3px 12px;
+    border-left:2px solid var(--key);padding:7px 0 7px 14px}
+  .hrs__g > b{font-size:13.5px;font-weight:700;letter-spacing:-.025em;color:var(--key)}
+  .hrs__t{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13.5px}
+  .hrs__t span{white-space:nowrap;font-variant-numeric:tabular-nums}
+  .hrs__t i{font-style:normal;color:var(--ink-3);margin-right:7px}
+  @media (max-width:520px){ .hrs__g{grid-template-columns:1fr;gap:5px} }
+  .hrs__note{margin:14px 0 0;padding:12px 14px;background:var(--sand);border-radius:10px;
     font-size:13px;line-height:1.65;color:var(--ink-2)}
   .loc__acts{margin-top:auto;padding:0 30px 30px;display:flex;flex-wrap:wrap;gap:10px}
   .loc__acts .btn{flex:1 1 auto;padding:13px 20px;font-size:14.5px}
-  .loc__acts .btn--fill{background:var(--cta);color:var(--cta-ink);box-shadow:none}
+  .loc__acts .btn--fill{background:var(--cta);color:var(--cta-ink);border:1.5px solid var(--cta-line);box-shadow:none}
   .loc__acts .btn--fill:hover{filter:brightness(.92)}
+  .loc__acts .btn--line{color:var(--ink-2)}
   .loc__acts .btn--line:hover{border-color:var(--key);color:var(--key)}
   .todo{color:#b3261e;font-weight:600}
 
@@ -293,7 +310,7 @@
     background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
   .bar a,.bar button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:50px;border-radius:12px;font-size:15px;font-weight:600}
   .bar .b1{border:1px solid var(--line);background:#fff;color:var(--ink)}
-  .bar .b2{background:var(--cta);color:var(--cta-ink);flex:1.35}
+  .bar .b2{background:var(--cta);color:var(--cta-ink);border:1.5px solid var(--cta-line);flex:1.35}
   @media (max-width:900px){ .bar{display:flex} }
 
   /* ---------- reveal ---------- */
@@ -481,7 +498,7 @@
 </section>
 
 <!-- ================= RESERVE (채널톡) ================= -->
-<section class="sec sec--sand" id="reserve">
+<section class="sec" id="reserve">
   <div class="wrap">
     <div class="reserve rv">
       <div>
@@ -530,24 +547,15 @@
           <div class="hrs">
             <div class="hrs__g">
               <b>피부 · 체형 · 두피</b>
-              <dl>
-                <dt>월 – 금</dt><dd>10:00 – 21:00</dd>
-                <dt>토 – 일</dt><dd>10:00 – 19:00</dd>
-              </dl>
+              <div class="hrs__t"><span><i>월–금</i>10:00 – 21:00</span><span><i>토–일</i>10:00 – 19:00</span></div>
             </div>
             <div class="hrs__g">
               <b>바디랩 (재활의학)</b>
-              <dl>
-                <dt>월 – 금</dt><dd>10:00 – 21:00</dd>
-                <dt>토</dt><dd>10:00 – 19:00</dd>
-              </dl>
+              <div class="hrs__t"><span><i>월–금</i>10:00 – 21:00</span><span><i>토</i>10:00 – 19:00</span></div>
             </div>
             <div class="hrs__g">
               <b>풋케어 · 발톱</b>
-              <dl>
-                <dt>월 – 금</dt><dd>09:30 – 20:00</dd>
-                <dt>토</dt><dd>09:30 – 19:00</dd>
-              </dl>
+              <div class="hrs__t"><span><i>월–금</i>09:30 – 20:00</span><span><i>토</i>09:30 – 19:00</span></div>
             </div>
           </div>
           <p class="hrs__note">일요일은 피부 · 체형 · 두피 클리닉만 진료합니다.</p>
@@ -566,7 +574,8 @@
           <h3>오블리브 송도 호라이즌의원<small>OBLIV SONGDO HORIZON</small></h3>
         </div>
         <dl>
-          <dt>주소</dt><dd>인천광역시 연수구 인천타워대로132번길 34, 2 · 3층 (송도동)<span class="muted">인천1호선 인천대입구역 인근</span></dd>
+          <dt>주소</dt><dd>인천광역시 연수구 인천타워대로132번길 34, 2 · 3층 (송도동)<span class="muted">인천1호선 인천대입구역 4번 · 5번 출구 도보 8분</span>
+            <span class="subaddr"><b>재활의학</b>인천광역시 연수구 테크노파크로 113, 2 · 5층</span></dd>
           <dt>대표번호</dt><dd><a href="tel:0328519119">032-851-9119</a></dd>
           <dt>진료 클리닉</dt><dd>피부 · 체형 / 문제성발톱 / 재활의학</dd>
         </dl>
@@ -576,29 +585,18 @@
           <div class="hrs">
             <div class="hrs__g">
               <b>피부체형 &amp; 문제성발톱</b>
-              <dl>
-                <dt>월 – 목</dt><dd>10:00 – 20:00</dd>
-                <dt>금</dt><dd>10:00 – 21:00</dd>
-                <dt>토</dt><dd>10:00 – 16:00</dd>
-              </dl>
+              <div class="hrs__t"><span><i>월–목</i>10:00 – 20:00</span><span><i>금</i>10:00 – 21:00</span><span><i>토</i>10:00 – 16:00</span></div>
             </div>
             <div class="hrs__g">
               <b>재활의학</b>
-              <dl>
-                <dt>월 – 금</dt><dd>10:00 – 21:00</dd>
-                <dt>토</dt><dd>10:00 – 17:00</dd>
-              </dl>
+              <div class="hrs__t"><span><i>월–금</i>10:00 – 21:00</span><span><i>토</i>10:00 – 17:00</span></div>
             </div>
             <div class="hrs__g">
               <b>롱래스팅 (반영구)</b>
-              <dl>
-                <dt>월 – 목</dt><dd>10:00 – 20:00</dd>
-                <dt>금</dt><dd>10:00 – 21:00</dd>
-                <dt>토</dt><dd>10:00 – 17:00</dd>
-              </dl>
+              <div class="hrs__t"><span><i>월–목</i>10:00 – 20:00</span><span><i>금</i>10:00 – 21:00</span><span><i>토</i>10:00 – 17:00</span></div>
             </div>
           </div>
-          <p class="hrs__note">평일 점심시간 13:00 – 14:00 · 매주 일요일 휴무</p>
+          <p class="hrs__note">평일 점심시간 13:00 – 14:00 · 매주 일요일 휴무<br />재활의학 클리닉은 테크노파크로 113 건물에서 진료합니다.</p>
         </div>
         <div class="loc__acts">
           <a class="btn btn--line" href="https://map.naver.com/p/search/%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%86%A1%EB%8F%84" target="_blank" rel="noopener">네이버 지도</a>
