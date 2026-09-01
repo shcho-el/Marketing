@@ -8,55 +8,65 @@
 <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://obliv.kr/" />
 
-<!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="오블리브의원 | 서울 종로 · 인천 송도" />
 <meta property="og:description" content="메디컬 토탈 웰니스케어 — 피부·체형 / 문제성발톱 / 재활의학(바디랩)" />
 <meta property="og:image" content="./assets/og.jpg" />
 <meta property="og:locale" content="ko_KR" />
+<link rel="icon" href="./assets/favicon.png" />
 
 <!--
  ============================================================
-  ▣ 게시 전 수정 포인트 (검색: TODO)
-   1. 종로 오리진 — 정확한 주소 / 대표번호 / 진료시간
-   2. 송도 호라이즌 — 주소·번호 최종 확인 (현재 값은 외부 검색 기준)
-   3. 채널톡 pluginKey  (스크립트 하단 CHANNEL_PLUGIN_KEY)
-   4. 사업자 정보 / 대표원장명 / 의료광고 심의번호
-   5. ./assets/og.jpg, ./assets/hero-*.jpg 이미지 교체
-   6. 각 센터 "자세히 보기" 링크 (현재 obliv.kr / oblivseoul.kr 연결)
+  ▣ 게시 전 수정 포인트 (소스에서 TODO 검색)
+   1. ./assets/logo.png  — 누끼(배경 투명) 로고. tools/logo_cutout.py 로 생성
+   2. 두 지점 진료시간 확정
+   3. 채널톡 pluginKey (스크립트 하단 CHANNEL_PLUGIN_KEY)
+   4. 의료광고 심의번호
+   5. ./assets/og.jpg (1200×630)
+   6. 클리닉별 "자세히 보기" 상세 페이지 URL
  ============================================================
 -->
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap" />
 
 <style>
   :root{
-    --ink:#14181a;
-    --ink-2:#5a6167;
-    --ink-3:#8b9298;
-    --line:#e7e3dc;
+    /* ── 브랜드 키컬러 ─────────────────────────────
+       --jongno : 오블리브 서울 오리진 (브라운)
+       --songdo : 오블리브 송도 호라이즌 (테라코타)
+       ※ 정확한 헥사값 받으시면 아래 두 줄만 교체하시면 됩니다 */
+    --jongno:#7b4a0b;
+    --jongno-2:#95601a;
+    --jongno-soft:#f4ece1;
+    --songdo:#d5805b;
+    --songdo-2:#c26e4a;
+    --songdo-soft:#fbeee7;
+
+    --accent:var(--jongno);
+    --accent-2:var(--jongno-2);
+    --accent-soft:var(--jongno-soft);
+
+    --ink:#17140f;
+    --ink-2:#5d574e;
+    --ink-3:#8d867b;
+    --line:#e8e2d8;
     --bg:#ffffff;
-    --sand:#f7f5f1;
-    --sand-2:#efece5;
-    --accent:#1c5750;
-    --accent-2:#2c7a70;
-    --accent-soft:#e8f1ef;
-    --gold:#a9855a;
+    --sand:#faf7f2;
+    --sand-2:#f0ebe1;
     --radius:18px;
     --maxw:1120px;
-    --shadow:0 1px 2px rgba(20,24,26,.04), 0 12px 32px -18px rgba(20,24,26,.28);
+    --shadow:0 1px 2px rgba(23,20,15,.04), 0 12px 32px -18px rgba(23,20,15,.3);
   }
   *,*::before,*::after{box-sizing:border-box}
-  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
   body{
     margin:0;
     font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-    color:var(--ink);
-    background:var(--bg);
-    line-height:1.65;
-    letter-spacing:-.017em;
-    word-break:keep-all;
+    color:var(--ink);background:var(--bg);line-height:1.65;letter-spacing:-.017em;word-break:keep-all;
   }
   img{max-width:100%;display:block}
   a{color:inherit;text-decoration:none}
@@ -64,33 +74,34 @@
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
 
   /* ---------- header ---------- */
-  .hd{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line)}
-  .hd__in{display:flex;align-items:center;gap:24px;height:64px}
-  .logo{display:flex;align-items:baseline;gap:9px;font-weight:700;letter-spacing:.14em;font-size:17px}
-  .logo span{font-size:12px;letter-spacing:-.01em;font-weight:600;color:var(--ink-3)}
+  .hd{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.88);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line)}
+  .hd__in{display:flex;align-items:center;gap:24px;height:66px}
+  .logo{display:flex;align-items:center}
+  .logo img{height:26px;width:auto;mix-blend-mode:multiply}
+  .logo__txt{font-family:"Cormorant Garamond",Georgia,serif;font-size:27px;font-weight:400;letter-spacing:.01em;line-height:1;color:var(--ink)}
   .nav{display:flex;gap:26px;margin-left:auto;font-size:14.5px;font-weight:500;color:var(--ink-2)}
   .nav a:hover{color:var(--accent)}
   .hd .btn-sm{margin-left:26px}
-  @media (max-width:860px){ .nav{display:none} .hd .btn-sm{margin-left:auto} }
+  @media (max-width:900px){ .nav{display:none} .hd .btn-sm{margin-left:auto} }
 
   /* ---------- buttons ---------- */
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:15px 28px;border-radius:999px;font-weight:600;font-size:15.5px;
-    transition:transform .18s ease, box-shadow .18s ease, background .18s ease}
-  .btn--fill{background:var(--accent);color:#fff;box-shadow:0 10px 24px -12px rgba(28,87,80,.8)}
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease}
+  .btn--fill{background:var(--accent);color:#fff;box-shadow:0 10px 24px -12px rgba(123,74,11,.85)}
   .btn--fill:hover{background:var(--accent-2);transform:translateY(-1px)}
   .btn--line{border:1px solid var(--line);background:#fff;color:var(--ink)}
   .btn--line:hover{border-color:var(--accent);color:var(--accent)}
-  .btn--ghost{border:1px solid rgba(255,255,255,.38);color:#fff}
-  .btn--ghost:hover{background:rgba(255,255,255,.12)}
+  .btn--ghost{border:1px solid rgba(255,255,255,.4);color:#fff}
+  .btn--ghost:hover{background:rgba(255,255,255,.13)}
   .btn-sm{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:999px;
     background:var(--accent);color:#fff;font-size:14px;font-weight:600}
   .btn-sm:hover{background:var(--accent-2)}
 
   /* ---------- hero ---------- */
   .hero{position:relative;background:var(--sand);border-bottom:1px solid var(--line);overflow:hidden}
-  .hero::after{content:"";position:absolute;right:-160px;top:-160px;width:520px;height:520px;border-radius:50%;
-    background:radial-gradient(circle at 30% 30%, rgba(28,87,80,.10), rgba(28,87,80,0) 68%)}
+  .hero::after{content:"";position:absolute;right:-170px;top:-170px;width:540px;height:540px;border-radius:50%;
+    background:radial-gradient(circle at 32% 32%, rgba(213,128,91,.20), rgba(213,128,91,0) 68%)}
   .hero__in{position:relative;z-index:1;padding:96px 0 88px;max-width:820px}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;letter-spacing:.03em;
     color:var(--accent);background:var(--accent-soft);padding:8px 15px;border-radius:999px}
@@ -103,33 +114,34 @@
   .chip{display:inline-flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);
     border-radius:999px;padding:10px 18px;font-size:14px;font-weight:500;box-shadow:var(--shadow)}
   .chip b{font-weight:600}
-  .chip i{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block}
-  .chip i.t{background:var(--accent)}
+  .chip i{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--jongno)}
+  .chip i.s{background:var(--songdo)}
 
   /* ---------- section ---------- */
-  section{scroll-margin-top:64px}
+  section{scroll-margin-top:66px}
   .sec{padding:92px 0}
   .sec--sand{background:var(--sand)}
-  .sec__head{max-width:640px;margin-bottom:52px}
-  .sec__label{font-size:12.5px;font-weight:700;letter-spacing:.16em;color:var(--gold);text-transform:uppercase}
+  .sec__head{max-width:660px;margin-bottom:52px}
+  .sec__label{font-size:12.5px;font-weight:700;letter-spacing:.16em;color:var(--songdo);text-transform:uppercase}
   .sec__head h2{margin:14px 0 0;font-size:clamp(25px,3.6vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1.35}
   .sec__head p{margin:16px 0 0;color:var(--ink-2);font-size:16px}
 
-  /* ---------- centers ---------- */
-  .centers{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  @media (max-width:900px){.centers{grid-template-columns:1fr}}
-  .center{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);
+  /* ---------- clinics ---------- */
+  .clinics{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  @media (max-width:900px){.clinics{grid-template-columns:1fr}}
+  .clinic{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);
     border-radius:var(--radius);padding:34px 30px 30px;transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease}
-  .center:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#d9d3c9}
-  .center__no{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-3)}
-  .center__ico{width:46px;height:46px;border-radius:14px;background:var(--accent-soft);color:var(--accent);
+  .clinic:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#ddd4c5}
+  .clinic__no{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-3)}
+  .clinic__ico{width:46px;height:46px;border-radius:14px;background:var(--accent-soft);color:var(--accent);
     display:grid;place-items:center;margin:18px 0 20px}
-  .center h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.03em}
-  .center h3 small{display:block;font-size:12.5px;font-weight:600;letter-spacing:.12em;color:var(--ink-3);margin-top:7px}
-  .center p{margin:16px 0 0;color:var(--ink-2);font-size:15px}
-  .center ul{margin:20px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:7px}
-  .center ul li{font-size:13px;color:var(--ink-2);background:var(--sand);border-radius:8px;padding:6px 11px}
-  .center__foot{margin-top:auto;padding-top:24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .clinic h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.03em}
+  .clinic h3 small{display:block;font-size:12.5px;font-weight:600;letter-spacing:.12em;color:var(--ink-3);margin-top:7px}
+  .clinic p{margin:16px 0 0;color:var(--ink-2);font-size:15px}
+  .clinic ul{margin:20px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:7px}
+  .clinic ul li{font-size:13px;color:var(--ink-2);background:var(--sand);border-radius:8px;padding:6px 11px}
+  .clinic ul li.only{background:var(--songdo-soft);color:var(--songdo-2)}
+  .clinic__foot{margin-top:auto;padding-top:24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
   .branchtag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--accent);
     background:var(--accent-soft);border-radius:999px;padding:6px 12px}
   .more{font-size:14px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--ink);padding-bottom:2px}
@@ -140,44 +152,59 @@
     grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
   @media (max-width:900px){.reserve{grid-template-columns:1fr;padding:44px 26px;gap:30px}}
   .reserve h2{margin:16px 0 0;font-size:clamp(24px,3.4vw,34px);font-weight:700;letter-spacing:-.03em;line-height:1.4}
-  .reserve .sec__label{color:rgba(255,255,255,.66)}
-  .reserve p{margin:16px 0 0;color:rgba(255,255,255,.82);font-size:15.5px}
+  .reserve .sec__label{color:rgba(255,255,255,.7)}
+  .reserve p{margin:16px 0 0;color:rgba(255,255,255,.84);font-size:15.5px}
   .reserve__acts{display:flex;flex-direction:column;gap:12px}
-  .reserve__acts .btn{width:100%;background:#fff;color:var(--accent)}
-  .reserve__acts .btn:hover{background:#f2f7f6}
-  .reserve__note{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px;text-align:center}
+  .reserve__acts .btn:first-child{width:100%;background:#fff;color:var(--accent)}
+  .reserve__acts .btn:first-child:hover{background:#f8f2ea}
+  .reserve__acts .btn{width:100%}
+  .reserve__note{font-size:13px;color:rgba(255,255,255,.62);margin:4px 0 0;text-align:center}
 
   /* ---------- location ---------- */
   .locs{display:grid;grid-template-columns:1fr 1fr;gap:22px}
   @media (max-width:900px){.locs{grid-template-columns:1fr}}
-  .loc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
-  .loc__top{padding:30px 30px 26px;border-bottom:1px solid var(--line)}
+  .loc{--key:var(--jongno);--key-soft:var(--jongno-soft);
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+  .loc--songdo{--key:var(--songdo);--key-soft:var(--songdo-soft)}
+  .loc__top{position:relative;padding:30px 30px 26px;border-bottom:1px solid var(--line);background:var(--key-soft)}
+  .loc__top::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--key)}
   .loc__badge{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.1em;padding:5px 11px;border-radius:6px;
-    background:var(--sand-2);color:var(--ink-2)}
+    background:var(--key);color:#fff}
   .loc h3{margin:14px 0 0;font-size:23px;font-weight:700;letter-spacing:-.03em}
-  .loc h3 small{display:block;font-size:13px;font-weight:600;color:var(--gold);letter-spacing:.06em;margin-top:6px}
-  .loc dl{margin:0;padding:26px 30px;display:grid;grid-template-columns:74px 1fr;gap:14px 12px;font-size:15px}
+  .loc h3 small{display:block;font-size:13px;font-weight:600;color:var(--key);letter-spacing:.06em;margin-top:6px}
+  .loc dl{margin:0;padding:26px 30px;display:grid;grid-template-columns:82px 1fr;gap:14px 12px;font-size:15px}
   .loc dt{color:var(--ink-3);font-weight:600;font-size:13.5px;padding-top:1px}
   .loc dd{margin:0;color:var(--ink)}
+  .loc dd a:hover{color:var(--key)}
   .loc dd .muted{color:var(--ink-2);font-size:14px;display:block;margin-top:4px}
   .loc__acts{margin-top:auto;padding:0 30px 30px;display:flex;flex-wrap:wrap;gap:10px}
   .loc__acts .btn{flex:1 1 auto;padding:13px 20px;font-size:14.5px}
+  .loc__acts .btn--fill{background:var(--key);box-shadow:none}
+  .loc__acts .btn--fill:hover{filter:brightness(.92)}
+  .loc__acts .btn--line:hover{border-color:var(--key);color:var(--key)}
   .todo{color:#b3261e;font-weight:600}
 
   /* ---------- footer ---------- */
-  .ft{background:var(--sand);border-top:1px solid var(--line);padding:52px 0 130px;font-size:13.5px;color:var(--ink-2)}
-  .ft__row{display:flex;flex-wrap:wrap;gap:22px 40px;align-items:flex-start;justify-content:space-between}
-  .ft strong{color:var(--ink)}
-  .ft ul{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:5px}
-  .ft .disc{margin-top:26px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);line-height:1.7}
+  .ft{background:var(--sand);border-top:1px solid var(--line);padding:56px 0 130px;font-size:13.5px;color:var(--ink-2)}
+  .ft__logo{margin-bottom:34px}
+  .ft__logo img{height:24px;width:auto;mix-blend-mode:multiply;opacity:.85}
+  .ft__logo .logo__txt{font-size:24px;color:var(--ink-2)}
+  .ft__row{display:grid;grid-template-columns:1fr 1fr;gap:34px 44px}
+  @media (max-width:760px){.ft__row{grid-template-columns:1fr}}
+  .ft__col strong{display:block;color:var(--ink);font-size:15px;letter-spacing:-.02em;margin-bottom:14px}
+  .ft__col dl{margin:0;display:grid;grid-template-columns:92px 1fr;gap:7px 10px}
+  .ft__col dt{color:var(--ink-3);font-weight:500}
+  .ft__col dd{margin:0}
+  .ft__col dd a:hover{text-decoration:underline}
+  .ft .disc{margin-top:34px;padding-top:24px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);line-height:1.75}
 
   /* ---------- mobile sticky bar ---------- */
   .bar{position:fixed;left:0;right:0;bottom:0;z-index:70;display:none;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
-    background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+    background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
   .bar a,.bar button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:50px;border-radius:12px;font-size:15px;font-weight:600}
   .bar .b1{border:1px solid var(--line);background:#fff;color:var(--ink)}
   .bar .b2{background:var(--accent);color:#fff;flex:1.35}
-  @media (max-width:860px){ .bar{display:flex} }
+  @media (max-width:900px){ .bar{display:flex} }
 
   /* ---------- reveal ---------- */
   .rv{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1)}
@@ -190,9 +217,13 @@
 <!-- ================= HEADER ================= -->
 <header class="hd">
   <div class="wrap hd__in">
-    <a class="logo" href="#top">OBLIV <span>오블리브의원</span></a>
+    <a class="logo" href="#top" aria-label="Obliv Clinic">
+      <!-- TODO: assets/logo.png 을 누끼(배경 투명) 파일로 교체. 없으면 아래 텍스트 워드마크로 자동 대체 -->
+      <img src="./assets/logo.png" alt="Obliv Clinic" data-logo />
+      <span class="logo__txt" hidden>Obliv Clinic</span>
+    </a>
     <nav class="nav">
-      <a href="#center">진료센터</a>
+      <a href="#clinic">진료 클리닉</a>
       <a href="#skin">피부·체형</a>
       <a href="#nail">문제성발톱</a>
       <a href="#rehab">재활의학</a>
@@ -221,79 +252,79 @@
       <a class="btn btn--line" href="#location">오시는 길 보기</a>
     </div>
     <div class="hero__meta">
-      <span class="chip"><i class="t"></i><b>오블리브 종로 오리진의원</b> · 서울 종로</span>
-      <span class="chip"><i></i><b>오블리브 송도 호라이즌의원</b> · 인천 송도</span>
+      <span class="chip"><i></i><b>오블리브 종로 오리진의원</b> · 서울 종로</span>
+      <span class="chip"><i class="s"></i><b>오블리브 송도 호라이즌의원</b> · 인천 송도</span>
     </div>
   </div>
 </section>
 
-<!-- ================= CENTERS ================= -->
-<section class="sec" id="center">
+<!-- ================= CLINICS ================= -->
+<section class="sec" id="clinic">
   <div class="wrap">
     <div class="sec__head rv">
-      <span class="sec__label">Medical Centers</span>
-      <h2>세 개의 전문 센터, 하나의 케어 흐름</h2>
-      <p>증상별로 나뉜 전문 센터가 서로 연결되어, 진단부터 시술·재활·유지 관리까지 이어집니다.</p>
+      <span class="sec__label">Medical Clinics</span>
+      <h2>세 개의 클리닉, 하나의 케어 흐름</h2>
+      <p>증상별로 나뉜 클리닉이 서로 연결되어, 통합 메디컬 케어가 가능합니다.</p>
     </div>
 
-    <div class="centers">
+    <div class="clinics">
 
       <!-- 01 피부·체형 -->
-      <article class="center rv" id="skin">
-        <span class="center__no">CENTER 01</span>
-        <div class="center__ico" aria-hidden="true">
+      <article class="clinic rv" id="skin">
+        <span class="clinic__no">CLINIC 01</span>
+        <div class="clinic__ico" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 3c3.6 2.6 6 5.6 6 8.8A6 6 0 0 1 6 11.8C6 8.6 8.4 5.6 12 3Z"/><path d="M9.5 12.6c.5 1.6 1.6 2.6 3.1 2.9"/>
           </svg>
         </div>
         <h3>피부 · 체형<small>SKIN &amp; BODY</small></h3>
-        <p>리프팅과 볼륨, 색소·홍조·여드름 관리부터 바디 윤곽까지. 피부 상태와 얼굴 구조를 함께 보고 설계합니다.</p>
+        <p>리프팅과 볼륨, 색소·홍조·여드름 관리부터 지방분해주사까지. 피부 상태와 얼굴 구조를 함께 보고 설계합니다.</p>
         <ul>
-          <li>리프팅 · 필러</li><li>색소 · 홍조</li><li>여드름 · 흉터</li><li>바디 윤곽</li><li>스킨부스터</li>
+          <li>리프팅 · 필러</li><li>색소 · 홍조</li><li>여드름 · 흉터</li><li>지방분해주사</li><li>스킨부스터</li><li class="only">두피 · 종로</li>
         </ul>
-        <div class="center__foot">
+        <div class="clinic__foot">
           <span class="branchtag">종로 · 송도</span>
-          <!-- TODO: 실제 상세 페이지 URL 확인 -->
+          <!-- TODO: 상세 페이지 URL -->
           <a class="more" href="https://oblivseoul.kr/beauty" target="_blank" rel="noopener">자세히 보기</a>
         </div>
       </article>
 
       <!-- 02 문제성발톱 -->
-      <article class="center rv" id="nail">
-        <span class="center__no">CENTER 02</span>
-        <div class="center__ico" aria-hidden="true">
+      <article class="clinic rv" id="nail">
+        <span class="clinic__no">CLINIC 02</span>
+        <div class="clinic__ico" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <rect x="6" y="4" width="12" height="14" rx="6"/><path d="M8.5 10.5c2.4-1.4 4.6-1.4 7 0"/><path d="M9 20h6"/>
           </svg>
         </div>
         <h3>문제성발톱<small>NAIL CARE</small></h3>
-        <p>내성발톱·발톱무좀·변형 발톱을 절개 최소화 방식으로 접근합니다. 교정 후 재발 관리까지 함께 봅니다.</p>
+        <p>내성발톱과 발톱무좀을 절개 최소화 방식으로 접근합니다. 교정 이후 발의 기능 회복과 재발 관리까지 함께 봅니다.</p>
         <ul>
-          <li>내성발톱 교정</li><li>발톱무좀</li><li>변형 발톱</li><li>재발 관리</li>
+          <li>내성발톱 교정</li><li>발톱무좀 레이저</li><li>족부기능회복치료</li><li>재발 관리</li>
         </ul>
-        <div class="center__foot">
-          <span class="branchtag">송도</span>
-          <!-- TODO: 실제 상세 페이지 URL 확인 -->
+        <div class="clinic__foot">
+          <span class="branchtag">종로 · 송도</span>
+          <!-- TODO: 상세 페이지 URL -->
           <a class="more" href="https://obliv.kr/" target="_blank" rel="noopener">자세히 보기</a>
         </div>
       </article>
 
       <!-- 03 재활의학 -->
-      <article class="center rv" id="rehab">
-        <span class="center__no">CENTER 03</span>
-        <div class="center__ico" aria-hidden="true">
+      <article class="clinic rv" id="rehab">
+        <span class="clinic__no">CLINIC 03</span>
+        <div class="clinic__ico" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 9v6"/><path d="M20 9v6"/><path d="M7 7v10"/><path d="M17 7v10"/><path d="M7 12h10"/>
           </svg>
         </div>
         <h3>재활의학 · 바디랩<small>BODY LAB</small></h3>
-        <p>비수술 통증 치료와 도수·체외충격파, 자세 교정. 통증의 원인을 찾아 움직임까지 회복시킵니다.</p>
+        <p>비수술 통증 치료와 체외충격파, 자세 교정. 통증의 원인을 찾아 움직임까지 회복시킵니다.</p>
         <ul>
-          <li>도수치료</li><li>체외충격파</li><li>비수술 통증</li><li>자세 · 재활</li>
+          <li>체외충격파</li><li>비수술 통증</li><li>자세 교정</li><li>재활 프로그램</li>
         </ul>
-        <div class="center__foot">
-          <span class="branchtag">송도</span>
-          <!-- TODO: 실제 상세 페이지 URL 확인 -->
+        <div class="clinic__foot">
+          <span class="branchtag">종로 · 송도</span>
+          <!-- TODO: 상세 페이지 URL -->
           <a class="more" href="https://obliv.kr/" target="_blank" rel="noopener">자세히 보기</a>
         </div>
       </article>
@@ -310,15 +341,14 @@
         <span class="sec__label">One Channel</span>
         <h2>두 지점 예약, 한 개의 대화창에서</h2>
         <p>
-          어느 지점, 어떤 센터든 상관없습니다. 채널톡 상담창에서 증상과 원하시는 일정을 남겨주시면
+          어느 지점, 어떤 클리닉이든 상관없습니다. 채널톡 상담창에서 증상과 원하시는 일정을 남겨주시면
           담당 코디네이터가 지점을 안내하고 예약까지 잡아드립니다. 진료시간 외 문의도 순차적으로 답변드립니다.
         </p>
       </div>
       <div class="reserve__acts">
         <button class="btn" data-cta="channel">채널톡으로 상담 · 예약</button>
+        <a class="btn btn--ghost" href="tel:0269563438">종로 오리진 02-6956-3438</a>
         <a class="btn btn--ghost" href="tel:0328519119">송도 호라이즌 032-851-9119</a>
-        <!-- TODO: 종로 오리진 대표번호 확인 후 교체 -->
-        <a class="btn btn--ghost" href="tel:0200000000">종로 오리진 02-0000-0000</a>
         <p class="reserve__note">상담 내용은 진료 목적 외로 사용되지 않습니다.</p>
       </div>
     </div>
@@ -343,13 +373,11 @@
           <h3>오블리브 종로 오리진의원<small>OBLIV JONGNO ORIGIN</small></h3>
         </div>
         <dl>
-          <!-- TODO: 종로 정확한 주소 확인 -->
-          <dt>주소</dt><dd><span class="todo">서울특별시 종로구 ○○○ 8층</span><span class="muted">1호선 종각역 도보 5분</span></dd>
-          <!-- TODO: 종로 대표번호 확인 -->
-          <dt>대표번호</dt><dd><a class="todo" href="tel:0200000000">02-0000-0000</a></dd>
-          <!-- TODO: 종로 진료시간 확인 (야간진료 21시까지 운영 확인됨) -->
-          <dt>진료시간</dt><dd>평일 10:00 – 21:00<span class="muted">토요일 10:00 – 16:00 / 점심 13:00 – 14:00 / 일요일·공휴일 휴진</span></dd>
-          <dt>진료센터</dt><dd>피부 · 체형</dd>
+          <dt>주소</dt><dd>서울특별시 종로구 청계천로 93 파고다타워 B1 ~ 5층<span class="muted">1호선 종각역 도보 5분</span></dd>
+          <dt>대표번호</dt><dd><a href="tel:0269563438">02-6956-3438</a></dd>
+          <!-- TODO: 종로 진료시간 확정 -->
+          <dt>진료시간</dt><dd class="todo">평일 10:00 – 21:00<span class="muted">토요일 10:00 – 16:00 / 점심 13:00 – 14:00 / 일요일·공휴일 휴진</span></dd>
+          <dt>진료 클리닉</dt><dd>피부 · 체형 · 두피 / 문제성발톱 / 재활의학(바디랩)</dd>
         </dl>
         <div class="loc__acts">
           <a class="btn btn--line" href="https://map.naver.com/p/search/%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%A2%85%EB%A1%9C" target="_blank" rel="noopener">네이버 지도</a>
@@ -359,18 +387,17 @@
       </article>
 
       <!-- 송도 -->
-      <article class="loc rv">
+      <article class="loc loc--songdo rv">
         <div class="loc__top">
           <span class="loc__badge">INCHEON</span>
           <h3>오블리브 송도 호라이즌의원<small>OBLIV SONGDO HORIZON</small></h3>
         </div>
         <dl>
-          <!-- TODO: 주소 최종 확인 (외부 검색 기준) -->
-          <dt>주소</dt><dd>인천광역시 연수구 인천타워대로132번길 34, 3층<span class="muted">인천1호선 인천대입구역 인근</span></dd>
+          <dt>주소</dt><dd>인천광역시 연수구 인천타워대로132번길 34, 2 · 3층 (송도동)<span class="muted">인천1호선 인천대입구역 인근</span></dd>
           <dt>대표번호</dt><dd><a href="tel:0328519119">032-851-9119</a></dd>
-          <!-- TODO: 송도 진료시간 확인 -->
-          <dt>진료시간</dt><dd>평일 10:00 – 19:00<span class="muted">토요일 10:00 – 16:00 / 점심 13:00 – 14:00 / 일요일·공휴일 휴진</span></dd>
-          <dt>진료센터</dt><dd>피부 · 체형 / 문제성발톱 / 재활의학(바디랩)</dd>
+          <!-- TODO: 송도 진료시간 확정 -->
+          <dt>진료시간</dt><dd class="todo">평일 10:00 – 19:00<span class="muted">토요일 10:00 – 16:00 / 점심 13:00 – 14:00 / 일요일·공휴일 휴진</span></dd>
+          <dt>진료 클리닉</dt><dd>피부 · 체형 / 문제성발톱 / 재활의학(바디랩)</dd>
         </dl>
         <div class="loc__acts">
           <a class="btn btn--line" href="https://map.naver.com/p/search/%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%86%A1%EB%8F%84" target="_blank" rel="noopener">네이버 지도</a>
@@ -386,24 +413,34 @@
 <!-- ================= FOOTER ================= -->
 <footer class="ft">
   <div class="wrap">
+    <div class="logo ft__logo">
+      <img src="./assets/logo.png" alt="Obliv Clinic" data-logo />
+      <span class="logo__txt" hidden>Obliv Clinic</span>
+    </div>
+
     <div class="ft__row">
-      <div>
-        <strong>오블리브 종로 오리진의원</strong>
-        <ul>
-          <li class="todo">서울특별시 종로구 ○○○ 8층</li>
-          <li class="todo">TEL 02-0000-0000</li>
-          <li class="todo">대표원장 ○○○ · 사업자등록번호 000-00-00000</li>
-        </ul>
+      <div class="ft__col">
+        <strong>오블리브 서울 오리진의원</strong>
+        <dl>
+          <dt>대표자</dt><dd>박영진</dd>
+          <dt>대표번호</dt><dd><a href="tel:0269563438">02-6956-3438</a></dd>
+          <dt>주소</dt><dd>서울특별시 종로구 청계천로 93 파고다타워 B1 ~ 5층</dd>
+          <dt>사업자등록번호</dt><dd>457-23-00938</dd>
+          <dt>이메일</dt><dd><a href="mailto:official@oblivseoul.kr">official@oblivseoul.kr</a></dd>
+        </dl>
       </div>
-      <div>
+      <div class="ft__col">
         <strong>오블리브 송도 호라이즌의원</strong>
-        <ul>
-          <li>인천광역시 연수구 인천타워대로132번길 34, 3층</li>
-          <li>TEL 032-851-9119</li>
-          <li class="todo">대표원장 ○○○ · 사업자등록번호 000-00-00000</li>
-        </ul>
+        <dl>
+          <dt>대표자</dt><dd>최강훈</dd>
+          <dt>대표번호</dt><dd><a href="tel:0328519119">032-851-9119</a></dd>
+          <dt>주소</dt><dd>인천광역시 연수구 인천타워대로132번길 34, 2, 3층 (송도동)</dd>
+          <dt>사업자등록번호</dt><dd>506-60-03455</dd>
+          <dt>이메일</dt><dd><a href="mailto:obliv.contact@gmail.com">obliv.contact@gmail.com</a></dd>
+        </dl>
       </div>
     </div>
+
     <p class="disc">
       본 페이지는 의료법 제56조에 따른 의료광고이며, 시술 및 치료 효과는 개인에 따라 차이가 있을 수 있습니다.
       모든 시술은 의료진 상담 후 결정되며 부작용이 발생할 수 있습니다. 자세한 내용은 내원 상담을 통해 안내받으시기 바랍니다.
@@ -415,7 +452,7 @@
 
 <!-- ================= MOBILE STICKY BAR ================= -->
 <div class="bar">
-  <a class="b1" href="tel:0328519119">전화</a>
+  <a class="b1" href="tel:0269563438">전화</a>
   <a class="b1" href="#location">오시는 길</a>
   <button class="b2" data-cta="channel">상담 · 예약</button>
 </div>
@@ -426,10 +463,21 @@
    채널톡 관리자 > 채널설정 > 보안 및 개발 > 플러그인 키
    =========================================================== */
 var CHANNEL_PLUGIN_KEY = "YOUR_CHANNEL_TALK_PLUGIN_KEY";
-var FALLBACK_TEL = "0328519119"; // 채널톡 미설정 시 대체 연결
+var FALLBACK_TEL = "0269563438"; // 채널톡 미설정 시 대체 연결
 
 (function () {
   "use strict";
+
+  /* ---- 로고: 파일 없으면 텍스트 워드마크로 대체 ---- */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-logo]"), function (img) {
+    function fallback() {
+      img.hidden = true;
+      var txt = img.nextElementSibling;
+      if (txt) txt.hidden = false;
+    }
+    img.addEventListener("error", fallback);
+    if (img.complete && img.naturalWidth === 0) fallback();
+  });
 
   /* ---- 채널톡 부트 (키가 설정된 경우에만) ---- */
   var channelReady = false;
@@ -484,7 +532,6 @@ var FALLBACK_TEL = "0328519119"; // 채널톡 미설정 시 대체 연결
       window.ChannelIO("showMessenger");
       return;
     }
-    /* 채널톡 미설정 시: 전화 연결로 대체 */
     window.location.href = "tel:" + FALLBACK_TEL;
   });
 
@@ -498,37 +545,38 @@ var FALLBACK_TEL = "0328519119"; // 채널톡 미설정 시 대체 연결
         io.unobserve(en.target);
       });
     }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
-    items.forEach(function (el, i) {
+    Array.prototype.forEach.call(items, function (el, i) {
       el.style.transitionDelay = (i % 3) * 90 + "ms";
       io.observe(el);
     });
   } else {
-    items.forEach(function (el) { el.classList.add("on"); });
+    Array.prototype.forEach.call(items, function (el) { el.classList.add("on"); });
   }
 
-  /* ---- 연도 ---- */
   var yr = document.getElementById("yr");
   if (yr) yr.textContent = new Date().getFullYear();
 })();
 </script>
 
-<!-- 구조화 데이터 (네이버/구글 지역 정보) -->
+<!-- 구조화 데이터 -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "MedicalClinic",
-      "name": "오블리브 종로 오리진의원",
-      "address": { "@type": "PostalAddress", "addressLocality": "종로구", "addressRegion": "서울특별시", "addressCountry": "KR" },
-      "telephone": "+82-2-0000-0000",
-      "medicalSpecialty": ["Dermatology"]
+      "name": "오블리브 서울 오리진의원",
+      "address": { "@type": "PostalAddress", "streetAddress": "청계천로 93 파고다타워 B1~5층", "addressLocality": "종로구", "addressRegion": "서울특별시", "addressCountry": "KR" },
+      "telephone": "+82-2-6956-3438",
+      "email": "official@oblivseoul.kr",
+      "medicalSpecialty": ["Dermatology", "PhysicalMedicineAndRehabilitation"]
     },
     {
       "@type": "MedicalClinic",
       "name": "오블리브 송도 호라이즌의원",
-      "address": { "@type": "PostalAddress", "streetAddress": "인천타워대로132번길 34, 3층", "addressLocality": "연수구", "addressRegion": "인천광역시", "addressCountry": "KR" },
+      "address": { "@type": "PostalAddress", "streetAddress": "인천타워대로132번길 34, 2, 3층", "addressLocality": "연수구", "addressRegion": "인천광역시", "addressCountry": "KR" },
       "telephone": "+82-32-851-9119",
+      "email": "obliv.contact@gmail.com",
       "medicalSpecialty": ["Dermatology", "PhysicalMedicineAndRehabilitation"]
     }
   ]
