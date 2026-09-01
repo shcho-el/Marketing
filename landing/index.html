@@ -105,27 +105,30 @@
   .hero__bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr}
   @media (max-width:760px){ .hero__bg{grid-template-columns:1fr;grid-template-rows:1fr 1fr} }
   .pane{position:relative;overflow:hidden}
+  .pane + .pane{box-shadow:inset 1px 0 0 rgba(255,255,255,.14)}
   /* 이미지가 없을 때도 각 지점 인테리어 톤이 보이도록 그라디언트 폴백 */
-  .pane--jongno{background:linear-gradient(155deg,#3a2415 0%,#8a5324 55%,#c9924f 100%)}
-  .pane--songdo{background:linear-gradient(155deg,#dad0c3 0%,#3c6a61 48%,#1d3c37 100%)}
+  /* 오리진 — 브론즈 로비: 우드 천장, 코퍼 월, 크림 벤치 */
+  .pane--jongno{background:linear-gradient(172deg,#241708 0%,#6d431c 34%,#b8823f 66%,#e3cfae 100%)}
+  /* 호라이즌 — 그린 마블 라운지: 테라코타 밴드, 크림 월, 딥그린 카운터, 샌드 플로어 */
+  .pane--songdo{background:linear-gradient(180deg,#c4714a 0%,#ece2d6 13%,#ded3c5 41%,#2f6259 57%,#1a3d37 88%,#c9bcab 100%)}
   .pane img{width:100%;height:100%;object-fit:cover;transform:scale(1.02)}
   .pane::after{content:"";position:absolute;inset:0}
   .pane--jongno::after{background:rgba(123,74,11,.26)}
   .pane--songdo::after{background:rgba(29,60,55,.22)}
   .hero__scrim{position:absolute;inset:0;
-    background:linear-gradient(180deg,rgba(18,15,11,.80) 0%,rgba(18,15,11,.46) 38%,rgba(18,15,11,.90) 100%)}
+    background:linear-gradient(180deg,rgba(18,15,11,.62) 0%,rgba(18,15,11,.30) 34%,rgba(18,15,11,.86) 100%)}
   .hero__in{position:relative;z-index:2;padding:132px 22px 108px}
   .hero h1{max-width:860px}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;letter-spacing:.14em;
     color:#f2e2cd;border:1px solid rgba(255,255,255,.32);padding:8px 16px;border-radius:999px;
     background:rgba(255,255,255,.06);backdrop-filter:blur(4px)}
   .hero h1{margin:28px 0 0;font-size:clamp(31px,5.6vw,56px);line-height:1.32;font-weight:700;letter-spacing:-.034em;
-    text-shadow:0 2px 24px rgba(0,0,0,.35)}
+    text-shadow:0 2px 20px rgba(0,0,0,.55)}
   .hero h1 em{font-style:normal;color:#eccb9f}
   .hero h1 .lead{display:block;font-size:clamp(19px,3vw,28px);font-weight:500;color:rgba(255,255,255,.8);
     letter-spacing:-.02em;margin-bottom:12px}
   .hero p.sub{margin:26px 0 0;font-size:clamp(15px,2.2vw,17.5px);color:rgba(255,255,255,.82);max-width:640px;
-    text-shadow:0 1px 16px rgba(0,0,0,.35)}
+    text-shadow:0 1px 14px rgba(0,0,0,.6)}
   .hero__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:38px}
 
 
@@ -294,8 +297,10 @@
 <section class="hero" id="top">
   <!-- TODO: assets/hero-jongno.jpg / hero-songdo.jpg 배치. 없으면 지점 톤 그라디언트로 자동 대체 -->
   <div class="hero__bg" aria-hidden="true">
-    <div class="pane pane--jongno"><img src="./assets/hero-jongno.jpg" alt="" data-img /></div>
+    <!-- 좌: 송도 호라이즌 (그린 마블 라운지) -->
     <div class="pane pane--songdo"><img src="./assets/hero-songdo.jpg" alt="" data-img /></div>
+    <!-- 우: 종로 오리진 (브론즈 로비) -->
+    <div class="pane pane--jongno"><img src="./assets/hero-jongno.jpg" alt="" data-img /></div>
   </div>
   <div class="hero__scrim" aria-hidden="true"></div>
 
