@@ -6,7 +6,7 @@
 ```
 landing/
 ├─ index.html            ← 페이지 본체 (단일 파일, 빌드 없음)
-├─ assets/               ← 로고·OG 이미지
+├─ assets/               ← 로고·히어로·OG 이미지
 └─ tools/logo_cutout.py  ← 로고 누끼 스크립트
 ```
 
@@ -88,6 +88,18 @@ python landing/tools/logo_cutout.py ~/Downloads/obliv-logo.png
 | 롱래스팅 (반영구) | 10:00–20:00 | 10:00–21:00 | 10:00–17:00 |
 
 JSON-LD `openingHoursSpecification` 에도 지점 단위 합집합으로 반영돼 있습니다.
+
+## 단일 파일로 뽑기
+
+메일 첨부·로컬 확인용으로 이미지까지 한 파일에 박은 HTML 이 필요할 때:
+
+```bash
+python landing/tools/build_standalone.py            # landing/index.standalone.html
+python landing/tools/build_standalone.py ~/obliv.html
+```
+
+이미지를 data URI 로 인라인해 약 680KB 파일 하나가 나옵니다.
+**운영 배포는 원본 `index.html` + `assets/` 구성을 쓰세요** — 브라우저 캐싱이 훨씬 낫습니다.
 
 ## 로컬 확인
 

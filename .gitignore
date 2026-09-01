@@ -7,3 +7,4 @@ venv/
 .venv/
 *.pyc
 logs/
+landing/index.standalone.html
