@@ -18,10 +18,9 @@
 <!--
  ============================================================
   ▣ 게시 전 수정 포인트 (소스에서 TODO 검색)
-   1. 두 지점 진료시간 확정
-   2. 채널톡 pluginKey (스크립트 하단 CHANNEL_PLUGIN_KEY)
-   3. 의료광고 심의번호
-   4. 클리닉별 "자세히 보기" 상세 페이지 URL
+   1. 채널톡 pluginKey (스크립트 하단 CHANNEL_PLUGIN_KEY)
+   2. 의료광고 심의번호
+   3. 클리닉별 "자세히 보기" 상세 페이지 URL
  ============================================================
 -->
 
@@ -141,10 +140,15 @@
   .cbar{position:relative;z-index:3;margin-top:-64px}
   .cbar__card{background:#fff;border:1px solid var(--line);border-radius:20px;
     box-shadow:0 2px 4px rgba(23,20,15,.05), 0 26px 60px -34px rgba(23,20,15,.5);
-    padding:26px 30px;display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center}
+    padding:26px 30px;display:grid;grid-template-columns:auto 1fr auto;gap:12px 26px;
+    grid-template-areas:"ttl fields btn" "ttl agree btn";align-items:center}
+  .cbar__ttl{grid-area:ttl}
+  .cbar__fields{grid-area:fields}
+  .cbar__agree{grid-area:agree}
+  .cbar__submit{grid-area:btn;align-self:center}
   .cbar__ttl{font-size:20px;font-weight:700;letter-spacing:-.03em;line-height:1.42;white-space:nowrap}
   .cbar__ttl span{display:block;font-size:12.5px;font-weight:600;letter-spacing:.02em;color:var(--songdo);margin-top:6px}
-  .cbar__fields{display:grid;grid-template-columns:1.3fr 1fr 1.2fr;gap:12px}
+  .cbar__fields{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
   .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
   .fld label{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.01em}
   .fld select,.fld input[type=text],.fld input[type=tel]{
@@ -155,8 +159,7 @@
     background-repeat:no-repeat;background-position:right 14px center;padding-right:34px}
   .fld :is(select,input):focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   .fld :is(select,input).err{border-color:#b3261e;box-shadow:0 0 0 3px rgba(179,38,30,.1)}
-  .cbar__side{display:flex;flex-direction:column;gap:10px;align-items:stretch}
-  .cbar__agree{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+  .cbar__agree{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
   .cbar__agree input{width:17px;height:17px;accent-color:var(--accent);flex:none}
   .cbar__agree button{font-size:12.5px;color:var(--ink-3);text-decoration:underline;text-underline-offset:2px}
   .cbar__agree button:hover{color:var(--accent)}
@@ -167,15 +170,21 @@
     font-size:12.5px;line-height:1.75;color:var(--ink-2)}
   .cbar__policy.open{display:block}
   .cbar__policy b{color:var(--ink)}
-  @media (max-width:1080px){
-    .cbar__card{grid-template-columns:1fr;gap:20px}
+  @media (max-width:1240px){
+    .cbar__card{grid-template-columns:1fr auto;gap:18px 22px;
+      grid-template-areas:"ttl ttl" "fields fields" "agree btn"}
     .cbar__ttl{white-space:normal}
+    .cbar__submit{padding:0 52px}
   }
-  @media (max-width:640px){
+  @media (max-width:860px){
+    .cbar__fields{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:560px){
     .cbar{margin-top:-40px}
-    .cbar__card{padding:22px 20px;border-radius:16px}
+    .cbar__card{padding:22px 20px;border-radius:16px;grid-template-columns:1fr;
+      grid-template-areas:"ttl" "fields" "agree" "btn"}
     .cbar__fields{grid-template-columns:1fr}
-    .cbar__submit{width:100%}
+    .cbar__submit{width:100%;padding:0}
   }
 
   /* ---------- section ---------- */
@@ -238,6 +247,16 @@
   .loc dd{margin:0;color:var(--ink)}
   .loc dd a:hover{color:var(--key)}
   .loc dd .muted{color:var(--ink-2);font-size:14px;display:block;margin-top:4px}
+  .loc__hours{padding:0 30px 28px}
+  .loc__hours > b{display:block;font-size:13.5px;font-weight:600;color:var(--ink-3);margin-bottom:15px}
+  .hrs{display:grid;gap:16px}
+  .hrs__g{border-left:2px solid var(--key);padding-left:15px}
+  .hrs__g > b{display:block;font-size:14px;font-weight:700;letter-spacing:-.02em;color:var(--key);margin-bottom:8px}
+  .loc .hrs__g dl{margin:0;padding:0;grid-template-columns:72px 1fr;gap:5px 10px;font-size:14px}
+  .hrs__g dt{color:var(--ink-3);font-weight:500;font-size:13.5px;padding-top:0}
+  .hrs__g dd{color:var(--ink);font-variant-numeric:tabular-nums}
+  .hrs__note{margin:18px 0 0;padding:12px 14px;background:var(--sand);border-radius:10px;
+    font-size:13px;line-height:1.65;color:var(--ink-2)}
   .loc__acts{margin-top:auto;padding:0 30px 30px;display:flex;flex-wrap:wrap;gap:10px}
   .loc__acts .btn{flex:1 1 auto;padding:13px 20px;font-size:14.5px}
   .loc__acts .btn--fill{background:var(--key);box-shadow:none}
@@ -335,29 +354,37 @@
         <div class="fld">
           <label for="c-branch">상담지점</label>
           <select id="c-branch">
-            <option value="">지점을 선택해주세요</option>
+            <option value="">지점 선택</option>
             <option value="종로 오리진">오블리브 종로 오리진의원</option>
             <option value="송도 호라이즌">오블리브 송도 호라이즌의원</option>
           </select>
         </div>
         <div class="fld">
+          <label for="c-clinic">상담클리닉</label>
+          <select id="c-clinic">
+            <option value="">클리닉 선택</option>
+            <option value="피부체형">피부체형</option>
+            <option value="문제성발톱">문제성발톱</option>
+            <option value="재활의학 · 바디랩">재활의학 · 바디랩</option>
+            <option value="상담 후 결정">잘 모르겠어요 (상담 후 안내)</option>
+          </select>
+        </div>
+        <div class="fld">
           <label for="c-name">이름</label>
-          <input id="c-name" type="text" placeholder="이름을 입력해주세요" autocomplete="name" />
+          <input id="c-name" type="text" placeholder="이름" autocomplete="name" />
         </div>
         <div class="fld">
           <label for="c-tel">연락처</label>
-          <input id="c-tel" type="tel" placeholder="- 없이 입력해주세요" inputmode="numeric" autocomplete="tel" />
+          <input id="c-tel" type="tel" placeholder="- 없이 입력" inputmode="numeric" autocomplete="tel" />
         </div>
       </div>
 
-      <div class="cbar__side">
-        <span class="cbar__agree">
-          <input id="c-agree" type="checkbox" />
-          <label for="c-agree">개인정보 수집·이용 동의</label>
-          <button type="button" id="c-policy-toggle" aria-expanded="false" aria-controls="c-policy">내용 보기</button>
-        </span>
-        <button class="cbar__submit" id="c-submit">상담 신청</button>
-      </div>
+      <span class="cbar__agree">
+        <input id="c-agree" type="checkbox" />
+        <label for="c-agree">개인정보 수집·이용 동의</label>
+        <button type="button" id="c-policy-toggle" aria-expanded="false" aria-controls="c-policy">내용 보기</button>
+      </span>
+      <button class="cbar__submit" id="c-submit">상담 신청</button>
     </div>
 
     <div class="cbar__policy" id="c-policy">
@@ -388,7 +415,7 @@
           </svg>
         </div>
         <h3>피부체형<small>SKIN &amp; BODY</small></h3>
-        <p>피부 건축학을 토대로 스킨 · 바디 토탈 웰니스 솔루션을 제안합니다. 피부 상태와 얼굴 구조를 함께 읽고 설계합니다.</p>
+        <p>피부 건축학을 토대로 피부 표면과 얼굴·바디의 구조적 밸런스를 정밀하게 고려합니다. 단순한 표면 관리를 넘어, 신체 본연의 아름다움과 건강을 완성하는 스킨·바디 토탈 웰니스 솔루션을 설계합니다.</p>
         <ul>
           <li>리프팅 · 필러</li><li>색소 · 홍조</li><li>여드름 · 흉터</li><li>지방분해주사</li><li>스킨부스터</li><li class="only">두피 · 종로</li>
         </ul>
@@ -408,7 +435,7 @@
           </svg>
         </div>
         <h3>문제성발톱<small>PROBLEM NAILS</small></h3>
-        <p>문제성발톱은 가려야 할 결점이 아닌, 치료가 필요한 질환입니다. 절개를 최소화한 교정부터 재발 관리까지 이어갑니다.</p>
+        <p>문제성 발톱은 감춰야 할 미용적 결점이 아닌, 의학적 치료가 필요한 ‘질환’입니다. 절개를 하지 않는 맞춤형 비수술 교정부터 레이저를 이용한 발톱무좀 치료까지. 체계적인 근본 프로그램을 제공합니다.</p>
         <ul>
           <li>내성발톱 교정</li><li>발톱무좀 레이저</li><li>족부기능회복치료</li><li>재발 관리</li>
         </ul>
@@ -428,9 +455,9 @@
           </svg>
         </div>
         <h3>재활의학 · 바디랩<small>REHABILITATION (BODY LAB)</small></h3>
-        <p>3박자 회복 메커니즘. 복합치료를 통해 근본적인 통증 개선을 지향합니다.</p>
+        <p>일시적인 통증 완화를 넘어 문제의 근원을 치료합니다. 진단·치료·재활을 아우르는 ‘3박자 회복 메커니즘’과 복합 치료를 통해, 신체 본연의 재생 회복을 제안합니다.</p>
         <ul>
-          <li>체외충격파</li><li>근막이완</li><li>비수술 통증</li><li>자세 교정</li><li>재활 프로그램</li>
+          <li>체외충격파</li><li>근막이완</li><li>비수술 통증</li><li>자세 가이드</li><li>재활 프로그램</li>
         </ul>
         <div class="clinic__foot">
           <span class="branchtag">종로 · 송도</span>
@@ -471,7 +498,7 @@
     <div class="sec__head rv">
       <span class="sec__label">Location</span>
       <h2>오시는 길</h2>
-      <p>두 지점 모두 역세권에 위치해 있습니다. 방문 전 예약을 권장드립니다.</p>
+      <p>두 지점 모두 역세권에 위치해 있습니다. 방문 전 예약을 필수로 권장드립니다.</p>
     </div>
 
     <div class="locs">
@@ -485,10 +512,36 @@
         <dl>
           <dt>주소</dt><dd>서울특별시 종로구 청계천로 93 파고다타워 B1 ~ 5층<span class="muted">1호선 종각역 도보 5분</span></dd>
           <dt>대표번호</dt><dd><a href="tel:0269563438">02-6956-3438</a></dd>
-          <!-- TODO: 종로 진료시간 확정 -->
-          <dt>진료시간</dt><dd class="todo">평일 10:00 – 21:00<span class="muted">토요일 10:00 – 16:00 / 점심 13:00 – 14:00 / 일요일·공휴일 휴진</span></dd>
-          <dt>진료 클리닉</dt><dd>피부 · 체형 · 두피 / 문제성발톱 / 재활의학(바디랩)</dd>
+          <dt>진료 클리닉</dt><dd>피부 · 체형 · 두피 / 문제성발톱 / 바디랩</dd>
         </dl>
+
+        <div class="loc__hours">
+          <b>진료시간</b>
+          <div class="hrs">
+            <div class="hrs__g">
+              <b>피부 · 체형 · 두피</b>
+              <dl>
+                <dt>월 – 금</dt><dd>10:00 – 21:00</dd>
+                <dt>토 – 일</dt><dd>10:00 – 19:00</dd>
+              </dl>
+            </div>
+            <div class="hrs__g">
+              <b>바디랩 (재활의학)</b>
+              <dl>
+                <dt>월 – 금</dt><dd>10:00 – 21:00</dd>
+                <dt>토</dt><dd>10:00 – 19:00</dd>
+              </dl>
+            </div>
+            <div class="hrs__g">
+              <b>풋케어 · 발톱</b>
+              <dl>
+                <dt>월 – 금</dt><dd>09:30 – 20:00</dd>
+                <dt>토</dt><dd>09:30 – 19:00</dd>
+              </dl>
+            </div>
+          </div>
+          <p class="hrs__note">일요일은 피부 · 체형 · 두피 클리닉만 진료합니다.</p>
+        </div>
         <div class="loc__acts">
           <a class="btn btn--line" href="https://map.naver.com/p/search/%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%A2%85%EB%A1%9C" target="_blank" rel="noopener">네이버 지도</a>
           <a class="btn btn--line" href="https://map.kakao.com/?q=%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%A2%85%EB%A1%9C" target="_blank" rel="noopener">카카오맵</a>
@@ -505,10 +558,38 @@
         <dl>
           <dt>주소</dt><dd>인천광역시 연수구 인천타워대로132번길 34, 2 · 3층 (송도동)<span class="muted">인천1호선 인천대입구역 인근</span></dd>
           <dt>대표번호</dt><dd><a href="tel:0328519119">032-851-9119</a></dd>
-          <!-- TODO: 송도 진료시간 확정 -->
-          <dt>진료시간</dt><dd class="todo">평일 10:00 – 19:00<span class="muted">토요일 10:00 – 16:00 / 점심 13:00 – 14:00 / 일요일·공휴일 휴진</span></dd>
-          <dt>진료 클리닉</dt><dd>피부 · 체형 / 문제성발톱 / 재활의학(바디랩)</dd>
+          <dt>진료 클리닉</dt><dd>피부 · 체형 / 문제성발톱 / 재활의학</dd>
         </dl>
+
+        <div class="loc__hours">
+          <b>진료시간</b>
+          <div class="hrs">
+            <div class="hrs__g">
+              <b>피부체형 &amp; 문제성발톱</b>
+              <dl>
+                <dt>월 – 목</dt><dd>10:00 – 20:00</dd>
+                <dt>금</dt><dd>10:00 – 21:00</dd>
+                <dt>토</dt><dd>10:00 – 16:00</dd>
+              </dl>
+            </div>
+            <div class="hrs__g">
+              <b>재활의학</b>
+              <dl>
+                <dt>월 – 금</dt><dd>10:00 – 21:00</dd>
+                <dt>토</dt><dd>10:00 – 17:00</dd>
+              </dl>
+            </div>
+            <div class="hrs__g">
+              <b>롱래스팅 (반영구)</b>
+              <dl>
+                <dt>월 – 목</dt><dd>10:00 – 20:00</dd>
+                <dt>금</dt><dd>10:00 – 21:00</dd>
+                <dt>토</dt><dd>10:00 – 17:00</dd>
+              </dl>
+            </div>
+          </div>
+          <p class="hrs__note">평일 점심시간 13:00 – 14:00 · 매주 일요일 휴무</p>
+        </div>
         <div class="loc__acts">
           <a class="btn btn--line" href="https://map.naver.com/p/search/%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%86%A1%EB%8F%84" target="_blank" rel="noopener">네이버 지도</a>
           <a class="btn btn--line" href="https://map.kakao.com/?q=%EC%98%A4%EB%B8%94%EB%A6%AC%EB%B8%8C%EC%9D%98%EC%9B%90%20%EC%86%A1%EB%8F%84" target="_blank" rel="noopener">카카오맵</a>
@@ -661,17 +742,18 @@ var FALLBACK_TEL = "0269563438"; // 채널톡 미설정 시 대체 연결
   var submit = document.getElementById("c-submit");
   if (submit) {
     var fBranch = document.getElementById("c-branch");
+    var fClinic = document.getElementById("c-clinic");
     var fName = document.getElementById("c-name");
     var fTel = document.getElementById("c-tel");
     var fAgree = document.getElementById("c-agree");
 
-    [fBranch, fName, fTel].forEach(function (el) {
+    [fBranch, fClinic, fName, fTel].forEach(function (el) {
       el.addEventListener("input", function () { el.classList.remove("err"); });
     });
 
     submit.addEventListener("click", function () {
       var bad = null;
-      [[fBranch, !fBranch.value], [fName, !fName.value.trim()],
+      [[fBranch, !fBranch.value], [fClinic, !fClinic.value], [fName, !fName.value.trim()],
        [fTel, fTel.value.replace(/\D/g, "").length < 9]].forEach(function (pair) {
         pair[0].classList.toggle("err", pair[1]);
         if (pair[1] && !bad) bad = pair[0];
@@ -684,13 +766,15 @@ var FALLBACK_TEL = "0269563438"; // 채널톡 미설정 시 대체 연결
       }
 
       var branch = fBranch.value;
+      var clinic = fClinic.value;
       var name = fName.value.trim();
       var tel = fTel.value.replace(/\D/g, "");
-      var msg = "[상담 신청]\n희망 지점: " + branch + "\n성함: " + name + "\n연락처: " + tel;
+      var msg = "[상담 신청]\n희망 지점: " + branch + "\n희망 클리닉: " + clinic +
+                "\n성함: " + name + "\n연락처: " + tel;
 
       if (channelReady && window.ChannelIO) {
         window.ChannelIO("updateUser", {
-          profile: { name: name, mobileNumber: tel, preferredBranch: branch }
+          profile: { name: name, mobileNumber: tel, preferredBranch: branch, preferredClinic: clinic }
         });
         window.ChannelIO("openChat", undefined, msg);
         return;
@@ -733,7 +817,12 @@ var FALLBACK_TEL = "0269563438"; // 채널톡 미설정 시 대체 연결
       "address": { "@type": "PostalAddress", "streetAddress": "청계천로 93 파고다타워 B1~5층", "addressLocality": "종로구", "addressRegion": "서울특별시", "addressCountry": "KR" },
       "telephone": "+82-2-6956-3438",
       "email": "official@oblivseoul.kr",
-      "medicalSpecialty": ["Dermatology", "PhysicalMedicineAndRehabilitation"]
+      "medicalSpecialty": ["Dermatology", "PhysicalMedicineAndRehabilitation"],
+      "openingHoursSpecification": [
+        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "09:30", "closes": "21:00" },
+        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Saturday"], "opens": "09:30", "closes": "19:00" },
+        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Sunday"], "opens": "10:00", "closes": "19:00" }
+      ]
     },
     {
       "@type": "MedicalClinic",
@@ -741,7 +830,11 @@ var FALLBACK_TEL = "0269563438"; // 채널톡 미설정 시 대체 연결
       "address": { "@type": "PostalAddress", "streetAddress": "인천타워대로132번길 34, 2, 3층", "addressLocality": "연수구", "addressRegion": "인천광역시", "addressCountry": "KR" },
       "telephone": "+82-32-851-9119",
       "email": "obliv.contact@gmail.com",
-      "medicalSpecialty": ["Dermatology", "PhysicalMedicineAndRehabilitation"]
+      "medicalSpecialty": ["Dermatology", "PhysicalMedicineAndRehabilitation"],
+      "openingHoursSpecification": [
+        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "10:00", "closes": "21:00" },
+        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Saturday"], "opens": "10:00", "closes": "17:00" }
+      ]
     }
   ]
 }
