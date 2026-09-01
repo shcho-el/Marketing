@@ -18,12 +18,10 @@
 <!--
  ============================================================
   ▣ 게시 전 수정 포인트 (소스에서 TODO 검색)
-   1. ./assets/logo.png  — 누끼(배경 투명) 로고. tools/logo_cutout.py 로 생성
-   2. 두 지점 진료시간 확정
-   3. 채널톡 pluginKey (스크립트 하단 CHANNEL_PLUGIN_KEY)
-   4. 의료광고 심의번호
-   5. ./assets/og.jpg (1200×630)
-   6. 클리닉별 "자세히 보기" 상세 페이지 URL
+   1. 두 지점 진료시간 확정
+   2. 채널톡 pluginKey (스크립트 하단 CHANNEL_PLUGIN_KEY)
+   3. 의료광고 심의번호
+   4. 클리닉별 "자세히 보기" 상세 페이지 URL
  ============================================================
 -->
 
@@ -39,11 +37,11 @@
        --jongno : 오블리브 서울 오리진 (브라운)
        --songdo : 오블리브 송도 호라이즌 (테라코타)
        ※ 정확한 헥사값 받으시면 아래 두 줄만 교체하시면 됩니다 */
-    --jongno:#7b4a0b;
+    --jongno:#794909;
     --jongno-2:#95601a;
     --jongno-soft:#f4ece1;
-    --songdo:#d5805b;
-    --songdo-2:#c26e4a;
+    --songdo:#d8815c;
+    --songdo-2:#c46c47;
     --songdo-soft:#fbeee7;
 
     --accent:var(--jongno);
@@ -89,7 +87,7 @@
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
     padding:15px 28px;border-radius:999px;font-weight:600;font-size:15.5px;
     transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease}
-  .btn--fill{background:var(--accent);color:#fff;box-shadow:0 10px 24px -12px rgba(123,74,11,.85)}
+  .btn--fill{background:var(--accent);color:#fff;box-shadow:0 10px 24px -12px rgba(121,73,9,.85)}
   .btn--fill:hover{background:var(--accent-2);transform:translateY(-1px)}
   .btn--line{border:1px solid var(--line);background:#fff;color:var(--ink)}
   .btn--line:hover{border-color:var(--accent);color:var(--accent)}
@@ -113,10 +111,13 @@
   .pane--songdo{background:linear-gradient(180deg,#c4714a 0%,#ece2d6 13%,#ded3c5 41%,#2f6259 57%,#1a3d37 88%,#c9bcab 100%)}
   .pane img{width:100%;height:100%;object-fit:cover;transform:scale(1.02)}
   .pane::after{content:"";position:absolute;inset:0}
-  .pane--jongno::after{background:rgba(123,74,11,.26)}
-  .pane--songdo::after{background:rgba(29,60,55,.22)}
+  .pane--jongno::after{background:rgba(121,73,9,.22)}
+  .pane--songdo::after{background:rgba(29,60,55,.16)}
   .hero__scrim{position:absolute;inset:0;
-    background:linear-gradient(180deg,rgba(18,15,11,.62) 0%,rgba(18,15,11,.30) 34%,rgba(18,15,11,.86) 100%)}
+    background:
+      linear-gradient(90deg,rgba(18,15,11,.62) 0%,rgba(18,15,11,.34) 42%,rgba(18,15,11,.06) 74%,rgba(18,15,11,0) 100%),
+      linear-gradient(180deg,rgba(18,15,11,.56) 0%,rgba(18,15,11,.26) 34%,rgba(18,15,11,.84) 100%)}
+  @media (max-width:760px){ .hero__scrim{background:linear-gradient(180deg,rgba(18,15,11,.60) 0%,rgba(18,15,11,.34) 30%,rgba(18,15,11,.62) 58%,rgba(18,15,11,.90) 100%)} }
   .hero__in{position:relative;z-index:2;padding:132px 22px 108px}
   .hero h1{max-width:860px}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;letter-spacing:.14em;
@@ -278,7 +279,6 @@
 <header class="hd">
   <div class="wrap hd__in">
     <a class="logo" href="#top" aria-label="Obliv Clinic">
-      <!-- TODO: assets/logo.png 을 누끼(배경 투명) 파일로 교체. 없으면 아래 텍스트 워드마크로 자동 대체 -->
       <img src="./assets/logo.png" alt="Obliv Clinic" data-logo />
       <span class="logo__txt" hidden>Obliv Clinic</span>
     </a>
@@ -295,7 +295,6 @@
 
 <!-- ================= HERO ================= -->
 <section class="hero" id="top">
-  <!-- TODO: assets/hero-jongno.jpg / hero-songdo.jpg 배치. 없으면 지점 톤 그라디언트로 자동 대체 -->
   <div class="hero__bg" aria-hidden="true">
     <!-- 좌: 송도 호라이즌 (그린 마블 라운지) -->
     <div class="pane pane--songdo"><img src="./assets/hero-songdo.jpg" alt="" data-img /></div>

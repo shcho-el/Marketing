@@ -23,23 +23,23 @@ landing/
 
 | 지점 | 변수 | 값 | 적용 범위 |
 |------|------|----|----------|
-| 서울 오리진 | `--jongno` | `#7b4a0b` | 전역 기본 컬러(버튼·예약 섹션), 종로 카드 |
-| 송도 호라이즌 | `--songdo` | `#d5805b` | 섹션 라벨, 송도 카드 |
+| 서울 오리진 | `--jongno` | `#794909` | 전역 기본 컬러(버튼·예약 섹션), 종로 카드 |
+| 송도 호라이즌 | `--songdo` | `#d8815c` | 섹션 라벨, 송도 카드 |
 
-정확한 헥사값을 받으면 `index.html` 상단 `:root` 의 `--jongno` / `--songdo` 두 줄만 바꾸면
-페이지 전체가 따라 바뀝니다. (`-2` 는 호버용 진한 톤, `-soft` 는 배경용 옅은 톤)
+전달받은 컬러칩에서 추출한 값입니다. 바꿀 일이 생기면 `index.html` 상단 `:root` 의
+`--jongno` / `--songdo` 두 줄만 고치면 페이지 전체가 따라 바뀝니다. (`-2` 는 호버용 진한 톤, `-soft` 는 배경용 옅은 톤)
 
-## 로고
+## 로고 · 이미지
 
-원본(흰 배경)만 있으면 누끼 + 파비콘까지 한 번에 생성됩니다.
+전달받은 원본으로 `assets/` 에 모두 생성해 반영했습니다 (로고·파비콘·히어로 2컷·OG).
+자세한 규격은 `assets/README.md` 참고.
+
+로고를 다른 파일로 교체할 때 흰 배경이라면:
 
 ```bash
 pip install pillow
 python landing/tools/logo_cutout.py ~/Downloads/obliv-logo.png
 ```
-
-`assets/logo.png` 가 없으면 Cormorant Garamond 로 조판된 `Obliv Clinic`
-텍스트 워드마크가 자동 대체되므로 페이지는 어느 상태에서도 깨지지 않습니다.
 
 ## 남은 확인 항목
 
@@ -52,8 +52,6 @@ python landing/tools/logo_cutout.py ~/Downloads/obliv-logo.png
 | 채널톡 플러그인 키 | `YOUR_CHANNEL_TALK_PLUGIN_KEY` | 아래 참고 |
 | 의료광고 심의번호 | 미기재 | 심의 후 푸터 삽입 |
 | 클리닉별 상세 링크 | obliv.kr / oblivseoul.kr | 상세 페이지 URL로 교체 |
-| OG 이미지 | `assets/og.jpg` | 1200×630 |
-| 히어로 인테리어 컷 | `assets/hero-jongno.jpg` / `hero-songdo.jpg` | 없으면 지점 톤 그라디언트로 대체 |
 
 지점 정보(주소·대표번호·대표자·사업자등록번호·이메일)는 전달받은 값으로 반영 완료.
 
