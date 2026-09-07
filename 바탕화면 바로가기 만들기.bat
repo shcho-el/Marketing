@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 
 echo.
-echo  바탕화면 바로가기를 만듭니다.
+echo  Making desktop shortcuts...
 echo.
 
 if exist ".venv\Scripts\python.exe" (
@@ -13,4 +13,11 @@ if exist ".venv\Scripts\python.exe" (
 )
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "tools\make_shortcut.ps1"
+if errorlevel 1 (
+  echo.
+  echo  PowerShell failed. Trying the VBScript fallback...
+  echo.
+  cscript //nologo "tools\make_shortcut.vbs"
+)
+echo.
 pause
