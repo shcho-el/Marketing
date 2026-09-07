@@ -534,9 +534,12 @@
         <code>{{ thumb_photo_dir }}</code> 폴더에 사진을 넣으세요.
       </div>
       {% endif %}
-      {% if not thumb_has_logo %}
-      <p class="hint">로고 미등록 — <code>assets/logo.png</code>에 누끼 딴 투명 PNG를 넣으면
-        텍스트 대신 로고가 들어갑니다.</p>
+      {% if thumb_logo.ok %}
+      <p class="hint">✅ {{ thumb_logo.message }}</p>
+      {% else %}
+      <div class="alert warn" style="margin-top:10px">
+        {{ thumb_logo.message }}
+      </div>
       {% endif %}
     </div>
   </div>

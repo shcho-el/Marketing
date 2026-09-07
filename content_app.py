@@ -248,7 +248,7 @@ def _post_view(record, **extra):
         thumb_layout=extra.pop("thumb_layout", request.args.get("layout", "")),
         thumb_ready=bool(cms_thumbnail.list_photos(doc.get("category", ""))),
         thumb_photo_dir=cms_thumbnail.PHOTO_DIR,
-        thumb_has_logo=os.path.exists(cms_thumbnail.LOGO_PATH),
+        thumb_logo=cms_thumbnail.logo_status(),
         **_base_context(),
         **extra,
     )

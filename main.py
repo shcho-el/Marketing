@@ -232,7 +232,11 @@ def cmd_publish():
     headless = "--show" not in flags
 
     doc = record["doc"]
+    from publisher import thumbnail as _thumb
+
+    logo = _thumb.logo_status()
     print(f"대상: [{doc.get('category')}] {doc.get('h1')}")
+    print(f"썸네일 로고: {logo['message'].splitlines()[0]}")
     print(f"모드: {'연습 실행 (저장 안 함)' if dry_run else '실제 저장'}"
           f" / {'노출' if expose else '미노출'}")
 

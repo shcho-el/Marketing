@@ -97,6 +97,10 @@ def run_one(
 
     # 4~5. 썸네일 + 업로드
     try:
+        logo = thumbnail.logo_status()
+        outcome["logo"] = logo
+        if not logo["ok"]:
+            logger.warning("썸네일 로고: %s", logo["message"])
         thumb = thumbnail.generate_for(doc, layout=layout)
         outcome["thumbnail"] = thumb
 
@@ -186,6 +190,9 @@ def format_outcome(outcome: dict, verbose: bool = True) -> str:
 
     if outcome.get("cms_alert"):
         lines.append(f"     CMS 알림: {outcome['cms_alert']}")
+    logo = outcome.get("logo")
+    if logo and not logo["ok"]:
+        lines.append(f"     썸네일 로고: {logo['message'].splitlines()[0]}")
 
     lines.append(
         f"     {outcome.get('elapsed', 0)}초 · 약 ${outcome.get('cost', 0)}"

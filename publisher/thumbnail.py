@@ -224,7 +224,15 @@ def load_logo(path: str = "", width: int = 0):
     from PIL import Image
 
     path = path or LOGO_PATH
-    if not path or not os.path.exists(path):
+    if not path:
+        return None
+    if not os.path.exists(path):
+        # 조용히 텍스트로 넘어가면 왜 로고가 안 나오는지 알 수가 없다.
+        logger.warning(
+            "로고 파일이 없어 텍스트('%s')로 대체합니다: %s\n"
+            "  배경을 지운(누끼) 투명 PNG를 그 경로에 두거나 .env에 THUMB_LOGO로 경로를 지정하세요.",
+            BRAND_TEXT, os.path.abspath(path),
+        )
         return None
 
     try:
@@ -233,11 +241,12 @@ def load_logo(path: str = "", width: int = 0):
         logger.warning("로고를 열지 못해 텍스트로 대체합니다 (%s): %s", path, exc)
         return None
 
-    alpha = logo.getchannel("A")
-    if alpha.getextrema() == (255, 255):
+    opaque = logo.getchannel("A").getextrema() == (255, 255)
+    if opaque:
         logger.warning(
-            "로고에 투명 영역이 없습니다(%s). 배경을 지운 PNG를 넣어야 사진 위에 자연스럽게 얹힙니다.",
-            path,
+            "로고에 투명 영역이 없습니다: %s\n"
+            "  배경이 사각형으로 그대로 얹힙니다. 배경을 지운 PNG로 교체하세요.",
+            os.path.abspath(path),
         )
 
     width = width or LOGO_WIDTH
@@ -245,12 +254,41 @@ def load_logo(path: str = "", width: int = 0):
         height = max(1, round(logo.height * width / logo.width))
         logo = logo.resize((width, height), Image.LANCZOS)
 
-    if LOGO_TINT:
-        # 알파(글자 모양)만 남기고 크림색으로 다시 칠한다.
+    # 투명 영역이 없는 이미지를 크림색으로 칠하면 통째로 크림색 사각형이 된다.
+    # 그러면 원인을 알 수 없으므로, 그럴 때는 원본을 그대로 얹어 문제가 눈에 보이게 한다.
+    if LOGO_TINT and not opaque:
         tinted = Image.new("RGBA", logo.size, TEXT_COLOR)
         tinted.putalpha(logo.getchannel("A"))
         return tinted
     return logo
+
+
+def logo_status(path: str = "") -> dict:
+    """로고 설정 상태. 화면과 CLI에서 사람에게 보여 주기 위한 것."""
+    path = path or LOGO_PATH
+    abs_path = os.path.abspath(path) if path else ""
+    if not path or not os.path.exists(path):
+        return {
+            "ok": False,
+            "path": abs_path,
+            "message": f"로고 미등록 — {abs_path}에 배경을 지운 투명 PNG를 넣으면 "
+                       f"텍스트 '{BRAND_TEXT}' 대신 로고가 들어갑니다.",
+        }
+    try:
+        from PIL import Image
+
+        img = Image.open(path).convert("RGBA")
+    except Exception as exc:
+        return {"ok": False, "path": abs_path, "message": f"로고를 열지 못했습니다: {exc}"}
+
+    if img.getchannel("A").getextrema() == (255, 255):
+        return {
+            "ok": False,
+            "path": abs_path,
+            "message": "로고에 투명 영역이 없습니다. 배경이 사각형으로 얹힙니다. "
+                       "배경을 지운 PNG로 교체하세요.",
+        }
+    return {"ok": True, "path": abs_path, "message": f"로고 사용 중 ({os.path.basename(path)})"}
 
 
 # ── 텍스트 ───────────────────────────────────────────────────────────
