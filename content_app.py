@@ -12,10 +12,14 @@
   · 사내망에 열어 두므로 비밀번호를 걸 수 있습니다(APP_PASSWORD).
 """
 
+import json
 import logging
 import os
+import queue
 import secrets
 import socket
+import threading
+import time
 from functools import wraps
 
 from flask import (
@@ -27,6 +31,7 @@ from flask import (
     request,
     send_file,
     session,
+    stream_with_context,
     url_for,
 )
 
@@ -217,6 +222,64 @@ def api_generate():
     doc, reports = result["doc"], result["reports"]
     post_id = store.save(doc, reports, result["parsed"]["topic"])
     return jsonify(view_model(doc, reports, post_id))
+
+
+@app.route("/api/generate/stream")
+@login_required
+def api_generate_stream():
+    """생성 진행 상황을 흘려보낸다(Server-Sent Events).
+
+    1~3분이 걸리는데 화면에 아무 표시가 없으면 멈춘 것처럼 보입니다.
+    생성은 별도 스레드에서 돌리고, 단계가 바뀔 때마다 큐로 받아 내보냅니다.
+    """
+    title = (request.args.get("title") or "").strip()
+    if not title:
+        return jsonify({"error": "제목을 입력하세요."}), 400
+
+    events: "queue.Queue" = queue.Queue()
+
+    def report(stage, state, detail=""):
+        events.put({"type": "stage", "stage": stage, "state": state, "detail": detail})
+
+    def work():
+        try:
+            result = generator.generate_from_title(title, on_progress=report)
+            doc, reports = result["doc"], result["reports"]
+            report("save", "start", "")
+            post_id = store.save(doc, reports, result["parsed"]["topic"])
+            report("save", "done", "")
+            events.put({"type": "done", "view": view_model(doc, reports, post_id)})
+        except generator.GenerationError as exc:
+            events.put({"type": "error", "error": str(exc)})
+        except Exception as exc:  # 예상 못 한 오류도 화면까지 전달한다
+            logger.exception("생성 실패")
+            events.put({"type": "error", "error": f"생성하지 못했습니다: {exc}"})
+        finally:
+            events.put(None)
+
+    threading.Thread(target=work, daemon=True).start()
+
+    def stream():
+        yield "retry: 10000\n\n"
+        yield f"data: {json.dumps({'type': 'stages', 'stages': [{'key': k, 'label': v} for k, v in generator.STAGES]}, ensure_ascii=False)}\n\n"
+        last = time.time()
+        while True:
+            try:
+                item = events.get(timeout=10)
+            except queue.Empty:
+                # 프록시가 끊지 않도록 주기적으로 신호를 보낸다
+                yield ": keep-alive\n\n"
+                continue
+            if item is None:
+                break
+            yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+            last = time.time()
+
+    return app.response_class(
+        stream_with_context(stream()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.route("/api/post/<int:post_id>")

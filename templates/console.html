@@ -372,6 +372,83 @@ pre.code {
 .toast[data-kind="bad"] { background: var(--bad); color: #fff; }
 .toast[data-kind="ok"]  { background: var(--ok); color: #fff; }
 
+/* ─── 생성 진행 창 ─────────────────────────────────────── */
+.load-backdrop {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center;
+  padding: 24px; background: color-mix(in srgb, var(--ink) 55%, transparent);
+  backdrop-filter: blur(4px);
+}
+.load-backdrop[hidden] { display: none; }
+.load-card {
+  width: 100%; max-width: 480px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg); padding: 26px 28px;
+}
+.load-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.load-head h2 { font-size: 1.02rem; }
+.load-timer {
+  font-variant-numeric: tabular-nums; font-size: .82rem; color: var(--ink-3);
+}
+.load-title {
+  margin-top: 6px; font-size: .84rem; color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.load-bar {
+  height: 3px; border-radius: 3px; background: var(--raised);
+  margin: 18px 0 4px; overflow: hidden;
+}
+.load-bar i {
+  display: block; height: 100%; width: 0%; border-radius: 3px;
+  background: var(--brass); transition: width .5s ease;
+}
+.steps { margin-top: 14px; display: flex; flex-direction: column; }
+/* 설명이 길어 이름 칸을 밀어내지 않도록, 이름 아래로 내려 쌓는다. */
+.step {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 12px; row-gap: 2px;
+  align-items: center; padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.step:last-child { border-bottom: 0; }
+.step .ico {
+  grid-row: 1 / span 2; align-self: start;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--raised); color: var(--ink-3);
+  transition: background .2s ease, color .2s ease;
+}
+.step .ico svg { width: 15px; height: 15px; display: block; }
+.step .name {
+  grid-column: 2; font-size: .87rem; color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.step .note {
+  grid-column: 2; font-size: .76rem; color: var(--ink-3);
+  line-height: 1.5; overflow-wrap: anywhere;
+}
+.step .note:empty { display: none; }
+
+.step[data-state="run"] .ico {
+  background: color-mix(in srgb, var(--brass) 22%, transparent); color: var(--brass);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.step[data-state="run"] .name { color: var(--ink); font-weight: 600; }
+.step[data-state="done"] .ico { background: var(--ok-bg); color: var(--ok); }
+.step[data-state="done"] .name { color: var(--ink-2); }
+.step[data-state="skip"] .name,
+.step[data-state="skip"] .note { opacity: .55; }
+.step[data-state="fail"] .ico { background: var(--bad-bg); color: var(--bad); }
+.step[data-state="fail"] .name { color: var(--bad); }
+
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  .step[data-state="run"] .ico { animation: none; }
+  .load-bar i { transition: none; }
+}
+.load-foot { margin-top: 16px; font-size: .78rem; color: var(--ink-3); }
+.load-error {
+  margin-top: 14px; padding: 12px 14px; border-radius: var(--r);
+  background: var(--bad-bg); color: var(--bad); font-size: .83rem; line-height: 1.6;
+}
+
 /* ─── 단축키 ───────────────────────────────────────────── */
 kbd {
   display: inline-block; min-width: 22px; text-align: center;
@@ -588,6 +665,23 @@ kbd {
   </div>
 </div>
 
+<div class="load-backdrop" id="loadModal" hidden role="dialog" aria-modal="true"
+     aria-labelledby="loadTitle" aria-live="polite">
+  <div class="load-card">
+    <div class="load-head">
+      <h2 id="loadTitle">원고를 만들고 있습니다</h2>
+      <span class="load-timer" id="loadTimer">0초</span>
+    </div>
+    <p class="load-title" id="loadSubject"></p>
+    <div class="load-bar"><i id="loadBar"></i></div>
+    <div class="steps" id="loadSteps"></div>
+    <p class="load-foot" id="loadFoot">
+      의료법 검사에 걸리면 자동으로 다시 씁니다. 그만큼 시간이 더 걸립니다.
+    </p>
+    <div id="loadError"></div>
+  </div>
+</div>
+
 <div class="keys-backdrop" id="keysModal" hidden role="dialog" aria-modal="true"
      aria-labelledby="keysTitle">
   <div class="keys-card">
@@ -787,26 +881,129 @@ $("titleInput").addEventListener("input", () => {
   }, 350);
 });
 
-$("runBtn").addEventListener("click", async () => {
+/* ── 생성 진행 창 ─────────────────────────────────────── */
+// 단계별 아이콘. 선으로만 그려 두 테마 모두에서 읽힌다.
+const STEP_ICONS = {
+  parse:  '<circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/>',
+  draft:  '<path d="M12.5 2.5l3 3L6 15H3v-3z"/><path d="M10.5 4.5l3 3"/>',
+  check:  '<path d="M8 1.5l5.5 2v4.2c0 3.4-2.3 6.2-5.5 7.3-3.2-1.1-5.5-3.9-5.5-7.3V3.5z"/><path d="M5.6 8.2l1.7 1.7 3.1-3.4"/>',
+  repair: '<path d="M11.4 2.6a3.6 3.6 0 00-4.8 4.4L2.4 11.2a1.4 1.4 0 002 2l4.2-4.2a3.6 3.6 0 004.4-4.8L11 5.4 9.5 4.9 9 3z"/>',
+  save:   '<path d="M2.5 8.5l3.6 3.6L13.5 4.7"/>',
+};
+
+function stepIcon(key) {
+  return `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+    aria-hidden="true">${STEP_ICONS[key] || STEP_ICONS.check}</svg>`;
+}
+
+let loadTimer = null, loadStart = 0, loadStages = [];
+
+function loadOpen(title) {
+  loadStages = [];
+  $("loadSubject").textContent = title;
+  $("loadSteps").innerHTML = "";
+  $("loadError").innerHTML = "";
+  $("loadBar").style.width = "0%";
+  $("loadFoot").hidden = false;
+  $("loadModal").hidden = false;
+  loadStart = Date.now();
+  clearInterval(loadTimer);
+  loadTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - loadStart) / 1000);
+    $("loadTimer").textContent = s < 60 ? `${s}초` : `${Math.floor(s / 60)}분 ${s % 60}초`;
+  }, 1000);
+  $("loadTimer").textContent = "0초";
+}
+
+function loadClose() {
+  clearInterval(loadTimer);
+  $("loadModal").hidden = true;
+}
+
+function loadRenderStages(stages) {
+  loadStages = stages;
+  $("loadSteps").innerHTML = stages.map(st =>
+    `<div class="step" data-key="${st.key}" data-state="wait">
+       <span class="ico">${stepIcon(st.key)}</span>
+       <span class="name">${esc(st.label)}</span>
+       <span class="note"></span>
+     </div>`).join("");
+}
+
+function loadStep(key, state, detail) {
+  const row = $("loadSteps").querySelector(`.step[data-key="${key}"]`);
+  if (!row) return;
+  if (state === "start") row.dataset.state = "run";
+  else if (state === "skip") row.dataset.state = "skip";
+  else row.dataset.state = "done";
+  if (detail) row.querySelector(".note").textContent = detail;
+
+  const rows = [...$("loadSteps").querySelectorAll(".step")];
+  const settled = rows.filter(r => ["done", "skip"].includes(r.dataset.state)).length;
+  $("loadBar").style.width = `${Math.round(settled / rows.length * 100)}%`;
+}
+
+function loadFail(message) {
+  clearInterval(loadTimer);
+  const running = $("loadSteps").querySelector('.step[data-state="run"]');
+  if (running) running.dataset.state = "fail";
+  $("loadFoot").hidden = true;
+  $("loadError").innerHTML =
+    `<div class="load-error">${esc(message)}</div>
+     <button class="btn quiet" style="margin-top:12px;width:100%" id="loadCloseBtn">닫기</button>`;
+  $("loadCloseBtn").addEventListener("click", loadClose);
+}
+
+$("runBtn").addEventListener("click", () => {
   const title = $("titleInput").value.trim();
   if (!title) { $("genHint").textContent = "제목을 입력하세요."; return; }
+
   const btn = $("runBtn");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>원고 작성 중';
+  btn.innerHTML = '<span class="spin"></span>작성 중';
   $("genHint").textContent = "";
-  try {
-    const v = await api("/api/generate", { method: "POST", body: JSON.stringify({ title }) });
-    render(v);
-    loadHistory();
-    $("genHint").textContent = v.reports.law.passed && v.reports.positioning.passed
-      ? "검사를 통과했습니다." : "검사에서 걸린 표현이 남아 있습니다.";
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  } catch (e) {
-    $("genHint").textContent = e.message;
-  } finally {
+  loadOpen(title);
+
+  const src = new EventSource("/api/generate/stream?title=" + encodeURIComponent(title));
+  const finish = () => {
+    src.close();
     btn.disabled = false;
     btn.textContent = "원고 생성";
-  }
+  };
+
+  src.onmessage = ev => {
+    let d;
+    try { d = JSON.parse(ev.data); } catch (e) { return; }
+
+    if (d.type === "stages") { loadRenderStages(d.stages); return; }
+    if (d.type === "stage")  { loadStep(d.stage, d.state, d.detail); return; }
+
+    if (d.type === "done") {
+      loadStep("save", "done", "");
+      $("loadBar").style.width = "100%";
+      setTimeout(() => {
+        loadClose();
+        render(d.view);
+        loadHistory();
+        const ok = d.view.reports.law.passed && d.view.reports.positioning.passed;
+        $("genHint").textContent = ok
+          ? "검사를 통과했습니다." : "검사에서 걸린 표현이 남아 있습니다.";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 500);
+      finish();
+      return;
+    }
+
+    if (d.type === "error") { loadFail(d.error); finish(); }
+  };
+
+  src.onerror = () => {
+    // 이미 끝난 뒤의 종료 신호는 무시한다
+    if ($("loadModal").hidden) { finish(); return; }
+    loadFail("서버와 연결이 끊겼습니다. 서버 창이 켜져 있는지 확인하고 다시 시도하세요.");
+    finish();
+  };
 });
 
 $("lintBtn").addEventListener("click", async () => {
@@ -939,11 +1136,13 @@ function selectTab(container, index) {
 document.addEventListener("keydown", e => {
   const el = document.activeElement;
 
-  // Esc — 열려 있는 창 닫기
+  // Esc — 열려 있는 창 닫기 (생성 진행 창은 임의로 닫지 않는다)
   if (e.key === "Escape") {
     if (!$("keysModal").hidden) { toggleKeys(false); e.preventDefault(); }
     return;
   }
+  // 생성 중에는 다른 단축키를 막는다
+  if (!$("loadModal").hidden) return;
 
   // Ctrl/⌘ 조합 — 입력 중에도 동작한다
   if (mod(e)) {

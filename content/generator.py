@@ -42,6 +42,20 @@ class GenerationError(RuntimeError):
     pass
 
 
+# 화면이 미리 단계 목록을 그릴 수 있도록 순서를 고정해 둔다.
+STAGES = [
+    ("parse", "제목 분석"),
+    ("draft", "원고 작성"),
+    ("check", "의료법·포지셔닝 검사"),
+    ("repair", "자동 교정"),
+    ("save", "저장"),
+]
+
+
+def _noop(*_args, **_kwargs):
+    pass
+
+
 def _client():
     try:
         import anthropic
@@ -216,17 +230,29 @@ def generate(
     audience: str = "",
     extra_notes: str = "",
     auto_repair: bool = True,
+    on_progress=None,
 ) -> dict:
-    """글 1편을 생성하고 검사까지 마쳐 돌려준다."""
+    """글 1편을 생성하고 검사까지 마쳐 돌려준다.
+
+    on_progress(stage, state, detail) 를 넘기면 진행 상황을 알려 준다.
+    state 는 "start" / "done" 중 하나다.
+    """
+    progress = on_progress or _noop
+
     user_prompt = prompts.build_user_prompt(
         category, primary_keyword, topic, angle, audience, extra_notes
     )
     messages = [{"role": "user", "content": user_prompt}]
 
     logger.info("생성 시작: %s / %s", category, primary_keyword)
+    progress("draft", "start", "Claude가 본문을 쓰고 있습니다")
     doc = _call(messages)
     doc = _normalize(doc, category, primary_keyword)
+    progress("draft", "done", f"{len(_full_text(doc))}자 초안 완성")
+
+    progress("check", "start", "")
     reports = evaluate(doc)
+    progress("check", "done", _check_summary(reports))
 
     attempts = 1
     usage_total = dict(doc.get("_usage", {}))
@@ -244,6 +270,10 @@ def generate(
             reports["law"]["block_count"],
             len(reports["law"]["missing_required"]),
             reports["seo"]["scores"]["total"],
+        )
+        progress(
+            "repair", "start",
+            f"{attempts}차 — {_check_summary(reports)}",
         )
         messages = messages + [
             {"role": "assistant", "content": json.dumps(
@@ -279,26 +309,42 @@ def generate(
                 >= reports["seo"]["scores"]["total"]
             )
 
-        if better:
+        if better or new_law < old_law:
+            # 점수가 조금 나빠져도 위반이 줄면 그쪽을 택한다.
             doc, reports = repaired, new_reports
-        elif new_law < old_law:
-            # 점수는 나빠졌지만 위반이 줄었다면 그래도 채택한다.
-            doc, reports = repaired, new_reports
+            progress("repair", "done", _check_summary(reports))
         else:
             logger.info("교정 결과가 개선되지 않아 이전 버전을 유지합니다.")
+            progress("repair", "done", "더 나아지지 않아 이전 버전을 유지합니다")
             break
         attempts += 1
+
+    if attempts == 1:
+        progress("repair", "skip", "고칠 것이 없었습니다")
 
     doc["_usage"] = usage_total
     doc["_attempts"] = attempts
     return {"doc": doc, "reports": reports}
 
 
-def generate_from_title(title: str, auto_repair: bool = True) -> dict:
+def _check_summary(reports: dict) -> str:
+    """검사 결과를 한 줄로. 화면에 그대로 띄운다."""
+    law, pos = reports["law"], reports["positioning"]
+    hard = law["block_count"] + len(law["missing_required"]) + pos["block_count"]
+    score = reports["seo"]["scores"]["total"]
+    if hard:
+        return f"고칠 곳 {hard}건 · 점수 {score}"
+    return f"통과 · 점수 {score}"
+
+
+def generate_from_title(title: str, auto_repair: bool = True, on_progress=None) -> dict:
     """제목 하나로 글을 만든다. 카테고리·주키워드는 제목에서 추론한다."""
     from content import title_parser
 
+    progress = on_progress or _noop
+    progress("parse", "start", "")
     parsed = title_parser.parse(title)
+    progress("parse", "done", title_parser.describe(parsed))
 
     notes = [
         f"주어진 제목을 그대로 쓰지 말고, 이 주제를 다루되 h1은 SEO 규칙"
@@ -317,6 +363,7 @@ def generate_from_title(title: str, auto_repair: bool = True) -> dict:
         topic=parsed["topic"],
         extra_notes="\n".join(notes),
         auto_repair=auto_repair,
+        on_progress=on_progress,
     )
     result["parsed"] = parsed
     return result
