@@ -340,10 +340,72 @@
 </div>
 {% endif %}
 
+{% if publish_error %}
+<div class="alert bad">
+  <strong>{{ '업로드 중단' if blocked else '업로드 실패' }}</strong><br />
+  <span style="white-space:pre-wrap">{{ publish_error }}</span>
+</div>
+{% endif %}
+
+{% if publish_result %}
+<div class="alert ok">
+  <strong>{{ publish_result.message }}</strong><br />
+  포스트URL: {{ publish_result.post_url }} ·
+  썸네일: {{ publish_result.thumbnail }}
+  {% if publish_result.alert %}<br />CMS 알림: {{ publish_result.alert }}{% endif %}
+  {% if publish_result.shots %}
+  <br /><span class="muted">화면 캡처: {{ publish_result.shots | join(', ') }}</span>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>CMS 자동 업로드</h2>
+  {% if not cms.ready %}
+  <div class="alert warn">
+    <strong>업로드 준비가 되지 않았습니다.</strong>
+    <ul style="margin:6px 0 0 18px">
+      {% for p in cms.problems %}<li>{{ p }}</li>{% endfor %}
+    </ul>
+    <span class="muted">터미널에서 <code>python main.py inspect-cms</code>를 먼저 실행하세요.</span>
+  </div>
+  {% else %}
+  <p class="hint" style="margin-bottom:12px">
+    대상: {{ cms.write_url }} — 썸네일은 제목 문구로 자동 생성(880×580, 300KB 이하)됩니다.
+  </p>
+  {% endif %}
+
+  {% if not law.passed %}
+  <div class="alert bad">
+    의료법 검사를 통과하지 못해 업로드가 차단됩니다. 원고를 수정한 뒤 다시 시도하세요.
+  </div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('post_publish', post_id=record.id) }}"
+        onsubmit="return confirmPublish(this)">
+    <div class="field">
+      <label>
+        <input type="checkbox" name="dry_run" checked style="width:auto" />
+        연습 실행 — 폼만 채우고 저장은 누르지 않습니다 (화면 캡처로 확인)
+      </label>
+      <label style="margin-top:6px">
+        <input type="checkbox" name="expose" style="width:auto" />
+        <strong>노출</strong> 상태로 저장 — 해제하면 미노출로 올라갑니다 (권장)
+      </label>
+    </div>
+    <button type="submit" {{ 'disabled' if not cms.ready or not law.passed }}>
+      CMS에 업로드
+    </button>
+    <span class="hint" style="margin-left:10px">
+      브라우저가 자동으로 로그인해 폼을 채웁니다. 30초 내외 걸립니다.
+    </span>
+  </form>
+</div>
+
 <div class="card">
   <h2>CMS 기본 정보 — 그대로 옮겨 담으세요</h2>
   <table class="cms">
-    {% for k, v in cms.items() %}
+    {% for k, v in cms_fields.items() %}
     <tr>
       <td>{{ k }}</td>
       <td>
@@ -418,6 +480,18 @@
     document.getElementById(id).classList.remove('hidden');
     btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+  }
+  function confirmPublish(form) {
+    const dry = form.dry_run.checked;
+    const expose = form.expose.checked;
+    if (dry) return true;
+    let msg = '실제로 CMS에 저장합니다.';
+    if (expose) {
+      msg += '\n\n⚠️ 노출 상태로 올라가 바로 공개됩니다.';
+    } else {
+      msg += '\n미노출 상태로 저장되며, 공개는 CMS에서 직접 바꿔야 합니다.';
+    }
+    return confirm(msg + '\n\n계속할까요?');
   }
   function copyEl(id) {
     const el = document.getElementById(id);

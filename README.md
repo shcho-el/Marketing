@@ -84,5 +84,11 @@ python main.py write      # CLI로 1편 생성
 - CMS 기본정보 필드(MetaTitle 40자·MetaDescription 80자 등)를 그대로 출력
 - 부작용 고지·JSON-LD 구조화 데이터 자동 삽입
 - `/lint`에서 기존 원고의 의료법 위반 표현 점검
+- CMS 자동 업로드 (썸네일 자동 생성, 기본 미노출 저장)
+
+```bash
+python main.py inspect-cms   # CMS 폼 구조 분석 (최초 1회)
+python main.py publish <id>  # 업로드 (기본: 연습 실행)
+```
 
 자세한 내용은 [CONTENT.md](CONTENT.md)를 참고하세요.

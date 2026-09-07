@@ -8,3 +8,7 @@ venv/
 *.pyc
 logs/
 content.db
+cms_mapping.json
+cms_form_dump.json
+cms_shots/
+thumbnails/

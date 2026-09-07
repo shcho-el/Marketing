@@ -33,6 +33,8 @@ from content import (
     store,
     taxonomy,
 )
+from publisher import config as cms_config
+from publisher import publish as cms_publish
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,7 @@ def _base_context() -> dict:
         "categories": taxonomy.CATEGORIES,
         "core_keywords": taxonomy.CORE_KEYWORDS,
         "nap": clinic.nap_completeness(),
+        "cms": cms_config.status(),
     }
 
 
@@ -110,20 +113,7 @@ def post_detail(post_id: int):
     if not record:
         abort(404)
 
-    doc = record["doc"]
-    return render_template(
-        "content.html",
-        view="post",
-        record=record,
-        doc=doc,
-        reports=record["reports"],
-        cms=renderer.cms_fields(doc),
-        body_html=renderer.render_body(doc, include_schema=False),
-        plaintext=renderer.render_plaintext(doc),
-        jsonld=schema.to_script_tag(doc),
-        cost=generator.estimate_cost(doc.get("_usage", {})),
-        **_base_context(),
-    )
+    return _post_view(record)
 
 
 @app.route("/post/<int:post_id>/status", methods=["POST"])
@@ -152,6 +142,57 @@ def lint():
         lint_text=text,
         lint_report=report,
         **_base_context(),
+    )
+
+
+@app.route("/post/<int:post_id>/publish", methods=["POST"])
+def post_publish(post_id: int):
+    """CMS에 업로드한다. 기본은 미노출 저장."""
+    record = store.get(post_id)
+    if not record:
+        abort(404)
+
+    doc = record["doc"]
+    reports = record["reports"]
+    dry_run = request.form.get("dry_run") == "on"
+    # 노출 전환은 사람이 CMS에서 확인하고 누르도록 기본값을 미노출로 둔다.
+    expose = request.form.get("expose") == "on"
+
+    try:
+        result = cms_publish.publish(
+            doc=doc,
+            body_html=renderer.render_body(doc, include_schema=True),
+            reports=reports,
+            expose=expose,
+            dry_run=dry_run,
+        )
+    except cms_publish.ComplianceBlocked as exc:
+        return _post_view(record, publish_error=str(exc), blocked=True)
+    except Exception as exc:
+        logger.exception("CMS 업로드 실패")
+        return _post_view(record, publish_error=str(exc))
+
+    if result.get("saved"):
+        store.set_status(post_id, "published" if expose else "uploaded")
+    return _post_view(store.get(post_id) or record, publish_result=result)
+
+
+def _post_view(record, **extra):
+    """결과 화면 렌더링 - 발행 결과/오류를 함께 표시한다."""
+    doc = record["doc"]
+    return render_template(
+        "content.html",
+        view="post",
+        record=record,
+        doc=doc,
+        reports=record["reports"],
+        cms_fields=renderer.cms_fields(doc),
+        body_html=renderer.render_body(doc, include_schema=False),
+        plaintext=renderer.render_plaintext(doc),
+        jsonld=schema.to_script_tag(doc),
+        cost=generator.estimate_cost(doc.get("_usage", {})),
+        **_base_context(),
+        **extra,
     )
 
 

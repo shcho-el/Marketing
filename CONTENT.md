@@ -162,8 +162,118 @@ curl localhost:5001/api/post/1     # CMS 필드 + 본문 HTML + JSON-LD
 
 ---
 
+## CMS 자동 업로드
+
+생성한 글을 `blog.obliv.kr` 관리자에 자동으로 올립니다.
+브라우저를 실제로 띄워 로그인 → 폼 입력 → 썸네일 업로드 → 저장까지 수행합니다.
+(레거시 PHP 관리자는 세션·CSRF·파일 업로드가 얽혀 있어 요청 위조보다 브라우저 조작이 안정적입니다.)
+
+### 안전장치
+
+자동화가 병원 블로그에 잘못된 글을 **공개**시키는 것이 가장 비싼 사고입니다.
+그래서 기본값을 다음과 같이 잡았습니다.
+
+| 장치 | 기본 동작 |
+|---|---|
+| 의료법 검사 | 위반 표현이 남아 있으면 **업로드 자체를 거부** |
+| 노출 여부 | 항상 **미노출**로 저장. 공개 전환은 사람이 CMS에서 직접 |
+| 연습 실행 | 폼만 채우고 저장은 누르지 않음 (웹 UI 기본 체크됨) |
+| 화면 캡처 | 저장 직전·직후를 `cms_shots/`에 기록 |
+| 확인 대화상자 | 실제 저장 시 한 번 더 확인. 노출 선택 시 경고 문구 추가 |
+
+### 설정
+
+```bash
+# .env  ── 로그인 정보는 절대 커밋하지 마세요
+CMS_WRITE_URL=https://blog.obliv.kr/blogmanage/nxt-blog.php
+CMS_LOGIN_URL=          # 비우면 글쓰기 URL 접속 후 리다이렉트를 따라감
+CMS_USERNAME=
+CMS_PASSWORD=
+CMS_HEADLESS=1          # 0으로 두면 브라우저 창을 띄워 눈으로 확인
+```
+
+### 1단계 — 폼 구조 읽기 (최초 1회)
+
+셀렉터를 코드에 박아 두지 않습니다. 실제 화면을 훑어 매핑 파일을 만듭니다.
+
+```bash
+python main.py inspect-cms          # 헤드리스
+python main.py inspect-cms --show   # 브라우저 창을 띄워 확인
+```
+
+관리자 화면의 라벨(`제목( H1 )`, `MetaTitle`, `썸네일 등록` …)로 필드를 찾아
+`cms_mapping.json`을 만들고, 전체 폼 구조를 `cms_form_dump.json`에 남깁니다.
+
+```
+✅ category           #ca_name            select[]
+✅ title              #wr_subject         input[text]
+⚠️  body              #editor             textarea — 라벨 불일치, 확인 권장
+❌ thumbnail          -                   찾지 못함 — 직접 입력 필요
+```
+
+`⚠️`나 `❌`가 뜨면 `cms_form_dump.json`에서 올바른 셀렉터를 찾아
+`cms_mapping.json`의 `fields`에 직접 채우세요. **CMS 화면이 바뀌면 이 명령만 다시 돌리면 됩니다.**
+
+### 2단계 — 업로드
+
+```bash
+python main.py publish 3                   # 연습 실행 (저장 안 함)
+python main.py publish 3 --save            # 실제 저장, 미노출
+python main.py publish 3 --save --expose   # 실제 저장, 노출 (확인 입력 필요)
+python main.py publish 3 --save --show     # 브라우저 창을 띄워 보면서
+python main.py publish                     # 인자 없이 실행하면 최근 글 목록
+```
+
+웹 UI(`/post/<id>`)의 **CMS 자동 업로드** 카드에서도 같은 일을 할 수 있습니다.
+
+### 썸네일 자동 생성
+
+CMS가 썸네일 없이는 글을 저장하지 않으므로 자동 생성이 포함되어 있습니다.
+규격(880×580, 300KB 이하)에 맞춰 만들고, 300KB를 넘으면 품질을 낮춰 재저장합니다.
+문구는 생성 단계의 `thumbnail_copy`를 정중앙에 배치합니다.
+
+```bash
+THUMB_FONT=              # 비워 두면 자동 탐지 (윈도우: 맑은 고딕)
+THUMB_BG=#0f2540
+THUMB_FG=#ffffff
+THUMB_ACCENT=#5b9bd5
+```
+
+한글 폰트를 못 찾으면 오류로 알려 줍니다. 그때 `THUMB_FONT`에 폰트 파일 경로를 지정하세요.
+
+### 운영 CMS에 붙이기 전에 — 목 CMS로 연습
+
+실제 관리자 화면과 같은 구조의 가짜 CMS가 들어 있습니다.
+운영 블로그를 건드리지 않고 전 과정을 그대로 돌려 볼 수 있습니다.
+
+```bash
+# 터미널 1
+python tools/mock_cms.py            # http://localhost:5002 (test / test)
+
+# 터미널 2
+export CMS_WRITE_URL=http://localhost:5002/write
+export CMS_LOGIN_URL=http://localhost:5002/login
+export CMS_USERNAME=test CMS_PASSWORD=test
+export CMS_MAPPING_PATH=mock_mapping.json
+
+python main.py inspect-cms          # 폼 분석이 되는지
+python main.py publish 1 --save     # 업로드가 되는지
+```
+
+저장된 내용은 `mock_cms_submissions.json`에 쌓입니다.
+값이 제자리에 들어갔는지 확인한 뒤 운영 설정으로 바꾸세요.
+
+### 점검
+
+```bash
+python test_publish.py    # 썸네일 규격 · 셀렉터 매핑 · 업로드 절차 (브라우저 없이)
+```
+
+---
+
 ## 발행 후 할 일
 
-1. JSON-LD를 [리치 결과 테스트](https://search.google.com/test/rich-results)로 검증
-2. 구글 서치콘솔·네이버 서치어드바이저에 URL 수집 요청
-3. `config.py`의 `TARGET_URLS`에 발행 URL 추가 → 다음날부터 순위 자동 추적
+1. CMS에서 미노출 글을 열어 내용을 확인하고 노출로 전환
+2. JSON-LD를 [리치 결과 테스트](https://search.google.com/test/rich-results)로 검증
+3. 구글 서치콘솔·네이버 서치어드바이저에 URL 수집 요청
+4. `config.py`의 `TARGET_URLS`에 발행 URL 추가 → 다음날부터 순위 자동 추적
