@@ -24,6 +24,7 @@ from flask import (
     url_for,
 )
 
+import pipeline
 from content import (
     clinic,
     generator,
@@ -33,6 +34,7 @@ from content import (
     seo,
     store,
     taxonomy,
+    title_parser,
 )
 from publisher import config as cms_config
 from publisher import publish as cms_publish
@@ -56,15 +58,60 @@ def _base_context() -> dict:
     }
 
 
-@app.route("/")
-def index():
+def _form_view(**extra):
     return render_template(
         "content.html",
         view="form",
         posts=store.list_posts(30),
         used=store.used_keywords(),
         **_base_context(),
+        **extra,
     )
+
+
+@app.route("/")
+def index():
+    return _form_view()
+
+
+@app.route("/auto", methods=["POST"])
+def auto():
+    """제목만 받아 생성부터 업로드까지 한 번에 처리한다."""
+    raw = (request.form.get("titles") or "").strip()
+    titles = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+    if not titles:
+        return _form_view(error="제목을 한 줄에 하나씩 입력하세요."), 400
+
+    upload = request.form.get("upload") == "on"
+    expose = request.form.get("expose") == "on"
+
+    if upload and not cms_config.status()["ready"]:
+        return _form_view(
+            error="CMS 업로드 설정이 끝나지 않았습니다. "
+                  "터미널에서 python main.py inspect-cms 를 먼저 실행하세요."
+        ), 400
+
+    outcomes = pipeline.run_many(titles, upload=upload, expose=expose, dry_run=False)
+    return render_template(
+        "content.html",
+        view="auto_result",
+        outcomes=outcomes,
+        summary=pipeline.summarize(outcomes),
+        **_base_context(),
+    )
+
+
+@app.route("/api/preview-title")
+def api_preview_title():
+    """제목을 어떻게 해석했는지 미리 보여 준다(생성 전 확인용)."""
+    title = request.args.get("title", "").strip()
+    if not title:
+        return jsonify({"error": "title 파라미터가 필요합니다."}), 400
+    try:
+        parsed = title_parser.parse(title)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({**parsed, "summary": title_parser.describe(parsed)})
 
 
 @app.route("/generate", methods=["POST"])
@@ -75,14 +122,7 @@ def generate():
     topic = (form.get("topic") or "").strip()
 
     if not category or not primary or not topic:
-        return render_template(
-            "content.html",
-            view="form",
-            error="카테고리·주키워드·주제는 필수입니다.",
-            posts=store.list_posts(30),
-            used=store.used_keywords(),
-            **_base_context(),
-        ), 400
+        return _form_view(error="카테고리·주키워드·주제는 필수입니다."), 400
 
     try:
         result = generator.generate(
@@ -96,14 +136,7 @@ def generate():
         )
     except generator.GenerationError as exc:
         logger.exception("생성 실패")
-        return render_template(
-            "content.html",
-            view="form",
-            error=str(exc),
-            posts=store.list_posts(30),
-            used=store.used_keywords(),
-            **_base_context(),
-        ), 502
+        return _form_view(error=str(exc)), 502
 
     post_id = store.save(result["doc"], result["reports"], topic)
     return redirect(url_for("post_detail", post_id=post_id))

@@ -16,7 +16,14 @@ import json
 import logging
 import os
 
-from content import medical_law, prompts, seo, slug as slug_mod, taxonomy
+from content import (
+    medical_law,
+    positioning,
+    prompts,
+    seo,
+    slug as slug_mod,
+    taxonomy,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +33,9 @@ EFFORT = os.getenv("CONTENT_EFFORT", "high")
 
 # 자동 교정을 시도할 최소 점수. 이 아래면 한 번 더 고쳐 쓴다.
 REPAIR_SCORE_THRESHOLD = int(os.getenv("CONTENT_MIN_SCORE", "80"))
-MAX_REPAIRS = int(os.getenv("CONTENT_MAX_REPAIRS", "1"))
+MAX_REPAIRS = int(os.getenv("CONTENT_MAX_REPAIRS", "2"))
+# 의료법 위반이 남아 있으면 점수와 무관하게 여기까지 더 시도한다.
+MAX_LAW_RETRIES = int(os.getenv("CONTENT_MAX_LAW_RETRIES", "3"))
 
 
 class GenerationError(RuntimeError):
@@ -169,8 +178,9 @@ def evaluate(doc: dict) -> dict:
     """생성 결과를 검사한다(의료법 + SEO/AEO/GEO)."""
     text = _full_text(doc)
     law = medical_law.review(text)
+    pos = positioning.review(text)
     audit = seo.audit(doc, doc.get("primary_keyword", ""))
-    return {"law": law, "seo": audit}
+    return {"law": law, "positioning": pos, "seo": audit}
 
 
 def _needs_repair(reports: dict) -> bool:
@@ -178,9 +188,23 @@ def _needs_repair(reports: dict) -> bool:
         return True
     if reports["law"]["missing_required"]:
         return True
+    # 하지 않는 시술을 언급했거나 지양 표현이 남아 있으면 다시 쓴다.
+    if reports["positioning"]["block_count"] > 0:
+        return True
+    if reports["positioning"]["warn_count"] > 0:
+        return True
     if reports["seo"]["scores"]["total"] < REPAIR_SCORE_THRESHOLD:
         return True
     return False
+
+
+def _hard_issues(reports: dict) -> int:
+    """반드시 없애야 하는 문제의 개수 - 의료법 위반, 필수 누락, 미시행 시술."""
+    return (
+        reports["law"]["block_count"]
+        + len(reports["law"]["missing_required"])
+        + reports["positioning"]["block_count"]
+    )
 
 
 # ── 진입점 ───────────────────────────────────────────────────────────
@@ -207,11 +231,18 @@ def generate(
     attempts = 1
     usage_total = dict(doc.get("_usage", {}))
 
-    while auto_repair and attempts <= MAX_REPAIRS and _needs_repair(reports):
+    while auto_repair and _needs_repair(reports):
+        law_dirty = bool(_hard_issues(reports))
+        # 의료법 문제는 점수 문제보다 더 오래 물고 늘어진다.
+        limit = MAX_LAW_RETRIES if law_dirty else MAX_REPAIRS
+        if attempts > limit:
+            break
+
         logger.info(
-            "자동 교정 %d회차 (위반 %d건 / 점수 %d)",
+            "자동 교정 %d회차 (위반 %d건 / 필수누락 %d건 / 점수 %d)",
             attempts,
             reports["law"]["block_count"],
+            len(reports["law"]["missing_required"]),
             reports["seo"]["scores"]["total"],
         )
         messages = messages + [
@@ -220,22 +251,38 @@ def generate(
                 ensure_ascii=False,
             )},
             {"role": "user", "content": prompts.repair_prompt(
-                doc, reports["law"], reports["seo"]
+                doc, reports["law"], reports["seo"], reports["positioning"]
             )},
         ]
         repaired = _call(messages)
         repaired = _normalize(repaired, category, primary_keyword)
         new_reports = evaluate(repaired)
 
-        # 교정 결과가 더 나쁘면 되돌린다.
-        better = (
-            new_reports["law"]["block_count"] <= reports["law"]["block_count"]
-            and new_reports["seo"]["scores"]["total"] >= reports["seo"]["scores"]["total"]
-        )
         for k, v in repaired.get("_usage", {}).items():
             usage_total[k] = usage_total.get(k, 0) + v
 
+        old_law = _hard_issues(reports)
+        new_law = _hard_issues(new_reports)
+
+        if law_dirty:
+            # 의료법을 고치는 중에는 위반 건수만 본다.
+            # 점수가 조금 내려가도 위반이 줄면 그쪽이 낫다.
+            better = new_law < old_law or (
+                new_law == 0
+                and new_reports["seo"]["scores"]["total"]
+                >= reports["seo"]["scores"]["total"] - 5
+            )
+        else:
+            better = (
+                new_law <= old_law
+                and new_reports["seo"]["scores"]["total"]
+                >= reports["seo"]["scores"]["total"]
+            )
+
         if better:
+            doc, reports = repaired, new_reports
+        elif new_law < old_law:
+            # 점수는 나빠졌지만 위반이 줄었다면 그래도 채택한다.
             doc, reports = repaired, new_reports
         else:
             logger.info("교정 결과가 개선되지 않아 이전 버전을 유지합니다.")
@@ -245,6 +292,34 @@ def generate(
     doc["_usage"] = usage_total
     doc["_attempts"] = attempts
     return {"doc": doc, "reports": reports}
+
+
+def generate_from_title(title: str, auto_repair: bool = True) -> dict:
+    """제목 하나로 글을 만든다. 카테고리·주키워드는 제목에서 추론한다."""
+    from content import title_parser
+
+    parsed = title_parser.parse(title)
+
+    notes = [
+        f"주어진 제목을 그대로 쓰지 말고, 이 주제를 다루되 h1은 SEO 규칙"
+        f"(주키워드 '{parsed['primary_keyword']}'와 지역명 포함, 25~60자)에 맞게 다듬으십시오.",
+        f"원래 제목: {parsed['title']}",
+    ]
+    if not parsed["has_region"]:
+        notes.append(
+            "제목에 지역 신호가 없습니다. h1과 본문에 '송도' 또는 '인천'을 "
+            "자연스럽게 넣어 지역 검색에 걸리게 하십시오."
+        )
+
+    result = generate(
+        category=parsed["category"],
+        primary_keyword=parsed["primary_keyword"],
+        topic=parsed["topic"],
+        extra_notes="\n".join(notes),
+        auto_repair=auto_repair,
+    )
+    result["parsed"] = parsed
+    return result
 
 
 def estimate_cost(usage: dict) -> float:

@@ -10,6 +10,7 @@
   python main.py write        # 콘텐츠 1편 생성 (CLI)
   python main.py inspect-cms  # CMS 글쓰기 폼 분석 → 셀렉터 매핑 생성 (최초 1회)
   python main.py publish <id> # 생성한 글을 CMS에 업로드 (기본: 연습 실행)
+  python main.py auto "제목"  # 제목만 넣으면 생성→검사→썸네일→업로드까지 한 번에
 """
 
 import sys
@@ -99,6 +100,70 @@ def cmd_write():
         print(f"    [{f['severity']}] \"{f['matched']}\" - {f['reason']}")
     print(f"\n  저장 완료 (id={post_id}). 본문은 대시보드에서 확인하세요:")
     print("    python main.py content  →  http://localhost:5001/post/%d" % post_id)
+
+
+def cmd_auto():
+    """제목만 넣으면 원고 생성부터 CMS 업로드까지 한 번에 처리한다.
+
+      python main.py auto "송도 발톱무좀 병원 선택 기준"
+      python main.py auto titles.txt          # 한 줄에 제목 하나씩
+      python main.py auto "제목" --draft      # 업로드 없이 원고만
+      python main.py auto "제목" --hidden     # 미노출로 업로드
+      python main.py auto "제목" --dry        # 폼만 채우고 저장 안 함
+    """
+    import os
+
+    import pipeline
+
+    args = [a for a in sys.argv[2:] if not a.startswith("--")]
+    flags = {a for a in sys.argv[2:] if a.startswith("--")}
+
+    if not args:
+        print(cmd_auto.__doc__)
+        return
+
+    # 파일이면 한 줄에 제목 하나씩 읽는다.
+    if len(args) == 1 and os.path.isfile(args[0]):
+        with open(args[0], encoding="utf-8") as fp:
+            titles = [ln.strip() for ln in fp if ln.strip() and not ln.startswith("#")]
+        print(f"{args[0]}에서 제목 {len(titles)}개를 읽었습니다.")
+    else:
+        titles = [" ".join(args)] if len(args) > 1 else [args[0]]
+
+    upload = "--draft" not in flags
+    expose = "--hidden" not in flags
+    dry_run = "--dry" in flags
+
+    mode = (
+        "원고만 생성 (업로드 없음)"
+        if not upload
+        else ("연습 실행 (저장 안 함)" if dry_run else ("노출 업로드" if expose else "미노출 업로드"))
+    )
+    print(f"모드: {mode} · 대상 {len(titles)}편\n")
+
+    if upload and not dry_run and expose:
+        print("생성한 글이 검사를 통과하면 블로그에 바로 공개됩니다.")
+        if input("계속하려면 'yes' 입력: ").strip().lower() != "yes":
+            print("취소했습니다.")
+            return
+        print()
+
+    outcomes = pipeline.run_many(
+        titles, upload=upload, expose=expose, dry_run=dry_run
+    )
+
+    print("\n===== 결과 =====")
+    for outcome in outcomes:
+        print(pipeline.format_outcome(outcome))
+        print()
+    print(pipeline.summarize(outcomes))
+
+    blocked = [o for o in outcomes if o.get("blocked")]
+    if blocked:
+        print("\n의료법 검사를 통과하지 못한 글은 업로드하지 않았습니다.")
+        print("웹 UI에서 지적 내용을 확인하고 수정하세요:")
+        for o in blocked:
+            print(f"  http://localhost:5001/post/{o.get('post_id')}")
 
 
 def cmd_inspect_cms():
@@ -216,6 +281,7 @@ COMMANDS = {
     "all": cmd_all,
     "content": cmd_content,
     "write": cmd_write,
+    "auto": cmd_auto,
     "inspect-cms": cmd_inspect_cms,
     "publish": cmd_publish,
 }

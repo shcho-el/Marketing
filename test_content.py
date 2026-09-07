@@ -207,6 +207,28 @@ def main() -> int:
     for f in law["findings"]:
         print(f"      [{f['severity']}] \"{f['matched']}\" — {f['reason']}")
 
+    print("\n[2-1] 포지셔닝 검사")
+    from content import positioning
+
+    pos = positioning.review(generator._full_text(doc))
+    failures += not check("미시행 시술 언급 없음", pos["passed"], pos["summary"])
+    for f in pos["findings"]:
+        print(f"      [{f['severity']}] \"{f['matched']}\" — {f['reason']}")
+
+    # 문맥 판별 - 본원이 안 한다고 쓴 문장은 잡히면 안 된다
+    failures += not check(
+        "'뽑지 않고 교정' 문맥 통과",
+        positioning.review("본원은 발톱을 뽑지 않고 교정합니다.")["passed"],
+    )
+    failures += not check(
+        "'외과 진료 필요' 안내 통과",
+        positioning.review("절개가 필요한 경우 외과 진료가 필요할 수 있습니다.")["passed"],
+    )
+    failures += not check(
+        "본원이 절개한다고 쓰면 차단",
+        not positioning.review("본원에서 내성발톱 절개를 시행합니다.")["passed"],
+    )
+
     print("\n[3] SEO / AEO / GEO 채점")
     audit = seo.audit(doc, doc["primary_keyword"])
     s = audit["scores"]
@@ -243,7 +265,7 @@ def main() -> int:
     content_app.app.config["TESTING"] = True
     client = content_app.app.test_client()
 
-    post_id = store.save(doc, {"law": law, "seo": audit}, "테스트 주제")
+    post_id = store.save(doc, {"law": law, "positioning": pos, "seo": audit}, "테스트 주제")
     for path, label in [
         ("/", "생성 폼"),
         (f"/post/{post_id}", "결과 화면"),

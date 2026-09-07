@@ -204,6 +204,17 @@ def check_publishable(reports: dict, allow_violations: bool = False) -> None:
             f"필수 기재 사항이 빠져 업로드를 중단했습니다: {labels}"
         )
 
+    pos = reports.get("positioning", {})
+    if pos.get("block_count"):
+        matched = ", ".join(
+            f'"{f["matched"]}"' for f in pos.get("findings", [])
+            if f.get("severity") == "block"
+        )
+        raise ComplianceBlocked(
+            f"본원에서 시행하지 않는 시술이 언급되어 업로드를 중단했습니다: {matched}\n"
+            "허위광고에 해당할 수 있습니다. 원고를 수정한 뒤 다시 시도하세요."
+        )
+
 
 def publish(
     doc: dict,

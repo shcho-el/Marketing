@@ -5,68 +5,45 @@
 모니터링 중인 키워드로 글을 만들면 순위 대시보드에서 바로 성과를 추적할 수 있습니다.
 """
 
-from content import clinic
+from content import clinic, services
+
+_SVC = services.current()
+
+
+def _cms_categories() -> list:
+    """CMS에서 읽어 온 실제 카테고리 목록이 있으면 그것을 쓴다.
+
+    inspect-cms가 만든 매핑에 카테고리 드롭다운 값이 담겨 있습니다.
+    실물과 어긋난 카테고리로 생성하면 업로드 단계에서 실패하므로
+    있으면 실물을 우선합니다.
+    """
+    try:
+        import json
+        import os
+
+        path = os.getenv("CMS_MAPPING_PATH", "cms_mapping.json")
+        if not os.path.exists(path):
+            return []
+        with open(path, encoding="utf-8") as fp:
+            mapping = json.load(fp)
+        options = (mapping.get("_notes", {}).get("category", {}) or {}).get("options", [])
+        return [o for o in options if o and o.strip()]
+    except Exception:
+        return []
+
 
 # CMS '카테고리' 드롭다운과 동일한 값이어야 합니다.
-CATEGORIES = [
-    "발톱무좀치료",
-    "내성발톱치료",
-    "문제성발톱",
-    "발톱관리",
-]
+# inspect-cms를 돌렸다면 실제 CMS 목록으로 자동 대체됩니다.
+CATEGORIES = _cms_categories() or list(_SVC["categories"])
 
 # 카테고리별 대표 키워드(주키워드 후보). 지역명 조합은 build_keyword_set()이 만듭니다.
-CORE_KEYWORDS = {
-    "발톱무좀치료": [
-        "발톱무좀",
-        "발톱무좀치료",
-        "발톱무좀병원",
-        "발톱무좀레이저",
-        "조갑진균증",
-        "두꺼워진발톱",
-    ],
-    "내성발톱치료": [
-        "내성발톱",
-        "내성발톱치료",
-        "내성발톱병원",
-        "발톱이살을파고들때",
-        "함입조갑",
-    ],
-    "문제성발톱": [
-        "문제성발톱",
-        "문제성발톱병원",
-        "발톱변형",
-        "발톱변색",
-    ],
-    "발톱관리": [
-        "발톱관리",
-        "발톱깎는법",
-        "무좀재발방지",
-    ],
-}
+CORE_KEYWORDS = _SVC["core_keywords"]
 
 # 지역 수식어 - 로컬 SEO 조합용
 LOCAL_MODIFIERS = ["송도", "인천", "연수구", "인천송도"]
 
 # 해시태그 고정 풀. 생성기가 여기서 고르고, 본문 주제어 몇 개를 더합니다.
-HASHTAG_POOL = [
-    "#송도발톱무좀",
-    "#인천발톱무좀",
-    "#연수구발톱무좀",
-    "#송도동무좀치료",
-    "#인천논현동발톱무좀",
-    "#배곧발톱무좀",
-    "#송도내성발톱",
-    "#인천내성발톱",
-    "#문제성발톱",
-    "#문제성발톱병원",
-    "#인천문제성발톱",
-    "#송도문제성발톱",
-    "#발톱무좀레이저",
-    "#두꺼워진발톱",
-    "#조갑진균증",
-    "#발톱무좀병원",
-]
+HASHTAG_POOL = _SVC["hashtags"]
 
 
 def build_keyword_set(category: str, primary: str) -> dict:

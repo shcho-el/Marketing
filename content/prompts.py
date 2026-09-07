@@ -6,7 +6,7 @@
 그래야 CMS 필드 매핑·의료법 검사·JSON-LD 생성이 기계적으로 이어집니다.
 """
 
-from content import clinic, medical_law, seo, slug, taxonomy
+from content import clinic, medical_law, positioning, seo, slug, taxonomy
 
 
 # ── 출력 JSON 스키마 ─────────────────────────────────────────────────
@@ -193,6 +193,9 @@ SYSTEM = f"""당신은 {clinic.FULL_NAME}의 콘텐츠 에디터입니다.
 
 {clinic.facts_block()}
 
+## 본원 포지셔닝 (반드시 지킬 것)
+{positioning.rules_for_prompt()}
+
 ## 의료법 준수
 {medical_law.rules_for_prompt()}
 
@@ -284,7 +287,8 @@ def build_user_prompt(
     return "\n".join(lines)
 
 
-def repair_prompt(doc: dict, law_report: dict, seo_report: dict) -> str:
+def repair_prompt(doc: dict, law_report: dict, seo_report: dict,
+                  positioning_report: dict = None) -> str:
     """1차 결과의 문제점을 고치도록 재요청하는 프롬프트."""
     lines = ["직전에 작성한 글에서 아래 문제가 발견되었습니다. 해당 부분만 고쳐 다시 출력하십시오.", ""]
 
@@ -295,6 +299,16 @@ def repair_prompt(doc: dict, law_report: dict, seo_report: dict) -> str:
                 continue
             lines.append(
                 f"  - \"{f['matched']}\" ({f['article']}): {f['reason']} → {f['suggestion']}"
+            )
+        lines.append("")
+
+    pos = positioning_report or {}
+    if pos.get("findings"):
+        lines.append("■ 본원 포지셔닝 (반드시 수정)")
+        for f in pos["findings"]:
+            tag = "허위광고 소지" if f["severity"] == "block" else "표현 정리"
+            lines.append(
+                f"  - [{tag}] \"{f['matched']}\": {f['reason']} → {f['suggestion']}"
             )
         lines.append("")
 

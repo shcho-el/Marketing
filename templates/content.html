@@ -137,6 +137,17 @@
     .hidden { display: none; }
     .muted { color: var(--muted); font-size: 0.83rem; }
     .row-actions { display: flex; gap: 8px; align-items: center; }
+    .oneshot { border-left: 3px solid var(--primary); }
+    .outcome {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 16px; margin-bottom: 12px;
+    }
+    .outcome.blocked { background: #fff5f5; border-color: #f5c2c7; }
+    .outcome.done { background: #f6fdf8; border-color: #badbcc; }
+    .outcome-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .outcome p { margin: 2px 0; }
+    .outcome .err { color: var(--bad); font-size: 0.85rem; margin-top: 6px; }
+    #titlePreview div { margin-top: 3px; }
     .thumb-block { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; }
     .thumb-preview {
       width: 440px; max-width: 100%; border-radius: 8px;
@@ -178,8 +189,48 @@
 
 {# ─────────────── 생성 폼 ─────────────── #}
 {% if view == 'form' %}
+<div class="card oneshot">
+  <h2>제목만 넣고 한 번에</h2>
+  <p class="hint" style="margin-bottom:12px">
+    제목에서 카테고리와 주키워드를 자동으로 잡고, 원고 생성 → 의료법 검사 →
+    썸네일 → CMS 업로드까지 진행합니다.
+    <strong>의료법 검사를 통과하지 못하면 업로드하지 않습니다.</strong>
+  </p>
+
+  <form method="post" action="{{ url_for('auto') }}" onsubmit="return confirmAuto(this)">
+    <div class="field">
+      <label for="titles">제목 (한 줄에 하나씩, 여러 편 가능)</label>
+      <textarea name="titles" id="titles" rows="4" oninput="previewTitles()"
+                placeholder="송도 발톱무좀 병원 선택 기준&#10;발톱이 살을 파고들 때 내성발톱 치료 과정"></textarea>
+      <div id="titlePreview" class="hint"></div>
+    </div>
+
+    <div class="field">
+      <label>
+        <input type="checkbox" name="upload" id="autoUpload" checked style="width:auto"
+               onchange="syncExpose()" />
+        CMS에 업로드까지 진행
+      </label>
+      <label style="margin-top:6px">
+        <input type="checkbox" name="expose" id="autoExpose" checked style="width:auto" />
+        <strong>노출</strong> 상태로 저장 — 검사를 통과하면 블로그에 바로 공개됩니다
+      </label>
+    </div>
+
+    {% if not cms.ready %}
+    <div class="alert warn" style="margin-bottom:12px">
+      업로드 설정이 끝나지 않았습니다: {{ cms.problems | join(', ') }}<br />
+      <span class="muted">'CMS에 업로드까지 진행'을 해제하면 원고만 생성합니다.</span>
+    </div>
+    {% endif %}
+
+    <button type="submit">생성하고 올리기</button>
+    <span class="hint" style="margin-left:10px">1편당 1~3분 (검사 미통과 시 재작성 포함)</span>
+  </form>
+</div>
+
 <div class="card">
-  <h2>새 글 생성</h2>
+  <h2>항목을 직접 지정해서 생성</h2>
   <form method="post" action="{{ url_for('generate') }}">
     <div class="grid2">
       <div class="field">
@@ -276,6 +327,44 @@
 </div>
 
 <script>
+  let previewTimer = null;
+  function previewTitles() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(async () => {
+      const lines = document.getElementById('titles').value
+        .split('\n').map(s => s.trim()).filter(Boolean);
+      const box = document.getElementById('titlePreview');
+      if (!lines.length) { box.innerHTML = ''; return; }
+      const rows = await Promise.all(lines.slice(0, 10).map(async t => {
+        try {
+          const r = await fetch('/api/preview-title?title=' + encodeURIComponent(t));
+          const d = await r.json();
+          return d.error ? `<div>⚠️ ${t} — ${d.error}</div>`
+                         : `<div>· ${t} → <strong>${d.summary}</strong></div>`;
+        } catch (e) { return ''; }
+      }));
+      box.innerHTML = rows.join('');
+    }, 350);
+  }
+
+  function syncExpose() {
+    const up = document.getElementById('autoUpload');
+    const ex = document.getElementById('autoExpose');
+    ex.disabled = !up.checked;
+    if (!up.checked) ex.checked = false;
+  }
+
+  function confirmAuto(form) {
+    const n = form.titles.value.split('\n').map(s => s.trim()).filter(Boolean).length;
+    if (!n) return false;
+    if (!form.upload.checked) return true;
+    let msg = `${n}편을 생성해 CMS에 올립니다.`;
+    msg += form.expose.checked
+      ? '\n\n⚠️ 검사를 통과한 글은 블로그에 바로 공개됩니다.'
+      : '\n미노출로 저장되며 공개는 CMS에서 직접 바꿉니다.';
+    return confirm(msg + '\n\n계속할까요?');
+  }
+
   const CORE = {{ core_keywords | tojson }};
   function fillKeywords() {
     const cat = document.getElementById('category').value;
@@ -318,6 +407,13 @@
       <div class="n">{{ '통과' if law.passed else law.block_count }}</div>
       <div class="l">의료법 검사</div>
     </div>
+    {% set pos = reports.positioning %}
+    {% if pos %}
+    <div class="score {{ 's-ok' if pos.passed and not pos.warn_count else ('s-bad' if not pos.passed else 's-warn') }}">
+      <div class="n">{{ '통과' if pos.passed and not pos.warn_count else (pos.block_count or pos.warn_count) }}</div>
+      <div class="l">포지셔닝</div>
+    </div>
+    {% endif %}
   </div>
   <p class="hint" style="margin-top:10px">
     판정: {{ reports.seo.grade }} · {{ law.summary }}
@@ -325,6 +421,25 @@
     {% if cost %} · 생성 비용 약 ${{ cost }}{% endif %}
   </p>
 </div>
+
+{% if reports.positioning and reports.positioning.findings %}
+<div class="card">
+  <h2>포지셔닝 점검 — {{ reports.positioning.summary }}</h2>
+  <p class="hint" style="margin-bottom:12px">
+    본원이 시행하지 않는 시술을 언급하면 허위광고가 됩니다(업로드 차단).
+    지양 표현은 법 위반은 아니지만 치료 의원의 포지셔닝을 흐립니다.
+  </p>
+  {% for f in reports.positioning.findings %}
+  <div class="finding {{ f.severity }}">
+    <div><span class="pill {{ f.severity }}">{{ f.kind }}</span>
+      <span class="m">&nbsp;“{{ f.matched }}”</span></div>
+    <div class="c">{{ f.context }}</div>
+    <div class="c">{{ f.reason }}</div>
+    <div class="s">→ {{ f.suggestion }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if not law.passed %}
 <div class="card">
@@ -384,9 +499,14 @@
   </p>
   {% endif %}
 
-  {% if not law.passed %}
+  {% set gate_ok = law.passed and (not reports.positioning or reports.positioning.passed) %}
+  {% if not gate_ok %}
   <div class="alert bad">
-    의료법 검사를 통과하지 못해 업로드가 차단됩니다. 원고를 수정한 뒤 다시 시도하세요.
+    검사를 통과하지 못해 업로드가 차단됩니다.
+    {% if not law.passed %}의료법 위반{% endif %}
+    {% if reports.positioning and not reports.positioning.passed %}
+      {% if not law.passed %} · {% endif %}본원 미시행 시술 언급{% endif %}
+    — 원고를 수정한 뒤 다시 시도하세요.
   </div>
   {% endif %}
 
@@ -434,7 +554,7 @@
         <strong>노출</strong> 상태로 저장 — 해제하면 미노출로 올라갑니다 (권장)
       </label>
     </div>
-    <button type="submit" {{ 'disabled' if not cms.ready or not law.passed }}>
+    <button type="submit" {{ 'disabled' if not cms.ready or not gate_ok }}>
       CMS에 업로드
     </button>
     <span class="hint" style="margin-left:10px">
@@ -543,6 +663,80 @@
     });
   }
 </script>
+{% endif %}
+
+{# ─────────────── 한 번에 처리 결과 ─────────────── #}
+{% if view == 'auto_result' %}
+<div class="card">
+  <h2>처리 결과</h2>
+  <div class="alert {{ 'ok' if '차단' not in summary and '실패' not in summary else 'warn' }}">
+    {{ summary }}
+  </div>
+
+  {% for o in outcomes %}
+  <div class="outcome {{ 'blocked' if o.blocked else ('done' if o.exposed else 'partial') }}">
+    <div class="outcome-head">
+      <span class="pill {{ 'block' if o.blocked else ('pass' if o.exposed else 'warn') }}">
+        {% if o.blocked %}업로드 차단
+        {% elif o.exposed %}노출 완료
+        {% elif o.uploaded %}미노출 저장
+        {% elif o.error %}실패
+        {% else %}원고 생성{% endif %}
+      </span>
+      <strong>{{ o.h1 or o.title }}</strong>
+    </div>
+
+    {% if o.parsed %}
+    <p class="muted">입력한 제목: {{ o.title }}</p>
+    <p class="muted">카테고리 {{ o.parsed.category }} · 주키워드 {{ o.parsed.primary_keyword }}</p>
+    {% endif %}
+
+    {% if o.scores %}
+    <p class="muted">
+      SEO {{ o.scores.seo }} · AEO {{ o.scores.aeo }} · GEO {{ o.scores.geo }}
+      → 종합 {{ o.scores.total }}
+      {% if o.attempts and o.attempts > 1 %} · 자동 교정 {{ o.attempts - 1 }}회{% endif %}
+      · {{ o.elapsed }}초 · 약 ${{ o.cost }}
+    </p>
+    {% endif %}
+
+    {% if o.law %}
+    <p class="muted">의료법: {{ o.law.summary }}</p>
+    {% for f in o.law.findings %}{% if f.severity == 'block' %}
+    <div class="finding block">
+      <span class="pill block">{{ f.article }}</span>
+      <span class="m">&nbsp;“{{ f.matched }}”</span>
+      <div class="s">→ {{ f.suggestion }}</div>
+    </div>
+    {% endif %}{% endfor %}
+    {% endif %}
+
+    {% if o.positioning and o.positioning.findings %}
+    <p class="muted">포지셔닝: {{ o.positioning.summary }}</p>
+    {% for f in o.positioning.findings %}{% if f.severity == 'block' %}
+    <div class="finding block">
+      <span class="pill block">{{ f.kind }}</span>
+      <span class="m">&nbsp;“{{ f.matched }}”</span>
+      <div class="s">→ {{ f.suggestion }}</div>
+    </div>
+    {% endif %}{% endfor %}
+    {% endif %}
+
+    {% if o.error %}<p class="err">{{ o.error }}</p>{% endif %}
+    {% if o.post_url %}<p class="muted">포스트URL: {{ o.post_url }}</p>{% endif %}
+
+    {% if o.post_id %}
+    <a href="{{ url_for('post_detail', post_id=o.post_id) }}">
+      <button type="button" class="ghost">원고 열기</button>
+    </a>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <p style="margin-top:16px">
+    <a href="{{ url_for('index') }}"><button type="button" class="ghost">새로 만들기</button></a>
+  </p>
+</div>
 {% endif %}
 
 {# ─────────────── 원고 검사 ─────────────── #}

@@ -421,17 +421,31 @@ def main() -> int:
     print("\n[3] 업로드 절차와 안전장치")
     body_html = renderer.render_body(doc, include_schema=True)
 
+    _ok_pos = {"passed": True, "block_count": 0, "warn_count": 0, "findings": []}
     clean = {"law": {"passed": True, "block_count": 0, "warn_count": 0,
-                     "findings": [], "missing_required": []}}
+                     "findings": [], "missing_required": []},
+             "positioning": _ok_pos}
     dirty = {"law": {"passed": False, "block_count": 1, "warn_count": 0,
                      "findings": [{"severity": "block", "matched": "완치 보장"}],
-                     "missing_required": []}}
+                     "missing_required": []},
+             "positioning": _ok_pos}
     incomplete = {"law": {"passed": False, "block_count": 0, "warn_count": 0,
                           "findings": [],
-                          "missing_required": [{"label": "부작용 안내"}]}}
+                          "missing_required": [{"label": "부작용 안내"}]},
+                  "positioning": _ok_pos}
+    # 본원이 하지 않는 시술을 언급한 경우
+    off_brand = {"law": {"passed": True, "block_count": 0, "warn_count": 0,
+                         "findings": [], "missing_required": []},
+                 "positioning": {"passed": False, "block_count": 1, "warn_count": 0,
+                                 "findings": [{"severity": "block",
+                                               "matched": "내성발톱 절개"}]}}
 
     # 3-1. 의료법 위반이면 업로드 차단
-    for label, rep in (("위반 표현", dirty), ("필수 기재 누락", incomplete)):
+    for label, rep in (
+        ("위반 표현", dirty),
+        ("필수 기재 누락", incomplete),
+        ("미시행 시술 언급", off_brand),
+    ):
         try:
             cms.check_publishable(rep)
             failures += not check(f"{label} 시 차단", False, "차단되지 않음")

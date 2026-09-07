@@ -11,6 +11,8 @@ NAP(Name·Address·Phone) 일관성은 로컬 SEO와 GEO(생성형 검색 인용
 
 import os
 
+from content import services
+
 try:
     from dotenv import load_dotenv
 
@@ -23,7 +25,7 @@ except ImportError:
 # 정식 명칭. 본문 첫 등장 시 반드시 이 표기를 사용합니다.
 OFFICIAL_NAME = os.getenv("CLINIC_OFFICIAL_NAME", "오블리브 송도 호라이즌의원")
 # 클리닉(진료 브랜드) 명칭
-CLINIC_NAME = os.getenv("CLINIC_UNIT_NAME", "문제성발톱클리닉")
+CLINIC_NAME = os.getenv("CLINIC_UNIT_NAME", "") or services.current()["label"]
 # 본문에서 반복 사용할 짧은 호칭
 SHORT_NAME = os.getenv("CLINIC_SHORT_NAME", "오블리브의원")
 # 개체(Entity) 일관성을 위해 AI 검색이 학습할 정식 결합 표기
@@ -56,66 +58,24 @@ SERVICE_AREAS = [
 
 
 # ── 진료 범위 ────────────────────────────────────────────────────────
-# 본원이 실제로 진료하는 범위. 이 밖의 질환은 본문에서 다루지 않습니다.
-SCOPE = {
-    "primary": ["발톱무좀(조갑진균증)", "내성발톱(함입조갑)"],
-    "umbrella": "문제성발톱",
-    "related": ["두꺼워진 발톱(조갑비후)", "발톱 변색", "발톱 변형"],
-}
+# 진료 분야 카탈로그(content/services.py)에서 가져온다.
+# 새 분야를 추가하거나 진료 범위가 바뀌면 그 파일만 고치면 된다.
+_SVC = services.current()
 
-# 감별이 필요한 질환 - "무좀이 아닐 수도 있다"는 근거 있는 서술에 사용
-DIFFERENTIAL_DX = [
-    "조갑하 혈종",
-    "조갑 건선",
-    "단순 외상성 발톱 변형",
-    "편평태선",
-]
+SCOPE = _SVC["scope"]
+DIFFERENTIAL_DX = _SVC["differential"]
+
+# 본원에서 시행하지 않는 시술. 광고에 쓰면 허위광고가 된다.
+NOT_PERFORMED = _SVC["not_performed"]
+# 쓰지 않을 표현과 대체어 (치료 의원이지 관리숍이 아니다)
+AVOID_TERMS = _SVC["avoid_terms"]
 
 
 # ── 치료 프로세스 및 장비 ─────────────────────────────────────────────
-# 실제 보유·시행 항목만 기재. 생성기는 이 목록 밖의 장비를 언급할 수 없습니다.
-TREATMENT_STEPS = [
-    {
-        "name": "정밀 진단",
-        "detail": "발톱 두께·변색 범위·변형 정도와 기저질환을 확인해 무좀 외 원인"
-                  "(조갑하 혈종·건선 등)과 감별합니다.",
-    },
-    {
-        "name": "프리컨디셔닝",
-        "detail": "발톱 치료사가 두꺼워진 발톱 층을 정리해 레이저 에너지와 국소 도포제가"
-                  "발톱 아래 병변까지 도달할 통로를 확보하는 과정입니다.",
-    },
-    {
-        "name": "레이저 치료",
-        "detail": "단단한 발톱 조직을 투과해 진균이 서식하는 심부에 에너지를 전달합니다.",
-    },
-    {
-        "name": "복합 치료 플랜",
-        "detail": "진행 단계(1기~5기)와 기저질환에 따라 국소 도포제·경구 항진균제·레이저를"
-                  "조합한 개인별 계획을 세웁니다.",
-    },
-    {
-        "name": "경과 추적",
-        "detail": "새 발톱이 자라 나오는 속도에 맞춰 주기적으로 상태를 재평가합니다.",
-    },
-]
-
-# 보유 장비 - 명칭을 임의로 바꾸거나 추가하지 않습니다.
-DEVICES = [
-    {"name": "오니코", "type": "비가열성"},
-    {"name": "AF", "type": "비가열성"},
-    {"name": "아톰", "type": "비가열성"},
-    {"name": "클라레 다이오드", "type": "가열성"},
-]
-
-# 본원이 내세울 수 있는 차별점. 최상급 표현 없이 사실 서술만 남깁니다.
-DIFFERENTIATORS = [
-    "발톱 두께와 진행 단계를 확인한 뒤 진행하는 1:1 맞춤 치료 계획",
-    "비가열성·가열성 레이저를 상태에 따라 선택 적용",
-    "프리컨디셔닝으로 약물·레이저의 침투 경로를 먼저 확보",
-    "교차 감염을 고려한 기구 소독·멸균 절차",
-    "독립된 문제성발톱 전용 진료 공간",
-]
+# 실제 보유·시행 항목만. 생성기는 이 목록 밖의 장비를 언급할 수 없다.
+TREATMENT_STEPS = _SVC["steps"]
+DEVICES = _SVC["devices"]
+DIFFERENTIATORS = _SVC["strengths"]
 
 
 # ── 의료법 필수 고지 ──────────────────────────────────────────────────
@@ -123,17 +83,7 @@ DIFFERENTIATORS = [
 # 부작용 등 중요정보를 반드시 함께 기재해야 합니다. 모든 글 하단에 삽입됩니다.
 MANDATORY_NOTICE = {
     "heading": "시술 전 반드시 확인해 주세요",
-    "items": [
-        "가열성 레이저 시술 시 개인의 민감도에 따라 일시적인 열감, 화끈거림, "
-        "홍반 등이 나타날 수 있습니다.",
-        "진균 감염 정도와 발톱 성장 속도에 따라 치료 기간과 경과에는 개인차가 있습니다.",
-        "경구 항진균제는 간 기능 이상, 위장 장애, 약물 상호작용 등이 보고되어 있어 "
-        "복용 전 의료진 상담과 필요 시 혈액검사가 권장됩니다.",
-        "시술 후에는 발을 건조하게 유지하고, 재감염 방지를 위해 신발·양말을 "
-        "소독하거나 교체하는 것이 권장됩니다.",
-        "본 내용은 의학 정보 제공을 목적으로 하며 특정 치료 효과를 보장하지 않습니다. "
-        "정확한 진단과 치료 방법은 의료진 진료를 통해 결정됩니다.",
-    ],
+    "items": _SVC["notice"],
 }
 
 # 광고심의 관련 표기 (심의번호를 받은 경우 .env에 넣으면 하단에 자동 표기)
@@ -203,6 +153,14 @@ def facts_block() -> str:
     location = " ".join(
         p for p in (ADDRESS_REGION, ADDRESS_LOCALITY, ADDRESS_STREET) if p
     )
+    not_performed = "\n".join(
+        f"  - {', '.join(n['terms'])}: {n['reason']} → {n['instead']}"
+        for n in NOT_PERFORMED
+    )
+    avoid = "\n".join(
+        f"  - {', '.join(a['terms'])}: {a['reason']} → {a['instead']}"
+        for a in AVOID_TERMS
+    )
     return f"""[기관]
   정식명칭: {OFFICIAL_NAME}
   클리닉: {CLINIC_NAME}
@@ -224,6 +182,12 @@ def facts_block() -> str:
 
 [사실 기반 차별점]
 {diffs}
+
+[본원에서 시행하지 않는 시술 - 본원이 하는 것처럼 쓰면 허위광고]
+{not_performed}
+
+[쓰지 않을 표현]
+{avoid}
 
 [인용 가능한 근거 기관]
 {sources}
