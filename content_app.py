@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-콘텐츠 자동 생성 웹앱.
+콘텐츠 콘솔 — 사내 PC에서 띄워 여럿이 함께 쓰는 웹앱.
 
-  python main.py content        → http://localhost:5001
+  python main.py content      또는  serve.bat / ./serve.sh
 
-화면
-  /                생성 폼 + 생성 이력
-  /post/<id>       생성 결과 (CMS 필드 · 본문 HTML · 점수 · 의료법 리포트 · JSON-LD)
-  /lint            기존 원고 붙여넣기 검사 (생성 없이 의료법·표현만 점검)
+설계
+  · Claude API 키와 CMS 로그인 정보는 서버(.env)에만 있고 브라우저로 내려가지
+    않습니다. 생성·업로드는 전부 서버가 수행합니다.
+  · 의료법·포지셔닝·SEO 규칙은 content/ 모듈 하나만 씁니다.
+    화면은 결과를 받아 그리기만 하므로 규칙이 두 곳으로 갈라지지 않습니다.
+  · 사내망에 열어 두므로 비밀번호를 걸 수 있습니다(APP_PASSWORD).
 """
 
 import logging
 import os
+import secrets
+import socket
+from functools import wraps
 
 from flask import (
     Flask,
@@ -21,6 +26,7 @@ from flask import (
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 
@@ -29,6 +35,7 @@ from content import (
     clinic,
     generator,
     medical_law,
+    positioning,
     renderer,
     schema,
     seo,
@@ -43,175 +50,211 @@ from publisher import thumbnail as cms_thumbnail
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+# 세션 서명 키. 지정하지 않으면 매 기동마다 새로 만들어 로그인만 풀린다.
+app.secret_key = os.getenv("APP_SECRET", "") or secrets.token_hex(16)
 
-CONTENT_HOST = os.getenv("CONTENT_HOST", "0.0.0.0")
-CONTENT_PORT = int(os.getenv("CONTENT_PORT", "5001"))
+HOST = os.getenv("CONTENT_HOST", "0.0.0.0")
+PORT = int(os.getenv("CONTENT_PORT", "5001"))
+PASSWORD = os.getenv("APP_PASSWORD", "")
 
 
-def _base_context() -> dict:
+# ── 접근 제어 ────────────────────────────────────────────────────────
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if PASSWORD and not session.get("ok"):
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "로그인이 필요합니다."}), 401
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not PASSWORD:
+        return redirect(url_for("index"))
+    error = ""
+    if request.method == "POST":
+        if secrets.compare_digest(request.form.get("password", ""), PASSWORD):
+            session["ok"] = True
+            session.permanent = True
+            return redirect(request.args.get("next") or url_for("index"))
+        error = "비밀번호가 맞지 않습니다."
+    page = render_template("login.html", clinic=clinic.FULL_NAME, error=error)
+    return (page, 401) if error else page
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login") if PASSWORD else url_for("index"))
+
+
+# ── 뷰 모델 ──────────────────────────────────────────────────────────
+def lan_url() -> str:
+    """같은 네트워크의 다른 PC가 접속할 주소."""
+    ip = "127.0.0.1"
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(0.2)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+    except Exception:
+        pass
+    return f"http://{ip}:{PORT}"
+
+
+def _cms_field_rows(doc: dict) -> list:
+    limits = {"MetaTitle": seo.META_TITLE_MAX, "MetaDescription": seo.META_DESC_MAX}
+    rows = []
+    for key, value in renderer.cms_fields(doc).items():
+        row = {"key": key, "value": value}
+        if key in limits:
+            row["len"] = len(value)
+            row["max"] = limits[key]
+        elif key == "제목(H1)":
+            row["len"] = len(value)
+        rows.append(row)
+    return rows
+
+
+def view_model(doc: dict, reports: dict, post_id=None, is_sample=False) -> dict:
     return {
-        "clinic_name": clinic.FULL_NAME,
-        "categories": taxonomy.CATEGORIES,
-        "core_keywords": taxonomy.CORE_KEYWORDS,
-        "nap": clinic.nap_completeness(),
+        "post_id": post_id,
+        "is_sample": is_sample,
+        "doc": doc,
+        "reports": reports,
+        "cms_fields": _cms_field_rows(doc),
+        "body_html": renderer.render_body(doc, include_schema=False),
+        "plaintext": renderer.render_plaintext(doc),
+        "jsonld": schema.to_script_tag(doc),
+        "logo": cms_thumbnail.logo_status(),
         "cms": cms_config.status(),
     }
 
 
-def _form_view(**extra):
-    return render_template(
-        "content.html",
-        view="form",
-        posts=store.list_posts(30),
-        used=store.used_keywords(),
-        **_base_context(),
-        **extra,
-    )
+def sample_view() -> dict:
+    """화면이 빈 껍데기로 열리지 않도록, 가장 최근 글이나 예시를 보여 준다."""
+    rows = store.list_posts(1)
+    if rows:
+        rec = store.get(rows[0]["id"])
+        if rec:
+            return view_model(rec["doc"], rec["reports"], rec["id"])
+
+    from test_content import FIXTURE
+
+    doc = generator._normalize(dict(FIXTURE), FIXTURE["category"], FIXTURE["primary_keyword"])
+    text = generator._full_text(doc)
+    reports = {
+        "law": medical_law.review(text),
+        "positioning": positioning.review(text),
+        "seo": seo.audit(doc, doc["primary_keyword"]),
+    }
+    return view_model(doc, reports, None, is_sample=True)
 
 
+# ── 화면 ─────────────────────────────────────────────────────────────
 @app.route("/")
+@login_required
 def index():
-    return _form_view()
-
-
-@app.route("/auto", methods=["POST"])
-def auto():
-    """제목만 받아 생성부터 업로드까지 한 번에 처리한다."""
-    raw = (request.form.get("titles") or "").strip()
-    titles = [ln.strip() for ln in raw.splitlines() if ln.strip()]
-    if not titles:
-        return _form_view(error="제목을 한 줄에 하나씩 입력하세요."), 400
-
-    upload = request.form.get("upload") == "on"
-    expose = request.form.get("expose") == "on"
-
-    if upload and not cms_config.status()["ready"]:
-        return _form_view(
-            error="CMS 업로드 설정이 끝나지 않았습니다. "
-                  "터미널에서 python main.py inspect-cms 를 먼저 실행하세요."
-        ), 400
-
-    outcomes = pipeline.run_many(titles, upload=upload, expose=expose, dry_run=False)
     return render_template(
-        "content.html",
-        view="auto_result",
-        outcomes=outcomes,
-        summary=pipeline.summarize(outcomes),
-        **_base_context(),
-    )
-
-
-@app.route("/api/preview-title")
-def api_preview_title():
-    """제목을 어떻게 해석했는지 미리 보여 준다(생성 전 확인용)."""
-    title = request.args.get("title", "").strip()
-    if not title:
-        return jsonify({"error": "title 파라미터가 필요합니다."}), 400
-    try:
-        parsed = title_parser.parse(title)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
-    return jsonify({**parsed, "summary": title_parser.describe(parsed)})
-
-
-@app.route("/generate", methods=["POST"])
-def generate():
-    form = request.form
-    category = (form.get("category") or "").strip()
-    primary = (form.get("primary_keyword") or "").strip()
-    topic = (form.get("topic") or "").strip()
-
-    if not category or not primary or not topic:
-        return _form_view(error="카테고리·주키워드·주제는 필수입니다."), 400
-
-    try:
-        result = generator.generate(
-            category=category,
-            primary_keyword=primary,
-            topic=topic,
-            angle=(form.get("angle") or "").strip(),
-            audience=(form.get("audience") or "").strip(),
-            extra_notes=(form.get("extra_notes") or "").strip(),
-            auto_repair=form.get("auto_repair") == "on",
-        )
-    except generator.GenerationError as exc:
-        logger.exception("생성 실패")
-        return _form_view(error=str(exc)), 502
-
-    post_id = store.save(result["doc"], result["reports"], topic)
-    return redirect(url_for("post_detail", post_id=post_id))
-
-
-@app.route("/post/<int:post_id>")
-def post_detail(post_id: int):
-    record = store.get(post_id)
-    if not record:
-        abort(404)
-
-    return _post_view(record)
-
-
-@app.route("/post/<int:post_id>/status", methods=["POST"])
-def post_status(post_id: int):
-    store.set_status(post_id, request.form.get("status", "draft"))
-    return redirect(url_for("post_detail", post_id=post_id))
-
-
-@app.route("/post/<int:post_id>/delete", methods=["POST"])
-def post_delete(post_id: int):
-    store.delete(post_id)
-    return redirect(url_for("index"))
-
-
-@app.route("/lint", methods=["GET", "POST"])
-def lint():
-    """이미 써 둔 원고를 붙여 넣어 의료법 표현만 점검한다."""
-    text = ""
-    report = None
-    if request.method == "POST":
-        text = request.form.get("text", "")
-        report = medical_law.review(text)
-    return render_template(
-        "content.html",
-        view="lint",
-        lint_text=text,
-        lint_report=report,
-        **_base_context(),
+        "console.html",
+        clinic=clinic.FULL_NAME,
+        boot=sample_view(),
+        lan_url=lan_url(),
+        auth_on=bool(PASSWORD),
     )
 
 
 @app.route("/post/<int:post_id>/thumbnail.jpg")
+@login_required
 def post_thumbnail(post_id: int):
-    """썸네일 미리보기. 업로드 전에 눈으로 확인할 수 있어야 합니다."""
     record = store.get(post_id)
     if not record:
         abort(404)
-
-    layout = request.args.get("layout", "")
+    doc = dict(record["doc"])
+    copy = request.args.get("copy", "")
+    if copy:
+        doc["thumbnail_copy"] = copy
     try:
-        path = cms_thumbnail.generate_for(record["doc"], layout=layout)
+        path = cms_thumbnail.generate_for(doc, layout=request.args.get("layout", ""))
     except cms_thumbnail.ThumbnailError as exc:
         logger.warning("썸네일 생성 실패: %s", exc)
         abort(500, description=str(exc))
     return send_file(os.path.abspath(path), mimetype="image/jpeg", max_age=0)
 
 
-@app.route("/post/<int:post_id>/publish", methods=["POST"])
-def post_publish(post_id: int):
-    """CMS에 업로드한다. 기본은 미노출 저장."""
-    record = store.get(post_id)
-    if not record:
-        abort(404)
+# ── JSON API ─────────────────────────────────────────────────────────
+@app.route("/api/preview-title")
+@login_required
+def api_preview_title():
+    title = request.args.get("title", "").strip()
+    if not title:
+        return jsonify({"error": "제목이 비어 있습니다."}), 400
+    parsed = title_parser.parse(title)
+    return jsonify({**parsed, "summary": title_parser.describe(parsed)})
 
-    doc = record["doc"]
-    reports = record["reports"]
-    dry_run = request.form.get("dry_run") == "on"
-    # 노출 전환은 사람이 CMS에서 확인하고 누르도록 기본값을 미노출로 둔다.
-    expose = request.form.get("expose") == "on"
-    layout = request.form.get("layout", "")
+
+@app.route("/api/generate", methods=["POST"])
+@login_required
+def api_generate():
+    payload = request.get_json(silent=True) or {}
+    title = (payload.get("title") or "").strip()
+    if not title:
+        return jsonify({"error": "제목을 입력하세요."}), 400
 
     try:
-        thumb = cms_thumbnail.generate_for(doc, layout=layout)
+        result = generator.generate_from_title(title)
+    except generator.GenerationError as exc:
+        logger.warning("생성 실패: %s", exc)
+        return jsonify({"error": str(exc)}), 502
+    except Exception as exc:
+        logger.exception("생성 실패")
+        return jsonify({"error": f"생성하지 못했습니다: {exc}"}), 500
+
+    doc, reports = result["doc"], result["reports"]
+    post_id = store.save(doc, reports, result["parsed"]["topic"])
+    return jsonify(view_model(doc, reports, post_id))
+
+
+@app.route("/api/post/<int:post_id>")
+@login_required
+def api_post(post_id: int):
+    record = store.get(post_id)
+    if not record:
+        return jsonify({"error": "글을 찾을 수 없습니다."}), 404
+    return jsonify(view_model(record["doc"], record["reports"], post_id))
+
+
+@app.route("/api/posts")
+@login_required
+def api_posts():
+    return jsonify(store.list_posts(30))
+
+
+@app.route("/api/lint", methods=["POST"])
+@login_required
+def api_lint():
+    text = (request.get_json(silent=True) or {}).get("text", "")
+    return jsonify({"law": medical_law.review(text), "positioning": positioning.review(text)})
+
+
+@app.route("/api/publish", methods=["POST"])
+@login_required
+def api_publish():
+    payload = request.get_json(silent=True) or {}
+    record = store.get(int(payload.get("post_id") or 0))
+    if not record:
+        return jsonify({"error": "글을 찾을 수 없습니다."}), 404
+
+    doc, reports = record["doc"], record["reports"]
+    expose = bool(payload.get("expose"))
+    dry_run = bool(payload.get("dry_run"))
+
+    try:
+        thumb = cms_thumbnail.generate_for(doc)
         result = cms_publish.publish(
             doc=doc,
             body_html=renderer.render_body(doc, include_schema=True),
@@ -221,78 +264,44 @@ def post_publish(post_id: int):
             thumbnail_path=thumb,
         )
     except cms_publish.ComplianceBlocked as exc:
-        return _post_view(record, publish_error=str(exc), blocked=True)
+        return jsonify({"error": str(exc)}), 400
     except Exception as exc:
-        logger.exception("CMS 업로드 실패")
-        return _post_view(record, publish_error=str(exc))
+        logger.exception("업로드 실패")
+        return jsonify({"error": f"업로드하지 못했습니다: {exc}"}), 500
 
     if result.get("saved"):
-        store.set_status(post_id, "published" if expose else "uploaded")
-    return _post_view(store.get(post_id) or record, publish_result=result)
-
-
-def _post_view(record, **extra):
-    """결과 화면 렌더링 - 발행 결과/오류를 함께 표시한다."""
-    doc = record["doc"]
-    return render_template(
-        "content.html",
-        view="post",
-        record=record,
-        doc=doc,
-        reports=record["reports"],
-        cms_fields=renderer.cms_fields(doc),
-        body_html=renderer.render_body(doc, include_schema=False),
-        plaintext=renderer.render_plaintext(doc),
-        jsonld=schema.to_script_tag(doc),
-        cost=generator.estimate_cost(doc.get("_usage", {})),
-        thumb_layout=extra.pop("thumb_layout", request.args.get("layout", "")),
-        thumb_ready=bool(cms_thumbnail.list_photos(doc.get("category", ""))),
-        thumb_photo_dir=cms_thumbnail.PHOTO_DIR,
-        thumb_logo=cms_thumbnail.logo_status(),
-        **_base_context(),
-        **extra,
-    )
-
-
-# ── JSON API ─────────────────────────────────────────────────────────
-@app.route("/api/posts")
-def api_posts():
-    return jsonify(store.list_posts(100))
-
-
-@app.route("/api/post/<int:post_id>")
-def api_post(post_id: int):
-    record = store.get(post_id)
-    if not record:
-        return jsonify({"error": "not found"}), 404
-    return jsonify(
-        {
-            "cms_fields": renderer.cms_fields(record["doc"]),
-            "body_html": renderer.render_body(record["doc"]),
-            "json_ld": schema.build(record["doc"]),
-            "reports": record["reports"],
-        }
-    )
-
-
-@app.route("/api/lint", methods=["POST"])
-def api_lint():
-    payload = request.get_json(silent=True) or {}
-    return jsonify(medical_law.review(payload.get("text", "")))
+        store.set_status(record["id"], "published" if expose else "uploaded")
+    return jsonify(result)
 
 
 @app.route("/api/audit", methods=["POST"])
+@login_required
 def api_audit():
-    """외부에서 만든 문서(JSON)를 점수만 매겨 본다."""
-    payload = request.get_json(silent=True) or {}
-    doc = payload.get("doc") or {}
+    doc = (request.get_json(silent=True) or {}).get("doc") or {}
     return jsonify(seo.audit(doc, doc.get("primary_keyword", "")))
 
 
+# ── 기동 ─────────────────────────────────────────────────────────────
 def run_app():
     store.init_db()
-    logger.info("콘텐츠 생성 앱 시작: http://%s:%d", CONTENT_HOST, CONTENT_PORT)
-    app.run(host=CONTENT_HOST, port=CONTENT_PORT, debug=False)
+    url = lan_url()
+    print()
+    print("  " + "=" * 52)
+    print(f"   {clinic.FULL_NAME} 콘텐츠 콘솔")
+    print("  " + "=" * 52)
+    print(f"   이 PC에서      http://localhost:{PORT}")
+    print(f"   사내 다른 PC   {url}")
+    if PASSWORD:
+        print("   비밀번호       설정됨 (APP_PASSWORD)")
+    else:
+        print("   비밀번호       없음 — 같은 네트워크면 누구나 들어옵니다.")
+        print("                  .env에 APP_PASSWORD를 넣어 잠그세요.")
+    if not os.getenv("APP_SECRET"):
+        print("   참고           APP_SECRET 미설정 — 재시작하면 로그인이 풀립니다.")
+    print("  " + "=" * 52)
+    print("   끄려면 Ctrl+C")
+    print()
+    app.run(host=HOST, port=PORT, debug=False, threaded=True)
 
 
 if __name__ == "__main__":

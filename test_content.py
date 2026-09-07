@@ -9,6 +9,7 @@
 """
 
 import json
+import os
 import sys
 
 from content import generator, medical_law, renderer, schema, seo, slug, store
@@ -263,29 +264,78 @@ def main() -> int:
     import content_app
 
     content_app.app.config["TESTING"] = True
+    content_app.PASSWORD = ""          # 인증은 아래에서 따로 확인한다
     client = content_app.app.test_client()
 
     post_id = store.save(doc, {"law": law, "positioning": pos, "seo": audit}, "테스트 주제")
     for path, label in [
-        ("/", "생성 폼"),
-        (f"/post/{post_id}", "결과 화면"),
-        ("/lint", "원고 검사"),
+        ("/", "콘솔 화면"),
         ("/api/posts", "API 목록"),
         (f"/api/post/{post_id}", "API 상세"),
+        (f"/post/{post_id}/thumbnail.jpg", "썸네일"),
+        ("/api/preview-title?title=송도 발톱무좀 병원", "제목 해석"),
     ]:
         r = client.get(path)
-        failures += not check(f"GET {path} ({label})", r.status_code == 200, f"HTTP {r.status_code}")
+        failures += not check(f"GET {path.split('?')[0]} ({label})",
+                              r.status_code == 200, f"HTTP {r.status_code}")
 
-    r = client.post("/api/lint", json={"text": "최고의 완치 보장 전문병원, 지금 50% 할인"})
+    # 화면이 필요한 값을 모두 담아 내려주는지
+    vm = client.get(f"/api/post/{post_id}").get_json()
+    for key in ("doc", "reports", "cms_fields", "body_html", "plaintext",
+                "jsonld", "logo", "cms"):
+        failures += not check(f"뷰 모델 '{key}'", key in vm)
+    # 변수 이름은 안내 문구에 나올 수 있다. 실제 '값'이 새는지를 본다.
+    from publisher import config as _cms
+
+    sentinel_key, sentinel_pw = "sk-ant-SENTINEL-KEY", "SENTINEL-PASSWORD"
+    saved = (os.environ.get("ANTHROPIC_API_KEY"), _cms.PASSWORD, _cms.USERNAME)
+    os.environ["ANTHROPIC_API_KEY"] = sentinel_key
+    _cms.PASSWORD, _cms.USERNAME = sentinel_pw, "sentinel-user"
+    try:
+        leaked = client.get(f"/api/post/{post_id}").get_data(as_text=True)
+        page = client.get("/").get_data(as_text=True)
+        failures += not check(
+            "API 응답에 비밀정보 없음",
+            sentinel_key not in leaked and sentinel_pw not in leaked,
+        )
+        failures += not check(
+            "화면 HTML에 비밀정보 없음",
+            sentinel_key not in page and sentinel_pw not in page,
+        )
+    finally:
+        if saved[0] is None:
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+        else:
+            os.environ["ANTHROPIC_API_KEY"] = saved[0]
+        _cms.PASSWORD, _cms.USERNAME = saved[1], saved[2]
+
+    r = client.post("/api/lint",
+                    json={"text": "최고의 완치 보장 전문병원, 내성발톱 절개도 합니다"})
     body = r.get_json()
     failures += not check(
-        "POST /api/lint 위반 탐지",
-        r.status_code == 200 and body["block_count"] >= 4,
-        f"{body.get('summary', '')}",
+        "POST /api/lint 의료법 탐지",
+        r.status_code == 200 and body["law"]["block_count"] >= 3,
+        body["law"]["summary"],
+    )
+    failures += not check(
+        "POST /api/lint 포지셔닝 탐지",
+        body["positioning"]["block_count"] >= 1,
+        body["positioning"]["summary"],
     )
 
-    r = client.post("/lint", data={"text": "부작용 없이 100% 완치됩니다"})
-    failures += not check("POST /lint 화면", r.status_code == 200)
+    # 비밀번호를 걸면 막히는지
+    content_app.PASSWORD = "secret"
+    guarded = content_app.app.test_client()
+    failures += not check("비로그인 화면 차단", guarded.get("/").status_code == 302)
+    failures += not check("비로그인 API 차단", guarded.get("/api/posts").status_code == 401)
+    failures += not check(
+        "틀린 비밀번호 거부",
+        guarded.post("/login", data={"password": "nope"}).status_code == 401,
+    )
+    ok = guarded.post("/login", data={"password": "secret"})
+    failures += not check("맞는 비밀번호 통과", ok.status_code == 302)
+    failures += not check("로그인 후 API 접근", guarded.get("/api/posts").status_code == 200)
+    content_app.PASSWORD = ""
 
     store.delete(post_id)
 

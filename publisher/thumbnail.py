@@ -63,7 +63,23 @@ class ThumbnailError(RuntimeError):
 
 
 # ── 폰트 ─────────────────────────────────────────────────────────────
-# 명조/세리프 계열을 우선한다. 예시 썸네일이 세리프체다.
+# 프리텐다드로 통일한다. 없으면 명조/세리프 계열로 내려간다.
+# 프리텐다드는 폰트 파일이 있어야 서버에서 그릴 수 있다:
+#   python main.py fonts   (assets/fonts/ 에 내려받음)
+_PRETENDARD = [
+    os.path.join("assets", "fonts", "Pretendard-SemiBold.otf"),
+    os.path.join("assets", "fonts", "Pretendard-Bold.otf"),
+    os.path.join("assets", "fonts", "Pretendard-Regular.otf"),
+    r"C:\Windows\Fonts\Pretendard-SemiBold.otf",
+    r"C:\Windows\Fonts\Pretendard-Bold.otf",
+    r"C:\Windows\Fonts\Pretendard-Regular.otf",
+    r"C:\Windows\Fonts\PretendardVariable.ttf",
+    os.path.expanduser("~/Library/Fonts/Pretendard-SemiBold.otf"),
+    os.path.expanduser("~/Library/Fonts/Pretendard-Regular.otf"),
+    "/usr/share/fonts/truetype/pretendard/Pretendard-SemiBold.otf",
+    "/usr/share/fonts/opentype/pretendard/Pretendard-Regular.otf",
+]
+
 _KO_SERIF = {
     "Windows": [
         r"C:\Windows\Fonts\NanumMyeongjo.ttf",
@@ -122,6 +138,11 @@ def _find_font(korean: bool) -> str:
         if os.path.exists(override):
             return override
         raise ThumbnailError(f"지정한 폰트 파일이 없습니다: {override}")
+
+    # 한글·영문 모두 프리텐다드를 먼저 찾는다(폰트 통일).
+    found = _first_existing(_PRETENDARD)
+    if found:
+        return found
 
     system = platform.system()
     table = _KO_SERIF if korean else _LATIN_SERIF

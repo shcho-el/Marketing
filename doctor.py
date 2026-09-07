@@ -75,6 +75,21 @@ def check_api_key():
     return _row(OK, "ANTHROPIC_API_KEY", f"{key[:12]}…")
 
 
+def check_webapp():
+    rows = []
+    if os.getenv("APP_PASSWORD"):
+        rows.append(_row(OK, "웹앱 비밀번호", "설정됨"))
+    else:
+        rows.append(_row(WARN, "웹앱 비밀번호 없음", "같은 네트워크면 누구나 접속",
+                         ".env에 APP_PASSWORD를 넣으세요."))
+    if os.getenv("APP_SECRET"):
+        rows.append(_row(OK, "세션 키", "설정됨"))
+    else:
+        rows.append(_row(WARN, "세션 키 없음", "재시작하면 로그인이 풀립니다",
+                         ".env에 APP_SECRET을 아무 긴 문자열로 넣으세요."))
+    return rows
+
+
 def check_clinic():
     try:
         from content import clinic
@@ -178,7 +193,7 @@ def run() -> int:
         pass
 
     sections = [
-        ("실행 환경", [check_python(), check_env_file(), check_api_key()]),
+        ("실행 환경", [check_python(), check_env_file(), check_api_key()] + check_webapp()),
         ("패키지", check_packages()),
         ("콘텐츠 설정", [check_service()] + check_clinic()),
         ("썸네일", check_thumbnail()),

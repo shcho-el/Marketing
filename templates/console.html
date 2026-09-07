@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{ clinic }} 콘텐츠 콘솔</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" />
+<style>
+:root {
+  --ground:   #F7F4EE;
+  --surface:  #FFFDFA;
+  --raised:   #F1ECE2;
+  --line:     #E2DACB;
+  --line-soft:#EDE7DC;
+  --ink:      #1E1B16;
+  --ink-2:    #564F44;
+  --ink-3:    #8A8277;
+  --brass:    #8A6A32;
+  --brass-2:  #B08D4C;
+  --ok:       #2C6249;
+  --ok-bg:    #E2EDE6;
+  --warn:     #8A6110;
+  --warn-bg:  #F6EBD5;
+  --bad:      #9C3A2E;
+  --bad-bg:   #F6E2DE;
+  --cream:    #F5EBDC;
+  --on-accent:#FFFFFF;
+
+  --r-sm: 4px;
+  --r:    8px;
+  --r-lg: 14px;
+
+  /* 프리텐다드로 통일. CDN을 못 받는 환경에서도 읽히도록 대체 스택을 둔다. */
+  --sans: Pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+          "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --serif: var(--sans);
+  --mono: "Pretendard", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:   #15130F;
+    --surface:  #1D1A15;
+    --raised:   #262119;
+    --line:     #3A3227;
+    --line-soft:#2C2620;
+    --ink:      #F0EAE0;
+    --ink-2:    #BDB3A4;
+    --ink-3:    #857C6F;
+    --brass:    #CDA664;
+    --brass-2:  #E0BC82;
+    --ok:       #7FC0A0;
+    --ok-bg:    #1D3229;
+    --warn:     #DCB158;
+    --warn-bg:  #362B15;
+    --bad:      #E0897C;
+    --bad-bg:   #3A211C;
+    --on-accent:#1A1610;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:   #15130F;
+  --surface:  #1D1A15;
+  --raised:   #262119;
+  --line:     #3A3227;
+  --line-soft:#2C2620;
+  --ink:      #F0EAE0;
+  --ink-2:    #BDB3A4;
+  --ink-3:    #857C6F;
+  --brass:    #CDA664;
+  --brass-2:  #E0BC82;
+  --ok:       #7FC0A0;
+  --ok-bg:    #1D3229;
+  --warn:     #DCB158;
+  --warn-bg:  #362B15;
+  --bad:      #E0897C;
+  --bad-bg:   #3A211C;
+  --on-accent:#1A1610;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+a { color: var(--brass); }
+
+/* ─── 상단 바 ─────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 14px 26px;
+  background: color-mix(in srgb, var(--ground) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.wordmark { display: flex; align-items: baseline; gap: 10px; }
+.wordmark .name {
+  font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em;
+}
+.wordmark .unit {
+  font-size: .72rem; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.gates { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.gate {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px 5px 9px; border-radius: 100px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: .78rem; font-weight: 500;
+}
+.gate .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.gate[data-state="ok"]   { border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); color: var(--ok); }
+.gate[data-state="ok"] .dot   { background: var(--ok); }
+.gate[data-state="warn"] { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); color: var(--warn); }
+.gate[data-state="warn"] .dot { background: var(--warn); }
+.gate[data-state="bad"]  { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); color: var(--bad); }
+.gate[data-state="bad"] .dot  { background: var(--bad); }
+
+/* ─── 레이아웃 ─────────────────────────────────────── */
+.shell {
+  display: grid; grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 26px; align-items: start;
+  max-width: 1440px; margin: 0 auto; padding: 26px;
+}
+@media (max-width: 940px) { .shell { grid-template-columns: 1fr; } }
+.rail { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 940px) { .rail { position: static; } }
+.stream { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+/* ─── 패널 ─────────────────────────────────────────── */
+.panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 20px 22px;
+}
+.panel > header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft);
+}
+.panel > header h2 { font-size: .95rem; }
+.eyebrow {
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600;
+}
+.hint { font-size: .8rem; color: var(--ink-3); line-height: 1.6; }
+
+/* ─── 폼 ───────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field > label { font-size: .78rem; color: var(--ink-2); font-weight: 500; }
+textarea, input[type="text"], select {
+  width: 100%; padding: 10px 12px;
+  background: var(--ground); border: 1px solid var(--line);
+  border-radius: var(--r); resize: vertical; line-height: 1.6;
+}
+textarea:focus-visible, input:focus-visible, select:focus-visible,
+button:focus-visible, .tab:focus-visible {
+  outline: 2px solid var(--brass); outline-offset: 2px;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; border: 1px solid transparent; border-radius: var(--r);
+  background: var(--brass); color: var(--on-accent); font-weight: 600; font-size: .87rem;
+  cursor: pointer; transition: filter .15s ease;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.quiet {
+  background: transparent; border-color: var(--line);
+  color: var(--ink-2); font-weight: 500;
+}
+.btn.quiet:hover:not(:disabled) { background: var(--raised); }
+.btn.tiny { padding: 4px 10px; font-size: .74rem; border-radius: var(--r-sm); }
+.check-row { display: flex; align-items: flex-start; gap: 8px; font-size: .83rem; margin-bottom: 8px; }
+.check-row input { margin-top: 3px; accent-color: var(--brass); }
+
+/* ─── 점수 ─────────────────────────────────────────── */
+.scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 560px) { .scores { grid-template-columns: repeat(2, 1fr); } }
+.score {
+  padding: 12px 10px; border-radius: var(--r); background: var(--raised);
+  border: 1px solid var(--line-soft); text-align: center;
+}
+.score .v {
+  font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.score .k { font-size: .68rem; color: var(--ink-3); letter-spacing: .06em; margin-top: 3px; }
+.score[data-grade="ok"]   { background: var(--ok-bg); border-color: transparent; }
+.score[data-grade="ok"] .v   { color: var(--ok); }
+.score[data-grade="warn"] { background: var(--warn-bg); border-color: transparent; }
+.score[data-grade="warn"] .v { color: var(--warn); }
+.score[data-grade="bad"]  { background: var(--bad-bg); border-color: transparent; }
+.score[data-grade="bad"] .v  { color: var(--bad); }
+
+/* ─── 지적사항 ─────────────────────────────────────── */
+.finding {
+  display: grid; grid-template-columns: 3px 1fr; gap: 12px;
+  padding: 0 0 0 0; margin-bottom: 10px;
+}
+.finding .stripe { border-radius: 2px; background: var(--warn); }
+.finding[data-sev="block"] .stripe { background: var(--bad); }
+.finding .body { padding: 2px 0; min-width: 0; }
+.finding .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 100px;
+  background: var(--warn-bg); color: var(--warn); white-space: nowrap;
+}
+.finding[data-sev="block"] .tag { background: var(--bad-bg); color: var(--bad); }
+.finding .term { font-family: var(--mono); font-size: .85rem; font-weight: 500; }
+.finding .ctx {
+  font-size: .78rem; color: var(--ink-3); margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.finding .why { font-size: .8rem; color: var(--ink-2); margin-top: 2px; }
+.finding .fix { font-size: .8rem; color: var(--ok); margin-top: 2px; }
+
+/* ─── CMS 필드 ─────────────────────────────────────── */
+.fields { display: flex; flex-direction: column; }
+.fld {
+  display: grid; grid-template-columns: 130px minmax(0, 1fr) auto;
+  gap: 12px; align-items: start;
+  padding: 10px 0; border-bottom: 1px solid var(--line-soft);
+}
+.fld:last-child { border-bottom: 0; }
+@media (max-width: 640px) { .fld { grid-template-columns: 1fr; gap: 4px; } }
+.fld .k { font-size: .78rem; color: var(--ink-3); padding-top: 2px; }
+.fld .v {
+  font-family: var(--mono); font-size: .84rem; overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.counter {
+  font-family: var(--mono); font-size: .72rem; color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.counter[data-over="1"] { color: var(--bad); font-weight: 500; }
+
+/* ─── 탭 ───────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab {
+  padding: 6px 13px; border-radius: 100px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink-3); font-size: .78rem;
+  cursor: pointer; font-weight: 500;
+}
+.tab[aria-selected="true"] {
+  background: var(--ink); color: var(--ground); border-color: var(--ink);
+}
+.pane[hidden] { display: none; }
+pre.code {
+  margin: 0; padding: 14px; border-radius: var(--r);
+  background: var(--raised); border: 1px solid var(--line-soft);
+  font-family: var(--mono); font-size: .76rem; line-height: 1.7;
+  max-height: 460px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* ─── 본문 미리보기 ────────────────────────────────── */
+.doc {
+  border: 1px solid var(--line-soft); border-radius: var(--r);
+  padding: 26px 30px; background: var(--ground);
+  max-height: 620px; overflow-y: auto; line-height: 1.9;
+}
+.doc h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; letter-spacing: -.02em; }
+.doc h2 { font-size: 1.05rem; margin: 26px 0 8px; }
+.doc h3 { font-size: .92rem; margin: 16px 0 4px; }
+.doc p { margin-bottom: 10px; }
+.doc ul, .doc ol { margin: 0 0 12px; padding-left: 20px; }
+.doc li { margin-bottom: 5px; }
+.doc .capsule, .doc .takeaways {
+  background: var(--raised); border-left: 3px solid var(--brass);
+  padding: 14px 18px; margin: 16px 0; border-radius: 0 var(--r) var(--r) 0;
+}
+.doc .capsule h2, .doc .takeaways h2 { margin: 0 0 6px; font-size: .88rem; }
+.doc .direct { font-weight: 600; }
+.doc .notice {
+  background: var(--warn-bg); border-radius: var(--r);
+  padding: 16px 20px; margin-top: 22px;
+}
+.doc .notice h2 { margin-top: 0; font-size: .92rem; color: var(--warn); }
+.doc .toc { background: var(--raised); border-radius: var(--r); padding: 14px 20px; margin: 16px 0; }
+.doc .toc h2 { margin: 0 0 6px; font-size: .88rem; }
+.doc table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+.doc .tw { overflow-x: auto; margin: 12px 0; }
+.doc th, .doc td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+.doc th { background: var(--raised); font-weight: 600; }
+.doc .byline, .doc .tags { color: var(--ink-3); font-size: .82rem; }
+
+/* ─── 썸네일 ───────────────────────────────────────── */
+.thumb-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 18px; }
+@media (max-width: 720px) { .thumb-wrap { grid-template-columns: 1fr; } }
+#thumbCanvas {
+  width: 100%; height: auto; display: block;
+  border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--raised);
+}
+.thumb-side { display: flex; flex-direction: column; gap: 10px; }
+.file-btn {
+  display: block; padding: 9px 12px; border: 1px dashed var(--line);
+  border-radius: var(--r); font-size: .78rem; color: var(--ink-2);
+  cursor: pointer; text-align: center;
+}
+.file-btn:hover { background: var(--raised); }
+.file-btn input { display: none; }
+
+/* ─── 이력 ─────────────────────────────────────────── */
+.hist { display: flex; flex-direction: column; gap: 2px; }
+.hist button {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  width: 100%; text-align: left; padding: 9px 10px; border: 0;
+  border-radius: var(--r-sm); background: transparent; cursor: pointer;
+}
+.hist button:hover { background: var(--raised); }
+.hist .t { font-size: .82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist .s { font-family: var(--mono); font-size: .74rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ─── 알림 ─────────────────────────────────────────── */
+.note {
+  padding: 12px 15px; border-radius: var(--r); font-size: .83rem; line-height: 1.6;
+  border: 1px solid transparent;
+}
+.note.ok   { background: var(--ok-bg);   color: var(--ok); }
+.note.warn { background: var(--warn-bg); color: var(--warn); }
+.note.bad  { background: var(--bad-bg);  color: var(--bad); }
+.note.flat { background: var(--raised); color: var(--ink-2); border-color: var(--line-soft); }
+.note strong { font-weight: 600; }
+
+.spin {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent;
+  animation: sp .7s linear infinite;
+}
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition: none !important; } }
+
+.sample-flag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .72rem; color: var(--ink-3);
+  border: 1px dashed var(--line); border-radius: 100px; padding: 3px 10px;
+}
+.empty { color: var(--ink-3); font-size: .83rem; padding: 6px 0; }
+
+/* ─── 서버 앱 전용 ─────────────────────────────────────── */
+.login-shell {
+  min-height: 100vh; display: grid; place-items: center; padding: 24px;
+}
+.login-card {
+  width: 100%; max-width: 380px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg); padding: 28px;
+}
+.login-card h1 { font-size: 1.15rem; margin-bottom: 6px; }
+.login-card .sub { font-size: .82rem; color: var(--ink-3); margin-bottom: 18px; }
+.lan {
+  font-family: var(--mono); font-size: .74rem; color: var(--ink-3);
+  padding: 4px 10px; border: 1px solid var(--line); border-radius: 100px;
+}
+.publish-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.busy { pointer-events: none; opacity: .6; }
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
+  padding: 11px 20px; border-radius: 100px; font-size: .85rem; font-weight: 500;
+  background: var(--ink); color: var(--ground); z-index: 60;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+.toast[data-kind="bad"] { background: var(--bad); color: #fff; }
+.toast[data-kind="ok"]  { background: var(--ok); color: #fff; }
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wordmark">
+    <span class="name">Obliv Clinic</span>
+    <span class="unit">문제성발톱 콘텐츠 콘솔</span>
+  </div>
+  <div class="gates" id="gates">
+    <span class="lan" id="lanUrl">{{ lan_url }}</span>
+    <span class="gate" data-state="" id="gateLaw"><span class="dot"></span>의료법</span>
+    <span class="gate" data-state="" id="gatePos"><span class="dot"></span>포지셔닝</span>
+    <span class="gate" data-state="" id="gateSeo"><span class="dot"></span>검색 최적화</span>
+    {% if auth_on %}<a href="{{ url_for('logout') }}" class="lan" style="text-decoration:none">나가기</a>{% endif %}
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- ─────────────── 좌측: 입력 ─────────────── -->
+  <div class="rail">
+    <section class="panel">
+      <header>
+        <h2>제목으로 원고 만들기</h2>
+        <span class="eyebrow">01</span>
+      </header>
+
+      <div class="field">
+        <label for="titleInput">제목</label>
+        <textarea id="titleInput" rows="2"
+          placeholder="송도 발톱무좀 병원 선택 기준"></textarea>
+        <p class="hint" id="parseHint">카테고리와 주키워드는 제목에서 자동으로 잡습니다.</p>
+      </div>
+
+      <button class="btn" id="runBtn" style="width:100%">원고 생성</button>
+      <p class="hint" id="genHint" style="margin-top:8px"></p>
+      <p class="hint" style="margin-top:4px">1편당 1~3분. 검사 미통과 시 자동으로 다시 씁니다.</p>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>원고 검사</h2>
+        <span class="eyebrow">02</span>
+      </header>
+      <p class="hint" style="margin-bottom:10px">
+        이미 써 둔 원고를 붙여 넣으면 의료법·포지셔닝 표현만 점검합니다. 생성 없이 동작합니다.
+      </p>
+      <div class="field">
+        <textarea id="lintInput" rows="5" placeholder="검사할 원고를 붙여 넣으세요"></textarea>
+      </div>
+      <button class="btn quiet" id="lintBtn" style="width:100%">검사하기</button>
+      <div id="lintOut" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>이력</h2>
+        <span class="eyebrow">03</span>
+      </header>
+      <div class="hist" id="hist"><p class="empty">아직 없습니다.</p></div>
+    </section>
+  </div>
+
+  <!-- ─────────────── 우측: 결과 ─────────────── -->
+  <div class="stream" id="stream">
+
+    <section class="panel" id="headPanel">
+      <header>
+        <div>
+          <span class="eyebrow">현재 원고</span>
+          <h2 id="docTitle" style="margin-top:4px">—</h2>
+        </div>
+        <span class="sample-flag" id="sampleFlag" hidden>예시 원고</span>
+      </header>
+      <div class="scores" id="scores"></div>
+      <p class="hint" id="verdict" style="margin-top:12px"></p>
+    </section>
+
+    <section class="panel" id="gatePanel" hidden>
+      <header><h2 id="gateTitle">발행 전 확인</h2></header>
+      <div id="gateBody"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>CMS 기본 정보</h2>
+        <button class="btn quiet tiny" id="copyAll">전체 복사</button>
+      </header>
+      <div class="fields" id="cmsFields"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>썸네일</h2>
+        <div class="tabs" id="layoutTabs">
+          <button class="tab" data-layout="center" aria-selected="true" role="tab">중앙형</button>
+          <button class="tab" data-layout="bottom" aria-selected="false" role="tab">하단형</button>
+        </div>
+      </header>
+      <div class="thumb-wrap">
+        <img id="thumbImg" alt="썸네일 미리보기"
+             style="width:100%;border-radius:8px;border:1px solid var(--line);display:block" />
+        <div class="thumb-side">
+          <div class="field" style="margin:0">
+            <label for="thumbCopy">썸네일 문구</label>
+            <input type="text" id="thumbCopy" />
+          </div>
+          <a class="btn quiet" id="saveThumb" download>이미지 저장</a>
+          <p class="hint" id="logoStatus"></p>
+          <p class="hint">880×580 · 300KB 이하. 배경 사진은
+            <code>assets/thumbnails/</code>, 로고는 <code>assets/logo.png</code>에 둡니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>본문</h2>
+        <div class="tabs" id="bodyTabs">
+          <button class="tab" data-pane="preview" aria-selected="true" role="tab">미리보기</button>
+          <button class="tab" data-pane="html" aria-selected="false" role="tab">HTML</button>
+          <button class="tab" data-pane="text" aria-selected="false" role="tab">평문</button>
+          <button class="tab" data-pane="schema" aria-selected="false" role="tab">JSON-LD</button>
+          <button class="tab" data-pane="audit" aria-selected="false" role="tab">항목별 점검</button>
+        </div>
+      </header>
+      <div class="pane" id="pane-preview"><div class="doc" id="docPreview"></div></div>
+      <div class="pane" id="pane-html" hidden>
+        <button class="btn quiet tiny" data-copy="htmlSrc" style="margin-bottom:8px">복사</button>
+        <pre class="code" id="htmlSrc"></pre>
+      </div>
+      <div class="pane" id="pane-text" hidden>
+        <button class="btn quiet tiny" data-copy="textSrc" style="margin-bottom:8px">복사</button>
+        <pre class="code" id="textSrc"></pre>
+      </div>
+      <div class="pane" id="pane-schema" hidden>
+        <p class="hint" style="margin-bottom:8px">
+          구글 리치 결과 테스트로 검증한 뒤 &lt;head&gt;에 넣으세요.
+        </p>
+        <button class="btn quiet tiny" data-copy="schemaSrc" style="margin-bottom:8px">복사</button>
+        <pre class="code" id="schemaSrc"></pre>
+      </div>
+      <div class="pane" id="pane-audit" hidden><div id="auditOut"></div></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>CMS 업로드</h2>
+        <span class="eyebrow" id="cmsState">확인 중</span>
+      </header>
+      <div id="cmsNotice"></div>
+      <div class="publish-row" style="margin-top:12px">
+        <label class="check-row" style="margin:0">
+          <input type="checkbox" id="pubDry" checked />
+          <span>연습 실행 — 폼만 채우고 저장하지 않음</span>
+        </label>
+        <label class="check-row" style="margin:0">
+          <input type="checkbox" id="pubExpose" />
+          <span><strong>노출</strong>로 저장 (해제 시 미노출)</span>
+        </label>
+      </div>
+      <button class="btn" id="publishBtn" style="margin-top:12px">CMS에 업로드</button>
+      <p class="hint" id="publishHint" style="margin-top:8px"></p>
+    </section>
+
+  </div>
+</div>
+<script>const BOOT = {{ boot | tojson }};</script>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let current = null;
+
+/* ── 공통 ─────────────────────────────────────────────── */
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts));
+  const ct = r.headers.get("content-type") || "";
+  const data = ct.includes("json") ? await r.json() : { error: await r.text() };
+  if (!r.ok) throw new Error(data.error || `요청 실패 (HTTP ${r.status})`);
+  return data;
+}
+function toast(msg, kind) {
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg;
+  if (kind) el.dataset.kind = kind;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function findingHTML(f) {
+  return `<div class="finding" data-sev="${f.severity}">
+    <div class="stripe"></div>
+    <div class="body">
+      <div class="head"><span class="tag">${esc(f.article || f.kind)}</span>
+        <span class="term">“${esc(f.matched)}”</span></div>
+      ${f.context ? `<div class="ctx">${esc(f.context)}</div>` : ""}
+      <div class="why">${esc(f.reason)}</div>
+      <div class="fix">→ ${esc(f.suggestion)}</div>
+    </div></div>`;
+}
+function setGate(el, state, label) {
+  el.dataset.state = state;
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+
+/* ── 결과 렌더 ─────────────────────────────────────────── */
+function render(v) {
+  current = v;
+  const law = v.reports.law, pos = v.reports.positioning, seo = v.reports.seo;
+
+  $("docTitle").textContent = v.doc.h1 || "—";
+  $("sampleFlag").hidden = !v.is_sample;
+
+  setGate($("gateLaw"), law.passed ? "ok" : "bad",
+    law.passed ? "의료법 통과" : `의료법 ${law.block_count + law.missing_required.length}건`);
+  setGate($("gatePos"), pos.passed ? (pos.warn_count ? "warn" : "ok") : "bad",
+    pos.passed ? (pos.warn_count ? `포지셔닝 ${pos.warn_count}건` : "포지셔닝 통과")
+               : `미시행 시술 ${pos.block_count}건`);
+  const t = seo.scores.total;
+  setGate($("gateSeo"), t >= 85 ? "ok" : t >= 70 ? "warn" : "bad", `검색 최적화 ${t}`);
+
+  const g = n => n >= 85 ? "ok" : n >= 70 ? "warn" : "bad";
+  $("scores").innerHTML = [["SEO","검색"],["AEO","답변"],["GEO","생성형"],["total","전체"]]
+    .map(([k, sub]) => {
+      const key = k === "total" ? "total" : k.toLowerCase();
+      const n = seo.scores[key];
+      return `<div class="score" data-grade="${g(n)}"><div class="v">${n}</div>
+        <div class="k">${k === "total" ? "종합" : k} · ${sub}</div></div>`;
+    }).join("");
+
+  $("verdict").textContent =
+    `${seo.grade} · 의료법: ${law.summary} · 포지셔닝: ${pos.summary}`;
+
+  const items = [];
+  if (law.missing_required.length) {
+    items.push(`<div class="note warn" style="margin-bottom:12px"><strong>필수 기재 누락</strong><br />${
+      law.missing_required.map(m => `${esc(m.label)} — ${esc(m.hint)}`).join("<br />")}</div>`);
+  }
+  const all = [...pos.findings, ...law.findings];
+  if (all.length) items.push(all.map(findingHTML).join(""));
+  $("gatePanel").hidden = !items.length;
+  if (items.length) {
+    $("gateTitle").textContent = (law.passed && pos.passed) ? "검토 권고" : "발행 전 반드시 수정";
+    $("gateBody").innerHTML = items.join("");
+  }
+
+  $("cmsFields").innerHTML = v.cms_fields.map(f => {
+    const over = f.max && f.len > f.max;
+    const counter = f.len != null
+      ? `<span class="counter" data-over="${over ? 1 : 0}">${f.len}${f.max ? " / " + f.max : ""}자</span>` : "";
+    return `<div class="fld"><div class="k">${esc(f.key)}</div>
+      <div class="v">${esc(f.value)}</div>
+      <div style="display:flex;gap:8px;align-items:center">${counter}
+        <button class="btn quiet tiny" data-copy-text="${esc(f.value)}">복사</button></div></div>`;
+  }).join("");
+
+  $("docPreview").innerHTML = v.body_html;
+  $("htmlSrc").textContent = v.body_html;
+  $("textSrc").textContent = v.plaintext;
+  $("schemaSrc").textContent = v.jsonld;
+
+  $("auditOut").innerHTML = ["seo", "aeo", "geo"].map((k, i) => {
+    const label = ["SEO — 검색엔진", "AEO — 답변엔진", "GEO — 생성형엔진"][i];
+    return `<h3 style="margin:14px 0 6px;font-size:.86rem">${label} · ${seo.scores[k]}점</h3>` +
+      seo.checks[k].map(c =>
+        `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:.82rem">
+          <span style="width:16px">${c.passed ? "✓" : "!"}</span>
+          <span style="width:180px;flex-shrink:0">${esc(c.label)}</span>
+          <span style="color:var(--ink-3);flex:1">${esc(c.detail)}${
+            c.passed ? "" : `<br /><em style="color:var(--ok)">→ ${esc(c.fix)}</em>`}</span></div>`
+      ).join("");
+  }).join("");
+
+  $("thumbCopy").value = v.doc.thumbnail_copy || "";
+  refreshThumb();
+  $("logoStatus").textContent = v.logo.message.split("\n")[0];
+  $("logoStatus").style.color = v.logo.ok ? "var(--ok)" : "var(--ink-3)";
+
+  const gateOk = law.passed && pos.passed;
+  $("publishBtn").disabled = !v.cms.ready || !gateOk || !v.post_id;
+  $("cmsState").textContent = v.cms.ready ? "준비됨" : "설정 필요";
+  $("cmsNotice").innerHTML = !v.cms.ready
+    ? `<div class="note warn"><strong>업로드 설정이 끝나지 않았습니다.</strong><br />${
+        v.cms.problems.map(esc).join("<br />")}<br />
+        <span class="muted">터미널에서 <code>python main.py inspect-cms</code>를 실행하세요.</span></div>`
+    : (!gateOk
+      ? `<div class="note bad">검사를 통과하지 못해 업로드가 차단됩니다. 위 지적을 수정하세요.</div>`
+      : `<div class="note flat">대상: <code>${esc(v.cms.write_url)}</code></div>`);
+}
+
+let thumbLayout = "";
+function refreshThumb() {
+  if (!current || !current.post_id) return;
+  const copy = encodeURIComponent($("thumbCopy").value || "");
+  const url = `/post/${current.post_id}/thumbnail.jpg?layout=${thumbLayout}&copy=${copy}&t=${Date.now()}`;
+  $("thumbImg").src = url;
+  const a = $("saveThumb");
+  a.href = url;
+  a.setAttribute("download", (current.doc.post_url || "thumb").slice(0, 40) + ".jpg");
+}
+
+/* ── 동작 ─────────────────────────────────────────────── */
+let previewTimer = null;
+$("titleInput").addEventListener("input", () => {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(async () => {
+    const t = $("titleInput").value.trim();
+    if (!t) { $("parseHint").textContent = "카테고리와 주키워드는 제목에서 자동으로 잡습니다."; return; }
+    try {
+      const d = await api("/api/preview-title?title=" + encodeURIComponent(t));
+      $("parseHint").textContent = d.summary;
+    } catch (e) { /* 입력 중 실패는 무시 */ }
+  }, 350);
+});
+
+$("runBtn").addEventListener("click", async () => {
+  const title = $("titleInput").value.trim();
+  if (!title) { $("genHint").textContent = "제목을 입력하세요."; return; }
+  const btn = $("runBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>원고 작성 중';
+  $("genHint").textContent = "";
+  try {
+    const v = await api("/api/generate", { method: "POST", body: JSON.stringify({ title }) });
+    render(v);
+    loadHistory();
+    $("genHint").textContent = v.reports.law.passed && v.reports.positioning.passed
+      ? "검사를 통과했습니다." : "검사에서 걸린 표현이 남아 있습니다.";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) {
+    $("genHint").textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "원고 생성";
+  }
+});
+
+$("lintBtn").addEventListener("click", async () => {
+  const text = $("lintInput").value;
+  if (!text.trim()) { $("lintOut").innerHTML = '<p class="empty">검사할 원고를 넣으세요.</p>'; return; }
+  try {
+    const d = await api("/api/lint", { method: "POST", body: JSON.stringify({ text }) });
+    const law = d.law, pos = d.positioning;
+    const clean = law.passed && pos.passed && !law.warn_count && !pos.warn_count;
+    const items = [...pos.findings, ...law.findings];
+    $("lintOut").innerHTML =
+      `<div class="note ${clean ? "ok" : (law.block_count || pos.block_count) ? "bad" : "warn"}"
+            style="margin-bottom:10px">${esc(law.summary)} · ${esc(pos.summary)}</div>` +
+      (law.missing_required.length
+        ? `<div class="note warn" style="margin-bottom:10px"><strong>필수 기재 누락</strong><br />${
+            law.missing_required.map(m => esc(m.label)).join(", ")}</div>` : "") +
+      (items.length ? items.map(findingHTML).join("") : '<p class="empty">걸린 표현이 없습니다.</p>');
+  } catch (e) { $("lintOut").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; }
+});
+
+$("publishBtn").addEventListener("click", async () => {
+  if (!current || !current.post_id) return;
+  const dry = $("pubDry").checked, expose = $("pubExpose").checked;
+  if (!dry) {
+    const msg = expose
+      ? "실제로 저장하며, 검사를 통과한 글은 블로그에 바로 공개됩니다.\n\n계속할까요?"
+      : "실제로 저장합니다. 미노출 상태이며 공개는 CMS에서 직접 바꿉니다.\n\n계속할까요?";
+    if (!confirm(msg)) return;
+  }
+  const btn = $("publishBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>업로드 중';
+  try {
+    const d = await api("/api/publish", {
+      method: "POST",
+      body: JSON.stringify({ post_id: current.post_id, dry_run: dry, expose }),
+    });
+    $("publishHint").textContent = d.message + (d.alert ? ` / CMS 알림: ${d.alert}` : "");
+    toast(d.message, d.saved ? "ok" : null);
+  } catch (e) {
+    $("publishHint").textContent = e.message;
+    toast("업로드 실패", "bad");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "CMS에 업로드";
+  }
+});
+
+$("thumbCopy").addEventListener("input", () => {
+  clearTimeout($("thumbCopy")._t);
+  $("thumbCopy")._t = setTimeout(refreshThumb, 400);
+});
+$("layoutTabs").addEventListener("click", e => {
+  const tab = e.target.closest(".tab"); if (!tab) return;
+  thumbLayout = tab.dataset.layout;
+  $("layoutTabs").querySelectorAll(".tab").forEach(x =>
+    x.setAttribute("aria-selected", x === tab ? "true" : "false"));
+  refreshThumb();
+});
+$("bodyTabs").addEventListener("click", e => {
+  const tab = e.target.closest(".tab"); if (!tab) return;
+  $("bodyTabs").querySelectorAll(".tab").forEach(t => {
+    const on = t === tab;
+    t.setAttribute("aria-selected", on ? "true" : "false");
+    $("pane-" + t.dataset.pane).hidden = !on;
+  });
+});
+
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-copy-text],[data-copy]");
+  if (!b) return;
+  const text = b.dataset.copyText != null ? b.dataset.copyText
+    : ($(b.dataset.copy) || {}).textContent || "";
+  try {
+    await navigator.clipboard.writeText(text);
+    const old = b.textContent; b.textContent = "복사됨";
+    setTimeout(() => { b.textContent = old; }, 1200);
+  } catch (err) { toast("복사에 실패했습니다. 직접 선택해 복사하세요.", "bad"); }
+});
+
+$("copyAll").addEventListener("click", async () => {
+  if (!current) return;
+  const text = current.cms_fields.map(f => `${f.key}\n${f.value}`).join("\n\n");
+  try { await navigator.clipboard.writeText(text); toast("CMS 기본 정보를 복사했습니다.", "ok"); }
+  catch (e) { toast("복사에 실패했습니다.", "bad"); }
+});
+
+async function loadHistory() {
+  try {
+    const rows = await api("/api/posts");
+    const el = $("hist");
+    if (!rows.length) { el.innerHTML = '<p class="empty">아직 없습니다.</p>'; return; }
+    el.innerHTML = rows.map(r =>
+      `<button data-id="${r.id}"><span class="t">${esc(r.h1)}</span>
+        <span class="s">${r.score_total}</span></button>`).join("");
+    el.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
+      try { render(await api("/api/post/" + b.dataset.id)); window.scrollTo({ top: 0, behavior: "smooth" }); }
+      catch (e) { toast(e.message, "bad"); }
+    }));
+  } catch (e) { /* 이력은 없어도 작업에 지장 없다 */ }
+}
+
+/* ── 기동 ─────────────────────────────────────────────── */
+render(BOOT);
+loadHistory();
+</script>
+</body>
+</html>

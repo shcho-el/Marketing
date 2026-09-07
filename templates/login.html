@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{ clinic }} 콘텐츠 콘솔</title>
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" />
+<style>
+:root {
+  --ground:#F7F4EE; --surface:#FFFDFA; --line:#E2DACB;
+  --ink:#1E1B16; --ink-3:#8A8277; --brass:#8A6A32; --bad:#9C3A2E; --bad-bg:#F6E2DE;
+  --sans: Pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+          "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#15130F; --surface:#1D1A15; --line:#3A3227;
+    --ink:#F0EAE0; --ink-3:#857C6F; --brass:#CDA664; --bad:#E0897C; --bad-bg:#3A211C;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#15130F; --surface:#1D1A15; --line:#3A3227;
+  --ink:#F0EAE0; --ink-3:#857C6F; --brass:#CDA664; --bad:#E0897C; --bad-bg:#3A211C;
+}
+* { box-sizing: border-box; }
+body {
+  margin:0; min-height:100vh; display:grid; place-items:center; padding:24px;
+  background:var(--ground); color:var(--ink); font-family:var(--sans); font-size:14px;
+}
+.card {
+  width:100%; max-width:360px; background:var(--surface);
+  border:1px solid var(--line); border-radius:14px; padding:30px;
+}
+h1 { font-size:1.1rem; margin:0 0 4px; letter-spacing:-.01em; }
+.sub { font-size:.82rem; color:var(--ink-3); margin:0 0 20px; }
+label { display:block; font-size:.78rem; color:var(--ink-3); margin-bottom:6px; }
+input {
+  width:100%; padding:11px 13px; font:inherit; color:inherit;
+  background:var(--ground); border:1px solid var(--line); border-radius:8px;
+}
+input:focus-visible, button:focus-visible { outline:2px solid var(--brass); outline-offset:2px; }
+button {
+  width:100%; margin-top:14px; padding:11px; font:inherit; font-weight:600;
+  background:var(--brass); color:#fff; border:0; border-radius:8px; cursor:pointer;
+}
+:root[data-theme="dark"] button, :root:not([data-theme="light"]) button { color:#1A1610; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) button { color:#fff; } }
+.err { margin-top:12px; padding:10px 12px; border-radius:8px;
+       background:var(--bad-bg); color:var(--bad); font-size:.83rem; }
+</style>
+</head>
+<body>
+  <form class="card" method="post">
+    <h1>{{ clinic }}</h1>
+    <p class="sub">콘텐츠 콘솔</p>
+    <label for="pw">비밀번호</label>
+    <input type="password" id="pw" name="password" autofocus autocomplete="current-password" />
+    <button type="submit">들어가기</button>
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+  </form>
+</body>
+</html>
