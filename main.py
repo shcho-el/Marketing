@@ -6,6 +6,8 @@
   python main.py scheduler    # 매일 자동 수집 (백그라운드 실행 권장)
   python main.py dashboard    # 웹 대시보드 실행 (http://localhost:5000)
   python main.py all          # 스케줄러 + 대시보드 동시 실행
+  python main.py content      # 콘텐츠 생성 앱 (http://localhost:5001)
+  python main.py write        # 콘텐츠 1편 생성 (CLI)
 """
 
 import sys
@@ -54,6 +56,49 @@ def cmd_dashboard():
     run_dashboard()
 
 
+def cmd_content():
+    from content_app import run_app
+    run_app()
+
+
+def cmd_write():
+    """CLI로 콘텐츠 1편 생성. 인자를 주지 않으면 대화형으로 묻는다.
+
+      python main.py write <카테고리> <주키워드> <주제>
+    """
+    from content import generator, renderer, store
+
+    args = sys.argv[2:]
+    if len(args) >= 3:
+        category, primary, topic = args[0], args[1], " ".join(args[2:])
+    else:
+        from content.taxonomy import CATEGORIES
+
+        print("카테고리:", " / ".join(CATEGORIES))
+        category = input("카테고리> ").strip()
+        primary = input("주키워드> ").strip()
+        topic = input("주제> ").strip()
+
+    print(f"\n생성 중... ({category} / {primary})")
+    result = generator.generate(category, primary, topic)
+    doc, reports = result["doc"], result["reports"]
+    post_id = store.save(doc, reports, topic)
+
+    print("\n===== CMS 기본 정보 =====")
+    for k, v in renderer.cms_fields(doc).items():
+        print(f"  {k}: {v}")
+
+    scores = reports["seo"]["scores"]
+    print("\n===== 점검 =====")
+    print(f"  SEO {scores['seo']} / AEO {scores['aeo']} / GEO {scores['geo']}"
+          f" → 종합 {scores['total']} ({reports['seo']['grade']})")
+    print(f"  의료법: {reports['law']['summary']}")
+    for f in reports["law"]["findings"]:
+        print(f"    [{f['severity']}] \"{f['matched']}\" - {f['reason']}")
+    print(f"\n  저장 완료 (id={post_id}). 본문은 대시보드에서 확인하세요:")
+    print("    python main.py content  →  http://localhost:5001/post/%d" % post_id)
+
+
 def cmd_all():
     """스케줄러를 백그라운드 스레드로, 대시보드를 메인 스레드로 실행."""
     scheduler_thread = threading.Thread(target=cmd_scheduler, daemon=True)
@@ -66,6 +111,8 @@ COMMANDS = {
     "scheduler": cmd_scheduler,
     "dashboard": cmd_dashboard,
     "all": cmd_all,
+    "content": cmd_content,
+    "write": cmd_write,
 }
 
 if __name__ == "__main__":

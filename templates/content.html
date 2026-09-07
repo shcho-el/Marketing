@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ clinic_name }} 콘텐츠 생성기</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --header-bg: #1a1a2e;
+      --header-text: #e2e8f0;
+      --border: #e2e8f0;
+      --text: #2d3748;
+      --muted: #718096;
+      --ok: #157347;
+      --ok-bg: #d4edda;
+      --warn: #856404;
+      --warn-bg: #fff3cd;
+      --bad: #842029;
+      --bad-bg: #f8d7da;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px;
+    }
+    header {
+      background: var(--header-bg); color: var(--header-text);
+      padding: 18px 32px; display: flex; align-items: center; justify-content: space-between;
+    }
+    header h1 { font-size: 1.25rem; }
+    header .subtitle { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+    header nav a {
+      color: #cbd5e1; text-decoration: none; margin-left: 16px; font-size: 0.85rem;
+    }
+    header nav a:hover { color: #fff; }
+    main { max-width: 1180px; margin: 24px auto; padding: 0 20px 60px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px 22px; margin-bottom: 18px;
+    }
+    .card > h2 {
+      font-size: 1rem; margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; }
+    input[type=text], select, textarea {
+      width: 100%; padding: 9px 11px; border: 1px solid var(--border);
+      border-radius: 6px; font-family: inherit; font-size: 0.9rem; background: #fff;
+    }
+    textarea { resize: vertical; line-height: 1.6; }
+    .field { margin-bottom: 14px; }
+    .hint { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+    button {
+      background: var(--primary); color: #fff; border: 0; border-radius: 6px;
+      padding: 10px 20px; font-size: 0.9rem; font-family: inherit; cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+    button.ghost { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { background: #f8fafc; font-weight: 600; color: var(--muted); font-size: 0.78rem; }
+    .scores { display: flex; gap: 12px; flex-wrap: wrap; }
+    .score {
+      flex: 1; min-width: 120px; text-align: center; padding: 14px 8px;
+      border-radius: 8px; border: 1px solid var(--border);
+    }
+    .score .n { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+    .score .l { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .s-ok { background: var(--ok-bg); color: var(--ok); }
+    .s-warn { background: var(--warn-bg); color: var(--warn); }
+    .s-bad { background: var(--bad-bg); color: var(--bad); }
+    .pill {
+      display: inline-block; padding: 2px 9px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .pill.block { background: var(--bad-bg); color: var(--bad); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .pill.info { background: #e2e8f0; color: var(--muted); }
+    .pill.pass { background: var(--ok-bg); color: var(--ok); }
+    .alert {
+      padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.87rem;
+    }
+    .alert.bad { background: var(--bad-bg); color: var(--bad); }
+    .alert.warn { background: var(--warn-bg); color: var(--warn); }
+    .alert.ok { background: var(--ok-bg); color: var(--ok); }
+    pre {
+      background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 8px;
+      overflow-x: auto; font-size: 0.78rem; line-height: 1.6; max-height: 460px;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .copyrow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .copyrow h3 { font-size: 0.88rem; }
+    .cms td:first-child { width: 150px; color: var(--muted); font-size: 0.8rem; }
+    .cms td { vertical-align: top; }
+    .cms .val { font-family: ui-monospace, Menlo, monospace; font-size: 0.83rem; word-break: break-all; }
+    .len { font-size: 0.74rem; color: var(--muted); margin-left: 6px; }
+    .len.over { color: var(--bad); font-weight: 700; }
+    .finding { border-left: 3px solid var(--border); padding: 8px 12px; margin-bottom: 8px; background: #fafbfc; }
+    .finding.block { border-left-color: #dc3545; }
+    .finding.warn { border-left-color: #ffc107; }
+    .finding .m { font-weight: 700; }
+    .finding .c { font-size: 0.8rem; color: var(--muted); margin: 3px 0; }
+    .finding .s { font-size: 0.8rem; color: var(--ok); }
+    .check { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px dashed #eef2f6; font-size: 0.83rem; }
+    .check .mark { width: 18px; flex-shrink: 0; }
+    .check .lab { width: 190px; flex-shrink: 0; }
+    .check .det { color: var(--muted); flex: 1; }
+    .preview {
+      border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px;
+      background: #fff; line-height: 1.8; max-height: 620px; overflow-y: auto;
+    }
+    .preview h1 { font-size: 1.35rem; margin: 8px 0 14px; }
+    .preview h2 { font-size: 1.05rem; margin: 22px 0 8px; padding-top: 6px; }
+    .preview h3 { font-size: 0.95rem; margin: 14px 0 4px; }
+    .preview p { margin-bottom: 10px; }
+    .preview ul, .preview ol { margin: 0 0 12px 20px; }
+    .preview li { margin-bottom: 4px; }
+    .preview table { margin: 10px 0 14px; border: 1px solid var(--border); }
+    .preview .answer-capsule, .preview .key-takeaways {
+      background: #eff6ff; border-left: 3px solid var(--primary);
+      padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0;
+    }
+    .preview .answer-capsule h2, .preview .key-takeaways h2 { margin: 0 0 6px; font-size: 0.9rem; }
+    .preview .medical-notice { background: #fffbeb; border: 1px solid #fde68a; padding: 14px 18px; border-radius: 8px; margin-top: 20px; }
+    .preview .medical-notice h2 { margin-top: 0; font-size: 0.95rem; }
+    .preview .direct-answer { font-weight: 600; }
+    .preview .byline, .preview .hashtags { color: var(--muted); font-size: 0.82rem; }
+    .preview .toc { background: #f8fafc; padding: 12px 18px; border-radius: 8px; margin: 14px 0; }
+    .preview .toc h2 { margin: 0 0 6px; font-size: 0.9rem; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .tabs button { background: #fff; color: var(--muted); border: 1px solid var(--border); padding: 7px 14px; font-size: 0.83rem; }
+    .tabs button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .hidden { display: none; }
+    .muted { color: var(--muted); font-size: 0.83rem; }
+    .row-actions { display: flex; gap: 8px; align-items: center; }
+    .kwbtn {
+      background: #eef2ff; color: #3730a3; border: 0; border-radius: 14px;
+      padding: 4px 10px; font-size: 0.76rem; margin: 0 4px 4px 0; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>{{ clinic_name }} 콘텐츠 생성기</h1>
+    <div class="subtitle">의료법 준수 · 구글/네이버 SEO · AEO · GEO 최적화</div>
+  </div>
+  <nav>
+    <a href="{{ url_for('index') }}">생성</a>
+    <a href="{{ url_for('lint') }}">원고 검사</a>
+  </nav>
+</header>
+
+<main>
+
+{% if not nap.complete %}
+<div class="alert warn">
+  <strong>병원 기본정보가 비어 있습니다.</strong>
+  누락: {{ nap.missing | join(', ') }}<br />
+  <span class="muted">.env에 채우면 JSON-LD·찾아오시는 길이 자동으로 붙고 GEO 점수가 올라갑니다.</span>
+</div>
+{% endif %}
+
+{% if error %}<div class="alert bad">{{ error }}</div>{% endif %}
+
+{# ─────────────── 생성 폼 ─────────────── #}
+{% if view == 'form' %}
+<div class="card">
+  <h2>새 글 생성</h2>
+  <form method="post" action="{{ url_for('generate') }}">
+    <div class="grid2">
+      <div class="field">
+        <label for="category">카테고리</label>
+        <select name="category" id="category" onchange="fillKeywords()">
+          {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="primary_keyword">주키워드</label>
+        <input type="text" name="primary_keyword" id="primary_keyword"
+               placeholder="예: 발톱무좀병원" required />
+        <div id="kwsuggest" class="hint"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="topic">다룰 주제</label>
+      <input type="text" name="topic" id="topic" required
+             placeholder="예: 발톱무좀 진료과 선택 기준 - 피부과와 정형외과 중 어디로 가야 하는가" />
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="angle">관점 / 논지 (선택)</label>
+        <input type="text" name="angle" id="angle"
+               placeholder="예: 바르는 약만으로 낫지 않는 물리적 이유를 중심으로" />
+      </div>
+      <div class="field">
+        <label for="audience">주요 독자 (선택)</label>
+        <input type="text" name="audience" id="audience"
+               placeholder="예: 자가 치료를 1년 이상 시도한 40~60대" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="extra_notes">추가 지시 (선택)</label>
+      <textarea name="extra_notes" id="extra_notes" rows="2"
+                placeholder="예: 당뇨 환자의 합병증 위험을 표로 정리해 주세요"></textarea>
+    </div>
+
+    <div class="field">
+      <label>
+        <input type="checkbox" name="auto_repair" checked style="width:auto" />
+        자동 교정 (의료법 위반 또는 점수 미달 시 한 번 더 고쳐 씁니다)
+      </label>
+    </div>
+
+    <button type="submit">생성하기</button>
+    <span class="hint" style="margin-left:10px">Claude Opus 5 · 1편당 30~90초, 약 $0.1~0.3</span>
+  </form>
+</div>
+
+<div class="card">
+  <h2>생성 이력</h2>
+  {% if posts %}
+  <table>
+    <thead>
+      <tr>
+        <th>일시</th><th>카테고리</th><th>주키워드</th><th>제목</th>
+        <th>SEO</th><th>AEO</th><th>GEO</th><th>의료법</th><th>상태</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in posts %}
+      <tr>
+        <td class="muted">{{ p.created_at[5:16].replace('T',' ') }}</td>
+        <td>{{ p.category }}</td>
+        <td>{{ p.primary_keyword }}</td>
+        <td><a href="{{ url_for('post_detail', post_id=p.id) }}">{{ p.h1 }}</a></td>
+        <td>{{ p.score_seo }}</td>
+        <td>{{ p.score_aeo }}</td>
+        <td>{{ p.score_geo }}</td>
+        <td>
+          {% if p.law_blocks %}<span class="pill block">{{ p.law_blocks }}</span>
+          {% elif p.law_warns %}<span class="pill warn">{{ p.law_warns }}</span>
+          {% else %}<span class="pill pass">통과</span>{% endif %}
+        </td>
+        <td class="muted">{{ p.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">아직 생성한 글이 없습니다.</p>
+  {% endif %}
+
+  {% if used %}
+  <p class="hint" style="margin-top:12px">
+    이미 사용한 주키워드:
+    {% for u in used %}{{ u.keyword }}({{ u.count }}){% if not loop.last %} · {% endif %}{% endfor %}
+  </p>
+  {% endif %}
+</div>
+
+<script>
+  const CORE = {{ core_keywords | tojson }};
+  function fillKeywords() {
+    const cat = document.getElementById('category').value;
+    const box = document.getElementById('kwsuggest');
+    const list = CORE[cat] || [];
+    box.innerHTML = list.map(k =>
+      `<button type="button" class="kwbtn" onclick="document.getElementById('primary_keyword').value='${k}'">${k}</button>`
+    ).join('');
+  }
+  fillKeywords();
+</script>
+{% endif %}
+
+{# ─────────────── 생성 결과 ─────────────── #}
+{% if view == 'post' %}
+{% set law = reports.law %}
+{% set scores = reports.seo.scores %}
+
+<div class="card">
+  <div class="copyrow">
+    <h2 style="border:0;margin:0;padding:0">{{ doc.h1 }}</h2>
+    <div class="row-actions">
+      <a href="{{ url_for('index') }}"><button type="button" class="ghost">목록</button></a>
+      <form method="post" action="{{ url_for('post_status', post_id=record.id) }}">
+        <input type="hidden" name="status" value="published" />
+        <button type="submit" class="ghost">발행 완료 표시</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="scores">
+    {% for key, label in [('seo','SEO 검색최적화'), ('aeo','AEO 답변최적화'), ('geo','GEO 생성형최적화'), ('total','종합')] %}
+    {% set v = scores[key] %}
+    <div class="score {{ 's-ok' if v >= 85 else ('s-warn' if v >= 70 else 's-bad') }}">
+      <div class="n">{{ v }}</div>
+      <div class="l">{{ label }}</div>
+    </div>
+    {% endfor %}
+    <div class="score {{ 's-ok' if law.passed else 's-bad' }}">
+      <div class="n">{{ '통과' if law.passed else law.block_count }}</div>
+      <div class="l">의료법 검사</div>
+    </div>
+  </div>
+  <p class="hint" style="margin-top:10px">
+    판정: {{ reports.seo.grade }} · {{ law.summary }}
+    {% if doc._attempts and doc._attempts > 1 %} · 자동 교정 {{ doc._attempts - 1 }}회{% endif %}
+    {% if cost %} · 생성 비용 약 ${{ cost }}{% endif %}
+  </p>
+</div>
+
+{% if not law.passed %}
+<div class="card">
+  <h2>의료법 점검 결과 — 발행 전 확인 필요</h2>
+  {% if law.missing_required %}
+  <div class="alert warn">
+    <strong>필수 기재 누락</strong>
+    <ul style="margin:6px 0 0 18px">
+      {% for m in law.missing_required %}<li>{{ m.label }} — {{ m.hint }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% for f in law.findings %}
+  <div class="finding {{ f.severity }}">
+    <div><span class="pill {{ f.severity }}">{{ f.article }}</span>
+      <span class="m">&nbsp;“{{ f.matched }}”</span></div>
+    <div class="c">{{ f.context }}</div>
+    <div class="c">{{ f.reason }}</div>
+    <div class="s">→ {{ f.suggestion }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>CMS 기본 정보 — 그대로 옮겨 담으세요</h2>
+  <table class="cms">
+    {% for k, v in cms.items() %}
+    <tr>
+      <td>{{ k }}</td>
+      <td>
+        <div class="val" id="cms-{{ loop.index }}">{{ v }}</div>
+        {% if k == 'MetaTitle' %}
+          <span class="len {{ 'over' if v|length > 40 }}">{{ v|length }} / 40자</span>
+        {% elif k == 'MetaDescription' %}
+          <span class="len {{ 'over' if v|length > 80 }}">{{ v|length }} / 80자</span>
+        {% elif k == '제목(H1)' %}
+          <span class="len">{{ v|length }}자</span>
+        {% endif %}
+        <button type="button" class="ghost" style="padding:2px 8px;font-size:0.72rem;margin-left:6px"
+                onclick="copyEl('cms-{{ loop.index }}')">복사</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>본문</h2>
+  <div class="tabs">
+    <button class="active" onclick="showTab(this,'t-preview')">미리보기</button>
+    <button onclick="showTab(this,'t-html')">HTML</button>
+    <button onclick="showTab(this,'t-text')">평문</button>
+    <button onclick="showTab(this,'t-schema')">JSON-LD</button>
+    <button onclick="showTab(this,'t-audit')">항목별 점검</button>
+  </div>
+
+  <div id="t-preview" class="tabpane">
+    <div class="preview">{{ body_html | safe }}</div>
+  </div>
+
+  <div id="t-html" class="tabpane hidden">
+    <div class="copyrow"><h3>CMS 본문 편집기용 HTML</h3>
+      <button type="button" class="ghost" onclick="copyEl('html-src')">복사</button></div>
+    <pre id="html-src">{{ body_html }}</pre>
+  </div>
+
+  <div id="t-text" class="tabpane hidden">
+    <div class="copyrow"><h3>평문 (네이버 블로그 등)</h3>
+      <button type="button" class="ghost" onclick="copyEl('text-src')">복사</button></div>
+    <pre id="text-src">{{ plaintext }}</pre>
+  </div>
+
+  <div id="t-schema" class="tabpane hidden">
+    <div class="copyrow"><h3>구조화 데이터 — &lt;head&gt; 또는 본문 하단에 삽입</h3>
+      <button type="button" class="ghost" onclick="copyEl('schema-src')">복사</button></div>
+    <p class="hint" style="margin-bottom:8px">
+      구글 리치 결과 테스트(search.google.com/test/rich-results)로 검증한 뒤 넣으세요.
+    </p>
+    <pre id="schema-src">{{ jsonld }}</pre>
+  </div>
+
+  <div id="t-audit" class="tabpane hidden">
+    {% for axis, label in [('seo','SEO — 검색엔진'), ('aeo','AEO — 답변엔진'), ('geo','GEO — 생성형엔진')] %}
+    <h3 style="margin:16px 0 6px;font-size:0.9rem">{{ label }} · {{ scores[axis] }}점</h3>
+    {% for c in reports.seo.checks[axis] %}
+    <div class="check">
+      <span class="mark">{{ '✅' if c.passed else '⚠️' }}</span>
+      <span class="lab">{{ c.label }}</span>
+      <span class="det">{{ c.detail }}{% if not c.passed %}<br /><em>→ {{ c.fix }}</em>{% endif %}</span>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  function showTab(btn, id) {
+    document.querySelectorAll('.tabpane').forEach(e => e.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function copyEl(id) {
+    const el = document.getElementById(id);
+    navigator.clipboard.writeText(el.innerText).then(() => {
+      const old = event.target.textContent;
+      event.target.textContent = '복사됨';
+      setTimeout(() => { event.target.textContent = old; }, 1200);
+    });
+  }
+</script>
+{% endif %}
+
+{# ─────────────── 원고 검사 ─────────────── #}
+{% if view == 'lint' %}
+<div class="card">
+  <h2>원고 의료법 검사</h2>
+  <p class="hint" style="margin-bottom:12px">
+    이미 작성한 원고를 붙여 넣으면 의료법 제56조 기준으로 위험 표현을 찾아냅니다.
+    자동 점검은 참고용이며 최종 판단과 심의는 사람이 합니다.
+  </p>
+  <form method="post">
+    <div class="field">
+      <textarea name="text" rows="12" placeholder="검사할 원고를 붙여 넣으세요">{{ lint_text }}</textarea>
+    </div>
+    <button type="submit">검사하기</button>
+  </form>
+</div>
+
+{% if lint_report %}
+<div class="card">
+  <h2>검사 결과</h2>
+  <div class="alert {{ 'ok' if lint_report.passed else 'bad' }}">{{ lint_report.summary }}</div>
+
+  {% if lint_report.missing_required %}
+  <div class="alert warn">
+    <strong>필수 기재 누락</strong>
+    <ul style="margin:6px 0 0 18px">
+      {% for m in lint_report.missing_required %}<li>{{ m.label }} — {{ m.hint }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% for f in lint_report.findings %}
+  <div class="finding {{ f.severity }}">
+    <div><span class="pill {{ f.severity }}">{{ f.article }}</span>
+      <span class="m">&nbsp;“{{ f.matched }}”</span></div>
+    <div class="c">{{ f.context }}</div>
+    <div class="c">{{ f.reason }}</div>
+    <div class="s">→ {{ f.suggestion }}</div>
+  </div>
+  {% else %}
+  <p class="muted">걸린 표현이 없습니다.</p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+</main>
+</body>
+</html>

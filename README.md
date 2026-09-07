@@ -68,3 +68,21 @@ SQLite (`rankings.db`)에 날짜·키워드·순위가 누적 저장됩니다.
 | 노랑 | 6~10위 |
 | 빨강 | 11위 이상 |
 | 회색 | 미노출 (상위 30위 밖) |
+
+---
+
+## 콘텐츠 자동 생성기
+
+의료법을 지키면서 SEO·AEO·GEO에 최적화된 블로그 글을 생성합니다.
+
+```bash
+python main.py content    # 웹 앱 (http://localhost:5001)
+python main.py write      # CLI로 1편 생성
+```
+
+- 생성 → 의료법 26개 규칙 검사 → SEO/AEO/GEO 채점 → 미달 시 자동 재작성
+- CMS 기본정보 필드(MetaTitle 40자·MetaDescription 80자 등)를 그대로 출력
+- 부작용 고지·JSON-LD 구조화 데이터 자동 삽입
+- `/lint`에서 기존 원고의 의료법 위반 표현 점검
+
+자세한 내용은 [CONTENT.md](CONTENT.md)를 참고하세요.
