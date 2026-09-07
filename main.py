@@ -1,7 +1,11 @@
 """
-네이버 키워드 순위 모니터링 - 진입점
+오블리브 콘텐츠 · 순위 모니터링 - 진입점
 
-사용법:
+윈도우는 ob.bat, 맥/리눅스는 ./ob 로 짧게 쓸 수 있습니다.
+  ob s          서버 실행
+  ob a "제목"    제목 하나로 생성부터 업로드까지
+
+전체 명령:
   python main.py collect      # 지금 즉시 1회 수집
   python main.py scheduler    # 매일 자동 수집 (백그라운드 실행 권장)
   python main.py dashboard    # 웹 대시보드 실행 (http://localhost:5000)
@@ -308,9 +312,66 @@ COMMANDS = {
     "publish": cmd_publish,
 }
 
+# 짧은 이름과 한글 이름. 매번 긴 명령을 치지 않아도 되도록.
+ALIASES = {
+    # 서버
+    "s": "content", "서버": "content", "웹": "content",
+    # 생성
+    "a": "auto", "생성": "auto", "글": "auto",
+    "w": "write",
+    # 업로드
+    "p": "publish", "업로드": "publish",
+    "i": "inspect-cms", "폼": "inspect-cms",
+    # 점검·설정
+    "d": "doctor", "점검": "doctor", "진단": "doctor",
+    "f": "fonts", "폰트": "fonts",
+    # 순위 모니터링
+    "c": "collect", "수집": "collect",
+    "순위": "dashboard",
+}
+
+
+def resolve(name: str) -> str:
+    """입력한 명령 이름을 실제 명령으로 바꾼다."""
+    name = (name or "").lower()
+    return ALIASES.get(name, name)
+
+
+def print_help() -> None:
+    print(__doc__)
+    print("짧게 쓰기:")
+    print("  ob s        서버 (= content)")
+    print("  ob a \"제목\"  생성부터 업로드까지 (= auto)")
+    print("  ob p 3      업로드 (= publish)")
+    print("  ob d        점검 (= doctor)")
+    print("  ob i        CMS 폼 분석 (= inspect-cms)")
+    print("  한글도 됩니다: ob 서버 / ob 생성 \"제목\" / ob 점검")
+    print()
+
+
+def suggest(name: str) -> None:
+    """오타를 냈을 때 가까운 명령을 알려 준다."""
+    import difflib
+
+    pool = list(COMMANDS) + list(ALIASES)
+    near = difflib.get_close_matches(name, pool, n=3, cutoff=0.5)
+    print(f"'{name}' 은(는) 없는 명령입니다.")
+    if near:
+        print("혹시 이것인가요? " + ", ".join(near))
+    print()
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
-        print(__doc__)
+    if len(sys.argv) < 2:
+        print_help()
         sys.exit(1)
 
-    COMMANDS[sys.argv[1]]()
+    command = resolve(sys.argv[1])
+    if command not in COMMANDS:
+        suggest(sys.argv[1])
+        print_help()
+        sys.exit(1)
+
+    # 하위 명령이 sys.argv를 그대로 읽으므로 별칭을 실제 이름으로 바꿔 둔다.
+    sys.argv[1] = command
+    COMMANDS[command]()

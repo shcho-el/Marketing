@@ -163,7 +163,59 @@ CMS 필드 + 본문 HTML + 평문 + JSON-LD 출력
 
 ---
 
-## 단축키
+## 명령 단축
+
+`python main.py ...` 를 매번 치지 않아도 됩니다.
+윈도우는 `ob.bat`, 맥/리눅스는 `./ob` 를 씁니다. 가상환경도 알아서 찾습니다.
+
+```bash
+ob s              서버 실행          (= python main.py content)
+ob a "제목"        생성부터 업로드까지  (= auto)
+ob p 3 --save     업로드             (= publish)
+ob d              환경 점검           (= doctor)
+ob i --show       CMS 폼 분석         (= inspect-cms)
+ob f              폰트 내려받기        (= fonts)
+ob                명령 목록
+```
+
+한글도 됩니다.
+
+```bash
+ob 서버
+ob 생성 "송도 발톱무좀 병원 선택 기준"
+ob 점검
+ob 업로드 3 --save
+ob 폼
+```
+
+| 짧게 | 한글 | 원래 명령 |
+|---|---|---|
+| `s` | 서버, 웹 | `content` |
+| `a` | 생성, 글 | `auto` |
+| `p` | 업로드 | `publish` |
+| `i` | 폼 | `inspect-cms` |
+| `d` | 점검, 진단 | `doctor` |
+| `f` | 폰트 | `fonts` |
+| `c` | 수집 | `collect` |
+| — | 순위 | `dashboard` |
+
+오타를 내면 가까운 명령을 알려 줍니다.
+
+```
+$ ob doctr
+'doctr' 은(는) 없는 명령입니다.
+혹시 이것인가요? doctor, collect
+```
+
+### 어느 폴더에서나 쓰려면
+
+폴더를 PATH에 넣으면 어디서든 `ob`로 실행됩니다.
+윈도우는 `시스템 환경 변수 편집 → 환경 변수 → Path → 새로 만들기`에
+`C:\Users\medib\marketing` 을 추가하세요.
+
+---
+
+## 화면 단축키
 
 화면 오른쪽 위 **단축키** 버튼이나 <kbd>?</kbd> 로 목록을 볼 수 있습니다.
 맥에서는 Ctrl 대신 ⌘가 표시됩니다.

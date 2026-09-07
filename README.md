@@ -76,9 +76,12 @@ SQLite (`rankings.db`)에 날짜·키워드·순위가 누적 저장됩니다.
 의료법을 지키면서 SEO·AEO·GEO에 최적화된 블로그 글을 생성합니다.
 
 ```bash
-python main.py auto "제목"  # 제목만 넣으면 생성→검사→썸네일→업로드까지
-python main.py content    # 웹 앱 (http://localhost:5001)
+ob s              # 서버 실행 (http://localhost:5001)
+ob a "제목"        # 제목만 넣으면 생성→검사→썸네일→업로드까지
+ob d              # 환경 점검
 ```
+
+윈도우는 `ob.bat`, 맥/리눅스는 `./ob`. 한글도 됩니다 (`ob 서버`, `ob 생성 "제목"`).
 
 - 제목만 넣으면 카테고리·주키워드 추론부터 CMS 업로드까지 한 번에
 - 생성 → 의료법 26개 규칙 검사 → 포지셔닝 검사 → SEO/AEO/GEO 채점 → 미달 시 자동 재작성

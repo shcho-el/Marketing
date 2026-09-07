@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# 짧은 명령 진입점 —  ./ob s  /  ./ob a "제목"  /  ./ob d
+set -u
+cd "$(dirname "$0")"
+if [ -x ".venv/bin/python" ]; then VPY=".venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then VPY="python3"
+else VPY="python"; fi
+exec "$VPY" main.py "$@"
