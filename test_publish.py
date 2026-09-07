@@ -284,16 +284,98 @@ def main() -> int:
     doc = generator._normalize(dict(FIXTURE), FIXTURE["category"], FIXTURE["primary_keyword"])
 
     # ── 1. 썸네일 ──────────────────────────────────────────────────
-    print("\n[1] 썸네일 생성")
-    with tempfile.TemporaryDirectory() as tmp:
-        path = thumbnail.generate_for(doc, out_dir=tmp)
-        from PIL import Image
+    print("\n[1] 썸네일 생성 (사진 배경 + 제목)")
+    from PIL import Image, ImageDraw
 
+    with tempfile.TemporaryDirectory() as tmp:
+        # 밝은 배경 사진과 누끼 로고를 만들어 실제 조건을 재현한다.
+        photo_dir = os.path.join(tmp, "photos", doc["category"])
+        os.makedirs(photo_dir)
+        bright = Image.new("RGB", (1400, 950), (238, 218, 198))
+        bright.save(os.path.join(photo_dir, "a.jpg"), quality=90)
+        dark = Image.new("RGB", (1400, 950), (36, 30, 26))
+        dark.save(os.path.join(photo_dir, "b.jpg"), quality=90)
+
+        logo = Image.new("RGBA", (600, 160), (0, 0, 0, 0))
+        ImageDraw.Draw(logo).rectangle([40, 50, 560, 110], fill=(50, 46, 42, 255))
+        logo_path = os.path.join(tmp, "logo.png")
+        logo.save(logo_path)
+
+        thumbnail.PHOTO_DIR = os.path.join(tmp, "photos")
+        thumbnail.LOGO_PATH = logo_path
+
+        path = thumbnail.generate_for(doc, out_dir=tmp)
         img = Image.open(path)
         size_kb = os.path.getsize(path) / 1024
         failures += not check("규격 880x580", img.size == (880, 580), f"{img.size}")
         failures += not check("용량 300KB 이하", size_kb <= 300, f"{size_kb:.0f}KB")
         failures += not check("JPEG 형식", img.format == "JPEG", img.format)
+
+        # 배경 사진이 실제로 쓰였는지 - 단색이면 색 분산이 거의 없다
+        colors = img.convert("RGB").getcolors(maxcolors=1_000_000) or []
+        failures += not check("배경 사진 사용", len(colors) > 200, f"{len(colors)}색")
+
+        # 같은 글은 항상 같은 사진 (재생성해도 썸네일이 바뀌면 안 됨)
+        first = thumbnail.pick_photo(doc["post_url"], doc["category"])
+        again = thumbnail.pick_photo(doc["post_url"], doc["category"])
+        failures += not check("사진 선택 재현성", first == again, os.path.basename(first))
+
+        # 카테고리 폴더 우선
+        failures += not check(
+            "카테고리 폴더에서 선택", doc["category"] in first, first.split("photos/")[-1]
+        )
+
+        # 레이아웃 두 가지가 실제로 다른 결과를 낸다
+        c = thumbnail.compose("테스트 제목", photo=first, layout="center",
+                              out_path=os.path.join(tmp, "c.jpg"))
+        b = thumbnail.compose("테스트 제목", photo=first, layout="bottom",
+                              out_path=os.path.join(tmp, "b.jpg"))
+        failures += not check(
+            "중앙형/하단형 결과 상이",
+            open(c, "rb").read() != open(b, "rb").read(),
+        )
+
+        # auto는 같은 키에 대해 항상 같은 레이아웃
+        failures += not check(
+            "auto 레이아웃 재현성",
+            thumbnail.resolve_layout("auto", "x") == thumbnail.resolve_layout("auto", "x"),
+        )
+
+        # 로고 틴트 - 알파를 보존하며 크림색으로 칠해지는지
+        tinted = thumbnail.load_logo(logo_path)
+        failures += not check("로고 로드", tinted is not None)
+        if tinted:
+            # 로고는 LOGO_WIDTH로 축소되므로 좌표도 비례해 잡는다.
+            px = tinted.getpixel((tinted.width // 2, tinted.height // 2))
+            failures += not check(
+                "로고 크림색 틴트", px[0] > 200 and px[3] == 255, str(px)
+            )
+            failures += not check(
+                "로고 투명 영역 보존", tinted.getpixel((1, 1))[3] == 0
+            )
+            failures += not check(
+                "로고 폭 조정", tinted.width == thumbnail.LOGO_WIDTH, f"{tinted.width}px"
+            )
+
+        # 밝은 사진에서도 글자 영역이 충분히 어두워지는지 (가독성)
+        bright_only = os.path.join(tmp, "photos", doc["category"], "a.jpg")
+        out = thumbnail.compose("가독성 확인", photo=bright_only, layout="center",
+                                out_path=os.path.join(tmp, "lum.jpg"))
+        band = Image.open(out).convert("L").crop((0, 230, 880, 350))
+        from PIL import ImageStat
+
+        mean = ImageStat.Stat(band).mean[0]
+        failures += not check(
+            "밝은 사진에서 글자 영역 어둡게", mean < 150, f"평균 밝기 {mean:.0f}"
+        )
+
+        # 사진이 하나도 없을 때도 저장은 되어야 한다
+        thumbnail.PHOTO_DIR = os.path.join(tmp, "empty")
+        fallback = thumbnail.generate_for(doc, out_dir=tmp)
+        failures += not check(
+            "사진 없을 때 단색 폴백", os.path.getsize(fallback) <= 300 * 1024
+        )
+        thumbnail.PHOTO_DIR = os.path.join(tmp, "photos")
 
     # ── 2. 셀렉터 자동 매핑 ────────────────────────────────────────
     print("\n[2] 셀렉터 자동 매핑 (실제 관리자 화면과 같은 구조)")

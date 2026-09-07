@@ -20,6 +20,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     url_for,
 )
 
@@ -35,6 +36,7 @@ from content import (
 )
 from publisher import config as cms_config
 from publisher import publish as cms_publish
+from publisher import thumbnail as cms_thumbnail
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +147,22 @@ def lint():
     )
 
 
+@app.route("/post/<int:post_id>/thumbnail.jpg")
+def post_thumbnail(post_id: int):
+    """썸네일 미리보기. 업로드 전에 눈으로 확인할 수 있어야 합니다."""
+    record = store.get(post_id)
+    if not record:
+        abort(404)
+
+    layout = request.args.get("layout", "")
+    try:
+        path = cms_thumbnail.generate_for(record["doc"], layout=layout)
+    except cms_thumbnail.ThumbnailError as exc:
+        logger.warning("썸네일 생성 실패: %s", exc)
+        abort(500, description=str(exc))
+    return send_file(os.path.abspath(path), mimetype="image/jpeg", max_age=0)
+
+
 @app.route("/post/<int:post_id>/publish", methods=["POST"])
 def post_publish(post_id: int):
     """CMS에 업로드한다. 기본은 미노출 저장."""
@@ -157,14 +175,17 @@ def post_publish(post_id: int):
     dry_run = request.form.get("dry_run") == "on"
     # 노출 전환은 사람이 CMS에서 확인하고 누르도록 기본값을 미노출로 둔다.
     expose = request.form.get("expose") == "on"
+    layout = request.form.get("layout", "")
 
     try:
+        thumb = cms_thumbnail.generate_for(doc, layout=layout)
         result = cms_publish.publish(
             doc=doc,
             body_html=renderer.render_body(doc, include_schema=True),
             reports=reports,
             expose=expose,
             dry_run=dry_run,
+            thumbnail_path=thumb,
         )
     except cms_publish.ComplianceBlocked as exc:
         return _post_view(record, publish_error=str(exc), blocked=True)
@@ -191,6 +212,10 @@ def _post_view(record, **extra):
         plaintext=renderer.render_plaintext(doc),
         jsonld=schema.to_script_tag(doc),
         cost=generator.estimate_cost(doc.get("_usage", {})),
+        thumb_layout=extra.pop("thumb_layout", request.args.get("layout", "")),
+        thumb_ready=bool(cms_thumbnail.list_photos(doc.get("category", ""))),
+        thumb_photo_dir=cms_thumbnail.PHOTO_DIR,
+        thumb_has_logo=os.path.exists(cms_thumbnail.LOGO_PATH),
         **_base_context(),
         **extra,
     )

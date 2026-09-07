@@ -137,6 +137,15 @@
     .hidden { display: none; }
     .muted { color: var(--muted); font-size: 0.83rem; }
     .row-actions { display: flex; gap: 8px; align-items: center; }
+    .thumb-block { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; }
+    .thumb-preview {
+      width: 440px; max-width: 100%; border-radius: 8px;
+      border: 1px solid var(--border); display: block;
+    }
+    .thumb-meta { flex: 1; min-width: 240px; }
+    .thumb-meta h3 { font-size: 0.9rem; margin-bottom: 8px; }
+    .thumb-meta code { background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 0.78rem; }
+    .tabs a { text-decoration: none; }
     .kwbtn {
       background: #eef2ff; color: #3730a3; border: 0; border-radius: 14px;
       padding: 4px 10px; font-size: 0.76rem; margin: 0 4px 4px 0; cursor: pointer;
@@ -381,8 +390,40 @@
   </div>
   {% endif %}
 
+  <div class="thumb-block">
+    <div>
+      <img class="thumb-preview" alt="썸네일 미리보기"
+           src="{{ url_for('post_thumbnail', post_id=record.id, layout=thumb_layout) }}" />
+    </div>
+    <div class="thumb-meta">
+      <h3>썸네일</h3>
+      <p class="muted">문구: <strong>{{ doc.thumbnail_copy }}</strong></p>
+      <p class="muted">880×580 · 300KB 이하로 자동 생성됩니다.</p>
+
+      <div class="tabs" style="margin:10px 0 4px">
+        {% for key, label in [('', '자동'), ('center', '중앙형'), ('bottom', '하단형')] %}
+        <a href="{{ url_for('post_detail', post_id=record.id, layout=key) }}">
+          <button type="button" class="{{ 'active' if thumb_layout == key }}">{{ label }}</button>
+        </a>
+        {% endfor %}
+      </div>
+
+      {% if not thumb_ready %}
+      <div class="alert warn" style="margin-top:10px">
+        배경 사진이 없어 단색으로 만들어집니다.<br />
+        <code>{{ thumb_photo_dir }}</code> 폴더에 사진을 넣으세요.
+      </div>
+      {% endif %}
+      {% if not thumb_has_logo %}
+      <p class="hint">로고 미등록 — <code>assets/logo.png</code>에 누끼 딴 투명 PNG를 넣으면
+        텍스트 대신 로고가 들어갑니다.</p>
+      {% endif %}
+    </div>
+  </div>
+
   <form method="post" action="{{ url_for('post_publish', post_id=record.id) }}"
         onsubmit="return confirmPublish(this)">
+    <input type="hidden" name="layout" value="{{ thumb_layout }}" />
     <div class="field">
       <label>
         <input type="checkbox" name="dry_run" checked style="width:auto" />

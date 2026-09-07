@@ -12,3 +12,6 @@ cms_mapping.json
 cms_form_dump.json
 cms_shots/
 thumbnails/
+assets/logo.png
+assets/thumbnails/*
+!assets/thumbnails/.gitkeep
