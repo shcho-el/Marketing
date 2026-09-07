@@ -137,6 +137,8 @@ def view_model(doc: dict, reports: dict, post_id=None, is_sample=False) -> dict:
         "jsonld": schema.to_script_tag(doc),
         "logo": cms_thumbnail.logo_status(),
         "cms": cms_config.status(),
+        # 키 자체는 절대 내려보내지 않는다. 있는지 여부만 알린다.
+        "api_key_ready": generator.has_api_key(),
     }
 
 
@@ -235,6 +237,8 @@ def api_generate_stream():
     title = (request.args.get("title") or "").strip()
     if not title:
         return jsonify({"error": "제목을 입력하세요."}), 400
+    if not generator.has_api_key():
+        return jsonify({"error": generator.NO_KEY_MESSAGE}), 400
 
     events: "queue.Queue" = queue.Queue()
 

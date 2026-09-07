@@ -532,6 +532,7 @@ kbd {
       </div>
 
       <button class="btn" id="runBtn" style="width:100%">원고 생성<span class="keyhint"><kbd class="mod">Ctrl</kbd><kbd>↵</kbd></span></button>
+      <div id="apiNotice"></div>
       <p class="hint" id="genHint" style="margin-top:8px"></p>
       <p class="hint" style="margin-top:4px">1편당 1~3분. 검사 미통과 시 자동으로 다시 씁니다. 단축키는 <kbd>?</kbd></p>
     </section>
@@ -839,6 +840,18 @@ function render(v) {
       ).join("");
   }).join("");
 
+  // API 키가 없으면 미리 알려 준다. 1~3분 기다렸다 실패하면 안 된다.
+  const keyReady = v.api_key_ready !== false;
+  $("runBtn").disabled = !keyReady;
+  $("apiNotice").innerHTML = keyReady ? "" :
+    `<div class="note warn" style="margin-top:10px">
+       <strong>Claude API 키가 없어 원고 생성을 쓸 수 없습니다.</strong><br />
+       폴더의 <code>.env</code> 를 메모장으로 열어
+       <code>ANTHROPIC_API_KEY=sk-ant-...</code> 를 채우고 저장한 뒤,
+       서버 창을 닫았다 다시 켜 주세요.<br />
+       <span class="muted">아래 원고 검사와 미리보기는 키 없이도 그대로 씁니다.</span>
+     </div>`;
+
   $("thumbCopy").value = v.doc.thumbnail_copy || "";
   refreshThumb();
   $("logoStatus").textContent = v.logo.message.split("\n")[0];
@@ -966,6 +979,7 @@ $("runBtn").addEventListener("click", () => {
   loadOpen(title);
 
   const src = new EventSource("/api/generate/stream?title=" + encodeURIComponent(title));
+  // EventSource는 오류 응답 본문을 읽지 못한다. 연결이 바로 끊기면 서버에 사유를 묻는다.
   const finish = () => {
     src.close();
     btn.disabled = false;
@@ -998,11 +1012,21 @@ $("runBtn").addEventListener("click", () => {
     if (d.type === "error") { loadFail(d.error); finish(); }
   };
 
-  src.onerror = () => {
+  src.onerror = async () => {
     // 이미 끝난 뒤의 종료 신호는 무시한다
     if ($("loadModal").hidden) { finish(); return; }
-    loadFail("서버와 연결이 끊겼습니다. 서버 창이 켜져 있는지 확인하고 다시 시도하세요.");
     finish();
+    // 서버가 시작 전에 거절했다면 그 사유를 받아 온다
+    try {
+      const r = await fetch("/api/generate/stream?title=" + encodeURIComponent(title));
+      if (!r.ok) {
+        const d = await r.json();
+        loadFail(d.error || "생성을 시작하지 못했습니다.");
+        return;
+      }
+      r.body && r.body.cancel();
+    } catch (e) { /* 아래 기본 메시지로 */ }
+    loadFail("서버와 연결이 끊겼습니다. 서버 창이 켜져 있는지 확인하고 다시 시도하세요.");
   };
 });
 

@@ -16,6 +16,13 @@ import json
 import logging
 import os
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
 from content import (
     medical_law,
     positioning,
@@ -56,6 +63,35 @@ def _noop(*_args, **_kwargs):
     pass
 
 
+NO_KEY_MESSAGE = (
+    "Claude API 키가 없어 원고를 생성할 수 없습니다.\n"
+    "프로젝트 폴더의 .env 파일을 메모장으로 열어 아래 한 줄을 채운 뒤 저장하고,\n"
+    "서버 창을 닫았다가 다시 켜 주세요.\n\n"
+    "    ANTHROPIC_API_KEY=sk-ant-...\n\n"
+    "키는 console.anthropic.com 에서 발급합니다.\n"
+    "(원고 검사와 미리보기는 키 없이도 그대로 쓸 수 있습니다.)"
+)
+
+
+def has_api_key() -> bool:
+    """생성을 시도하기 전에 키가 있는지 본다."""
+    return bool(
+        os.getenv("ANTHROPIC_API_KEY")
+        or os.getenv("ANTHROPIC_AUTH_TOKEN")
+    )
+
+
+def _is_auth_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return (
+        "authentication" in text
+        or "api_key" in text
+        or "api key" in text
+        or "unauthorized" in text
+        or "401" in text
+    )
+
+
 def _client():
     try:
         import anthropic
@@ -63,9 +99,15 @@ def _client():
         raise GenerationError(
             "anthropic 패키지가 없습니다. pip install -r requirements.txt 를 실행하세요."
         ) from exc
+
+    if not has_api_key():
+        raise GenerationError(NO_KEY_MESSAGE)
+
     try:
         return anthropic.Anthropic()
-    except Exception as exc:  # 인증 정보 없음 등
+    except Exception as exc:
+        if _is_auth_error(exc):
+            raise GenerationError(NO_KEY_MESSAGE) from exc
         raise GenerationError(f"Claude 클라이언트를 만들지 못했습니다: {exc}") from exc
 
 
@@ -93,6 +135,8 @@ def _call(messages: list) -> dict:
         ) as stream:
             response = stream.get_final_message()
     except Exception as exc:
+        if _is_auth_error(exc):
+            raise GenerationError(NO_KEY_MESSAGE) from exc
         raise GenerationError(f"Claude 호출 실패: {exc}") from exc
 
     if response.stop_reason == "refusal":
