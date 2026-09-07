@@ -7,3 +7,6 @@ selenium>=4.20.0
 webdriver-manager>=4.0.0
 anthropic>=0.69.0
 Pillow>=10.0.0
+
+# 크롬 드라이버 자동 탐지가 막힌 환경에서만 필요 (버전을 크롬에 맞춰 설치)
+#   pip install chromedriver-py==141.*

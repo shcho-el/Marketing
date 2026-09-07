@@ -367,11 +367,32 @@ python main.py publish 1 --save     # 업로드가 되는지
 저장된 내용은 `mock_cms_submissions.json`에 쌓입니다.
 값이 제자리에 들어갔는지 확인한 뒤 운영 설정으로 바꾸세요.
 
+### 크롬 드라이버가 안 뜬다면
+
+자동 탐지가 막힌 환경(사내망, 오프라인, 버전 불일치)에서는 경로를 직접 지정합니다.
+
+```bash
+CHROMEDRIVER_PATH=C:\\tools\\chromedriver.exe
+CHROME_BINARY=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe
+```
+
+드라이버는 `pip install chromedriver-py`로도 받을 수 있습니다.
+크롬 버전은 주소창에 `chrome://version`을 쳐서 확인하고, 같은 메이저 버전을 받으세요.
+
 ### 점검
 
 ```bash
+python test_cms_e2e.py    # 실제 브라우저로 목 CMS에 올려 전 과정 확인 (권장)
 python test_publish.py    # 썸네일 규격 · 셀렉터 매핑 · 업로드 절차 (브라우저 없이)
 ```
+
+`test_cms_e2e.py`는 목 CMS를 띄우고 실제 크롬으로 로그인 → 폼 분석 → 연습 실행 →
+저장까지 돌린 뒤, CMS가 받은 값을 원고와 대조합니다.
+**운영 CMS를 건드리기 전에 이것부터 통과시키세요.** 여기까지 되면
+남은 변수는 운영 CMS의 실제 셀렉터뿐이고, 그건 `inspect-cms`가 읽어 옵니다.
+
+> 브라우저는 textarea를 제출할 때 줄바꿈을 CRLF로 바꿉니다(HTML 표준).
+> 해시태그와 본문 길이가 원본보다 줄 수만큼 길어지는 것은 정상입니다.
 
 ---
 

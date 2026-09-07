@@ -15,3 +15,6 @@ thumbnails/
 assets/logo.png
 assets/thumbnails/*
 !assets/thumbnails/.gitkeep
+mock_cms_submissions.json
+mock_mapping.json
+.e2e/

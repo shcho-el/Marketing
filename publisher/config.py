@@ -32,6 +32,11 @@ PASSWORD = os.getenv("CMS_PASSWORD", "")
 MAPPING_PATH = os.getenv("CMS_MAPPING_PATH", "cms_mapping.json")
 DUMP_PATH = os.getenv("CMS_DUMP_PATH", "cms_form_dump.json")
 
+# 드라이버·브라우저 실행 파일 경로.
+# 자동 탐지가 실패하는 환경(사내망, 오프라인, 버전 불일치)에서 직접 지정합니다.
+CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH", "")
+CHROME_BINARY = os.getenv("CHROME_BINARY", "")
+
 # 브라우저 동작
 HEADLESS = os.getenv("CMS_HEADLESS", "1") not in ("0", "false", "False")
 TIMEOUT = int(os.getenv("CMS_TIMEOUT", "25"))

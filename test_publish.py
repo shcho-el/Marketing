@@ -575,7 +575,7 @@ def main() -> int:
     print("=" * 46)
     if not failures:
         print("\n브라우저 상호작용은 여기서 검증되지 않습니다.")
-        print("tools/mock_cms.py를 띄우고 실제로 한 번 돌려 보세요 (CONTENT.md 참고).")
+        print("실제 브라우저까지 확인하려면: python test_cms_e2e.py")
     return 1 if failures else 0
 
 

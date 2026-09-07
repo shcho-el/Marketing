@@ -16,6 +16,10 @@ from publisher import config
 logger = logging.getLogger(__name__)
 
 
+class BrowserError(RuntimeError):
+    pass
+
+
 class LoginError(RuntimeError):
     pass
 
@@ -39,20 +43,47 @@ def driver(headless: bool = None):
     options.add_argument("--lang=ko-KR")
     options.add_argument("--window-size=1440,1000")
 
+    # 브라우저 실행 파일을 직접 지정해야 하는 환경이 있다.
+    # (크로미움을 별도 경로에 두었거나, 여러 버전이 깔려 있는 경우)
+    if config.CHROME_BINARY:
+        options.binary_location = config.CHROME_BINARY
+
     drv = None
     try:
-        try:
-            from selenium.webdriver.chrome.service import Service
-            from webdriver_manager.chrome import ChromeDriverManager
+        from selenium.webdriver.chrome.service import Service
 
+        # 1) 드라이버 경로를 직접 지정한 경우가 가장 확실하다.
+        if config.CHROMEDRIVER_PATH:
             drv = webdriver.Chrome(
-                service=Service(ChromeDriverManager().install()), options=options
+                service=Service(config.CHROMEDRIVER_PATH), options=options
             )
-        except Exception:
-            drv = webdriver.Chrome(options=options)
+        else:
+            # 2) webdriver-manager가 브라우저 버전에 맞는 드라이버를 받아 온다.
+            try:
+                from webdriver_manager.chrome import ChromeDriverManager
+
+                drv = webdriver.Chrome(
+                    service=Service(ChromeDriverManager().install()), options=options
+                )
+            except Exception as exc:
+                logger.debug("webdriver-manager 실패, 기본 경로로 재시도: %s", exc)
+                # 3) 마지막으로 Selenium이 알아서 찾게 둔다.
+                drv = webdriver.Chrome(options=options)
 
         drv.set_page_load_timeout(config.TIMEOUT + 20)
         yield drv
+    except Exception as exc:
+        raise BrowserError(
+            f"크롬 드라이버를 시작하지 못했습니다: {exc}\n\n"
+            "다음을 확인하세요.\n"
+            "  1. 크롬(또는 엣지)이 설치되어 있는지\n"
+            "  2. 크롬 버전과 드라이버 버전이 맞는지 "
+            "(chrome://version 에서 확인)\n"
+            "  3. 자동 설치가 막힌 환경이면 .env에 경로를 직접 지정\n"
+            "       CHROMEDRIVER_PATH=드라이버 실행파일 경로\n"
+            "       CHROME_BINARY=크롬 실행파일 경로\n"
+            "     드라이버는 pip install chromedriver-py 로도 받을 수 있습니다."
+        ) from exc
     finally:
         if drv:
             drv.quit()
