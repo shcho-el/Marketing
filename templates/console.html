@@ -1138,23 +1138,53 @@ $("bodyTabs").addEventListener("click", e => {
   });
 });
 
+/* 이 앱은 사내망에서 http로 열린다. 보안 출처가 아니면 navigator.clipboard 자체가
+   없거나, 창에 포커스가 없으면 약속이 끝나지 않고 매달린다. 두 경우 모두
+   버튼이 먹통으로 보이므로 시간을 끊고 예전 방식으로 넘긴다. */
+async function copyText(text) {
+  text = String(text == null ? "" : text);
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      const done = await Promise.race([
+        navigator.clipboard.writeText(text).then(() => true),
+        new Promise(r => setTimeout(() => r(false), 1200)),
+      ]);
+      if (done) return true;
+    }
+  } catch (err) { /* 아래 방식으로 한 번 더 시도한다 */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+    document.body.appendChild(ta);
+    ta.focus();
+    try { ta.setSelectionRange(0, ta.value.length); } catch (err) { ta.select(); }
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (err) { return false; }
+}
+
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-copy-text],[data-copy]");
   if (!b) return;
   const text = b.dataset.copyText != null ? b.dataset.copyText
     : ($(b.dataset.copy) || {}).textContent || "";
-  try {
-    await navigator.clipboard.writeText(text);
-    const old = b.textContent; b.textContent = "복사됨";
-    setTimeout(() => { b.textContent = old; }, 1200);
-  } catch (err) { toast("복사에 실패했습니다. 직접 선택해 복사하세요.", "bad"); }
+  const back = b.dataset.back || (b.dataset.back = b.textContent);
+  if (await copyText(text)) {
+    b.textContent = "복사됨";
+    setTimeout(() => { b.textContent = back; }, 1200);
+  } else {
+    toast("복사에 실패했습니다. 직접 선택해 복사하세요.", "bad");
+  }
 });
 
 $("copyAll").addEventListener("click", async () => {
   if (!current) return;
   const text = current.cms_fields.map(f => `${f.key}\n${f.value}`).join("\n\n");
-  try { await navigator.clipboard.writeText(text); toast("CMS 기본 정보를 복사했습니다.", "ok"); }
-  catch (e) { toast("복사에 실패했습니다.", "bad"); }
+  if (await copyText(text)) toast("CMS 기본 정보를 복사했습니다.", "ok");
+  else toast("복사에 실패했습니다. 직접 선택해 복사하세요.", "bad");
 });
 
 async function loadHistory() {
@@ -1231,10 +1261,9 @@ document.addEventListener("keydown", e => {
     }
     if (k === "c" && e.shiftKey) {
       e.preventDefault();
-      const src = $("htmlSrc").textContent;
-      navigator.clipboard.writeText(src)
-        .then(() => toast("본문 HTML을 복사했습니다.", "ok"))
-        .catch(() => toast("복사에 실패했습니다.", "bad"));
+      copyText($("htmlSrc").textContent).then(ok => toast(
+        ok ? "본문 HTML을 복사했습니다." : "복사에 실패했습니다. 직접 선택해 복사하세요.",
+        ok ? "ok" : "bad"));
       return;
     }
     return;
