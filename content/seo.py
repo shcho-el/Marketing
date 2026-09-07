@@ -7,7 +7,7 @@ SEO / AEO / GEO 검증 및 점수 산출.
   SEO (검색엔진 최적화)   - 구글·네이버가 '이 페이지가 무엇에 관한 글인지' 파악하게 함
                             메타 길이, 키워드 배치, 제목 구조, 슬러그, 내부링크
   AEO (답변엔진 최적화)   - 검색 결과 상단 답변·네이버 스마트블록에 발췌되게 함
-                            질문형 소제목, 소제목 직후 직답, FAQ, 목차 앵커
+                            질문형 소제목, 소제목 직후 직답, FAQ
   GEO (생성형엔진 최적화) - ChatGPT·구글 AI 개요 등이 '인용'하게 함
                             독립적으로 잘라도 뜻이 통하는 문장, 표·목록, 근거 기관,
                             고유명사(기관명) 일관성, 구조화 데이터
@@ -209,7 +209,6 @@ def _aeo_checks(doc: dict) -> list:
     sections = doc.get("sections", []) or []
     faq = doc.get("faq", []) or []
     capsule = doc.get("answer_capsule", "") or ""
-    toc = doc.get("toc", []) or []
 
     q_heads = [s for s in sections if _QUESTION.search(s.get("h2", ""))]
     answered = [s for s in sections if (s.get("answer") or "").strip()]
@@ -254,12 +253,6 @@ def _aeo_checks(doc: dict) -> list:
             6, "FAQ 질문 형식",
             f"{len(q_faq)}/{len(faq)}개가 질문형",
             "FAQ 질문은 실제 검색어 형태의 완결된 의문문으로 쓰세요.",
-        ),
-        _check(
-            len(toc) >= 3,
-            8, "목차",
-            f"{len(toc)}개 항목",
-            "목차 앵커는 네이버 스마트블록·구글 사이트링크 발췌에 쓰입니다.",
         ),
         _check(
             all(20 <= len(f.get("a", "")) <= 400 for f in faq) if faq else False,

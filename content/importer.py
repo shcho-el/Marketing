@@ -27,7 +27,6 @@ EXPECTED = {
     "key_takeaways": "핵심 요약",
     "faq": "자주 묻는 질문",
     "hashtags": "해시태그",
-    "toc": "목차",
     "intro": "도입부",
     "closing": "마무리",
     "citations": "출처",
@@ -78,7 +77,7 @@ def _check_sections(sections):
 
 def _fill_defaults(doc):
     """비어 있어도 렌더링이 깨지지 않도록 기본값을 채운다."""
-    for key in ("key_takeaways", "hashtags", "toc", "faq", "citations",
+    for key in ("key_takeaways", "hashtags", "faq", "citations",
                 "internal_link_suggestions"):
         if not isinstance(doc.get(key), list):
             doc[key] = []

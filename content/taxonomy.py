@@ -103,5 +103,5 @@ def category_url_segment(category: str) -> str:
 
 
 def post_url(category: str, slug: str) -> str:
-    """발행 후 최종 URL을 조립한다(정규 URL/JSON-LD·목차 앵커에 사용)."""
+    """발행 후 최종 URL을 조립한다(정규 URL과 JSON-LD에 사용)."""
     return f"{clinic.BLOG_BASE}/{category_url_segment(category)}/{slug}"

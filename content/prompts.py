@@ -76,19 +76,6 @@ OUTPUT_SCHEMA = {
             "type": "string",
             "description": "도입부 2~4문장. 인사 + 이 글이 다루는 범위.",
         },
-        "toc": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "label": {"type": "string", "description": "목차에 표시할 문구"},
-                    "target_h2": {"type": "string", "description": "연결될 H2 제목과 정확히 동일"},
-                },
-                "required": ["label", "target_h2"],
-                "additionalProperties": False,
-            },
-            "description": "본문 H2와 1:1로 대응하는 목차.",
-        },
         "sections": {
             "type": "array",
             "items": {
@@ -166,7 +153,6 @@ OUTPUT_SCHEMA = {
         "hashtags",
         "answer_capsule",
         "intro",
-        "toc",
         "sections",
         "key_takeaways",
         "faq",

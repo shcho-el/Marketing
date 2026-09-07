@@ -38,12 +38,6 @@ FIXTURE = {
         "많은 분들이 약국에서 구한 외용액만으로 발톱 무좀을 해결하려 하시지만, "
         "정성껏 발라도 발톱이 여전히 두껍고 노랗다면 그것은 정성의 문제가 아니라 구조의 문제입니다."
     ),
-    "toc": [
-        {"label": "왜 바르는 약만으로는 부족한가요?", "target_h2": "왜 바르는 약만으로는 부족한가요?"},
-        {"label": "치료는 어떤 순서로 진행되나요?", "target_h2": "치료는 어떤 순서로 진행되나요?"},
-        {"label": "발톱 변색은 모두 무좀인가요?", "target_h2": "발톱 변색은 모두 무좀인가요?"},
-        {"label": "치료 기간은 얼마나 걸리나요?", "target_h2": "치료 기간은 얼마나 걸리나요?"},
-    ],
     "sections": [
         {
             "h2": "왜 바르는 약만으로는 부족한가요?",
@@ -243,7 +237,7 @@ def main() -> int:
     html = renderer.render_body(doc, include_schema=False)
     text = renderer.render_plaintext(doc)
     failures += not check("HTML 생성", len(html) > 1000, f"{len(html)}자")
-    failures += not check("목차 앵커 연결", 'href="#s1"' in html)
+    failures += not check("소제목 id 유지", 'id="s1"' in html)
     failures += not check("표 렌더링", "<table>" in html)
     failures += not check("의료법 고지 자동 삽입", "medical-notice" in html)
     failures += not check("평문 생성", len(text) > 800, f"{len(text)}자")

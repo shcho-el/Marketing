@@ -5,9 +5,8 @@
 CMS 본문 편집기에 그대로 붙여 넣을 수 있는 형태로 만듭니다.
 의료법 필수 고지와 JSON-LD는 여기서 자동으로 덧붙습니다(모델이 빠뜨려도 항상 들어감).
 
-목차 링크는 두 가지를 함께 제공합니다.
-  - id 앵커(#s1)      : CMS가 id 속성을 보존할 때
-  - 텍스트 프래그먼트  : id가 지워지는 CMS에서도 동작 (실제 발행 글이 쓰는 방식)
+소제목에는 id를 남겨 둡니다. 목차는 넣지 않지만 다른 글에서 특정 절로
+바로 연결할 때 쓸 수 있습니다.
 """
 
 import html
@@ -62,36 +61,6 @@ def _render_block(block: dict) -> str:
         )
 
     return ""
-
-
-def _render_toc(doc: dict, base_url: str) -> str:
-    """목차. id 앵커를 기본으로 하고 텍스트 프래그먼트를 보조로 붙인다."""
-    sections = doc.get("sections", []) or []
-    if not sections:
-        return ""
-
-    # target_h2로 매칭해 순서를 잡는다. 매칭 실패 시 섹션 순서를 따른다.
-    heads = [s.get("h2", "") for s in sections]
-    entries = []
-    for item in doc.get("toc", []) or []:
-        target = item.get("target_h2", "")
-        idx = heads.index(target) if target in heads else None
-        entries.append((item.get("label") or target, idx))
-    if not entries:
-        entries = [(h, i) for i, h in enumerate(heads)]
-
-    lis = []
-    for label, idx in entries:
-        if idx is None:
-            lis.append(f"<li>{_esc(label)}</li>")
-            continue
-        frag = urllib.parse.quote(heads[idx], safe="")
-        href = f"#{_anchor_id(idx)}"
-        lis.append(
-            f'<li><a href="{href}" data-textfragment="{base_url}#:~:text={frag}">'
-            f"{_esc(label)}</a></li>"
-        )
-    return '<nav class="toc" aria-label="목차"><h2>목차</h2><ul>' + "".join(lis) + "</ul></nav>"
 
 
 def _render_notice() -> str:
@@ -165,9 +134,6 @@ def _render_citations(doc: dict) -> str:
 
 def render_body(doc: dict, include_schema: bool = True) -> str:
     """CMS 본문에 넣을 HTML 전체."""
-    base_url = doc.get("published_url") or taxonomy.post_url(
-        doc.get("category", ""), doc.get("post_url", "")
-    )
     parts = [f"<h1>{_esc(doc.get('h1'))}</h1>"]
 
     byline = _render_author()
@@ -177,16 +143,12 @@ def render_body(doc: dict, include_schema: bool = True) -> str:
     if doc.get("intro"):
         parts.append(f"<p>{_esc(doc['intro'])}</p>")
 
-    # 답변 캡슐 - 발췌 대상 1순위. 목차보다 앞에 둔다.
+    # 답변 캡슐 - 발췌 대상 1순위. 본문 맨 앞에 둔다.
     if doc.get("answer_capsule"):
         parts.append(
             '<section class="answer-capsule"><h2>한눈에 보는 답</h2>'
             f"<p>{_esc(doc['answer_capsule'])}</p></section>"
         )
-
-    toc = _render_toc(doc, base_url)
-    if toc:
-        parts.append(toc)
 
     for i, section in enumerate(doc.get("sections", []) or []):
         parts.append(f'<h2 id="{_anchor_id(i)}">{_esc(section.get("h2"))}</h2>')
@@ -242,12 +204,6 @@ def render_plaintext(doc: dict) -> str:
         out += [doc["intro"], ""]
     if doc.get("answer_capsule"):
         out += ["[한눈에 보는 답]", doc["answer_capsule"], ""]
-
-    toc = doc.get("toc", []) or []
-    if toc:
-        out.append("목차")
-        out += [f"  {i + 1}. {t.get('label', '')}" for i, t in enumerate(toc)]
-        out.append("")
 
     for i, s in enumerate(doc.get("sections", []) or [], 1):
         out.append(f"{i}. {s.get('h2', '')}")
