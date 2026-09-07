@@ -39,6 +39,7 @@ import pipeline
 from content import (
     clinic,
     generator,
+    importer,
     medical_law,
     positioning,
     renderer,
@@ -284,6 +285,29 @@ def api_generate_stream():
         mimetype="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.route("/api/import", methods=["POST"])
+@login_required
+def api_import():
+    """클라우드 웹앱에서 만든 원고를 받아 발행 가능한 상태로 저장한다.
+
+    API 요금 없이 생성한 원고를 CMS 업로드까지 잇는 통로입니다.
+    """
+    payload = request.get_json(silent=True) or {}
+    try:
+        result = importer.load(payload.get("text") or payload.get("doc") or "")
+    except importer.ImportError_ as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        logger.exception("가져오기 실패")
+        return jsonify({"error": f"가져오지 못했습니다: {exc}"}), 500
+
+    doc, reports = result["doc"], result["reports"]
+    post_id = store.save(doc, reports, result["topic"])
+    view = view_model(doc, reports, post_id)
+    view["warnings"] = result["warnings"]
+    return jsonify(view)
 
 
 @app.route("/api/post/<int:post_id>")

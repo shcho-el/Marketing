@@ -539,8 +539,25 @@ kbd {
 
     <section class="panel">
       <header>
-        <h2>원고 검사</h2>
+        <h2>원고 가져오기</h2>
         <span class="eyebrow">02</span>
+      </header>
+      <p class="hint" style="margin-bottom:10px">
+        클라우드 웹앱에서 <strong>원고 내보내기</strong>로 복사한 내용을 붙여넣으면
+        검사·썸네일·CMS 업로드까지 그대로 이어집니다. API 요금이 들지 않습니다.
+      </p>
+      <div class="field">
+        <textarea id="importInput" rows="4"
+                  placeholder="클라우드 웹앱에서 복사한 내용을 붙여넣으세요"></textarea>
+      </div>
+      <button class="btn quiet" id="importBtn" style="width:100%">가져오기</button>
+      <div id="importOut" style="margin-top:10px"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>원고 검사</h2>
+        <span class="eyebrow">03</span>
       </header>
       <p class="hint" style="margin-bottom:10px">
         이미 써 둔 원고를 붙여 넣으면 의료법·포지셔닝 표현만 점검합니다. 생성 없이 동작합니다.
@@ -555,7 +572,7 @@ kbd {
     <section class="panel">
       <header>
         <h2>이력</h2>
-        <span class="eyebrow">03</span>
+        <span class="eyebrow">04</span>
       </header>
       <div class="hist" id="hist"><p class="empty">아직 없습니다.</p></div>
     </section>
@@ -1028,6 +1045,33 @@ $("runBtn").addEventListener("click", () => {
     } catch (e) { /* 아래 기본 메시지로 */ }
     loadFail("서버와 연결이 끊겼습니다. 서버 창이 켜져 있는지 확인하고 다시 시도하세요.");
   };
+});
+
+$("importBtn").addEventListener("click", async () => {
+  const text = $("importInput").value.trim();
+  if (!text) { $("importOut").innerHTML = '<p class="empty">붙여넣은 내용이 없습니다.</p>'; return; }
+  const btn = $("importBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>확인 중';
+  try {
+    const v = await api("/api/import", { method: "POST", body: JSON.stringify({ text }) });
+    render(v);
+    loadHistory();
+    $("importInput").value = "";
+    const warn = (v.warnings || []).length
+      ? `<div class="note warn" style="margin-top:8px">비어 있는 항목: ${
+          v.warnings.map(esc).join(", ")}<br />
+         <span class="muted">점수가 낮아질 수 있습니다.</span></div>` : "";
+    $("importOut").innerHTML =
+      `<div class="note ok">가져왔습니다. 오른쪽에서 확인하세요.</div>${warn}`;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) {
+    $("importOut").innerHTML =
+      `<div class="note bad" style="white-space:pre-wrap">${esc(e.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "가져오기";
+  }
 });
 
 $("lintBtn").addEventListener("click", async () => {
