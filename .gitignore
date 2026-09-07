@@ -18,3 +18,4 @@ assets/thumbnails/*
 mock_cms_submissions.json
 mock_mapping.json
 .e2e/
+.venv/

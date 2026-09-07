@@ -93,4 +93,15 @@ python main.py inspect-cms   # CMS 폼 구조 분석 (최초 1회)
 python main.py publish <id>  # 업로드 (기본: 연습 실행)
 ```
 
+### 로컬에서 실행하기
+
+**윈도우** — `start.bat` 더블클릭
+
+**맥 / 리눅스** — 터미널에서 `./start.sh`
+
+처음 실행하면 가상환경 생성 → 패키지 설치 → `.env` 생성 → 환경 점검을 거쳐
+브라우저가 자동으로 열립니다. 두 번째부터는 바로 뜹니다.
+
+문제가 있으면 `python main.py doctor`로 무엇이 빠졌는지 확인하세요.
+
 자세한 내용은 [CONTENT.md](CONTENT.md)를 참고하세요.

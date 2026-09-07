@@ -11,6 +11,7 @@
   python main.py inspect-cms  # CMS 글쓰기 폼 분석 → 셀렉터 매핑 생성 (최초 1회)
   python main.py publish <id> # 생성한 글을 CMS에 업로드 (기본: 연습 실행)
   python main.py auto "제목"  # 제목만 넣으면 생성→검사→썸네일→업로드까지 한 번에
+  python main.py doctor       # 환경 점검 (뭐가 빠졌는지 한 번에 확인)
 """
 
 import sys
@@ -100,6 +101,13 @@ def cmd_write():
         print(f"    [{f['severity']}] \"{f['matched']}\" - {f['reason']}")
     print(f"\n  저장 완료 (id={post_id}). 본문은 대시보드에서 확인하세요:")
     print("    python main.py content  →  http://localhost:5001/post/%d" % post_id)
+
+
+def cmd_doctor():
+    """환경 점검."""
+    import doctor
+
+    sys.exit(doctor.run())
 
 
 def cmd_auto():
@@ -286,6 +294,7 @@ COMMANDS = {
     "content": cmd_content,
     "write": cmd_write,
     "auto": cmd_auto,
+    "doctor": cmd_doctor,
     "inspect-cms": cmd_inspect_cms,
     "publish": cmd_publish,
 }

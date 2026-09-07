@@ -3,11 +3,32 @@
 오블리브 송도 호라이즌의원 문제성발톱클리닉의 블로그 콘텐츠를
 **의료법을 지키면서** 구글·네이버 SEO, AEO, GEO에 맞게 생성합니다.
 
+## 실행
+
+**윈도우** — `start.bat` 더블클릭
+**맥 / 리눅스** — `./start.sh`
+
+가상환경 생성 → 패키지 설치 → `.env` 생성 → 환경 점검 → 브라우저 열기까지
+한 번에 처리합니다. 두 번째 실행부터는 바로 뜹니다.
+
+직접 하려면:
+
 ```bash
+python -m venv .venv
+.venv\Scripts\activate          # 맥/리눅스: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env      # ANTHROPIC_API_KEY와 병원 기본정보 입력
-python main.py content    # http://localhost:5001
+copy .env.example .env           # 맥/리눅스: cp .env.example .env
+python main.py content           # http://localhost:5001
 ```
+
+### 뭔가 안 될 때
+
+```bash
+python main.py doctor
+```
+
+파이썬 버전·패키지·`.env`·API 키·병원 정보·폰트·로고·배경 사진·CMS 설정·
+크롬 드라이버를 한 번에 점검하고, 빠진 항목마다 해결 방법을 알려 줍니다.
 
 ## 제목만 넣고 한 번에
 
