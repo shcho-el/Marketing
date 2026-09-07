@@ -372,6 +372,53 @@ pre.code {
 .toast[data-kind="bad"] { background: var(--bad); color: #fff; }
 .toast[data-kind="ok"]  { background: var(--ok); color: #fff; }
 
+/* ─── 단축키 ───────────────────────────────────────────── */
+kbd {
+  display: inline-block; min-width: 22px; text-align: center;
+  padding: 2px 7px; border-radius: 5px;
+  border: 1px solid var(--line); border-bottom-width: 2px;
+  background: var(--raised); color: var(--ink-2);
+  font-family: var(--mono); font-size: .74rem; line-height: 1.5;
+}
+.keyhint {
+  display: inline-flex; gap: 3px; align-items: center;
+  margin-left: 8px; vertical-align: middle; opacity: .75;
+}
+.btn kbd {
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  color: inherit; font-size: .7rem; min-width: 0; padding: 1px 5px;
+  border-bottom-width: 1px;
+}
+#keysBtn { cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
+.keys-backdrop {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
+  padding: 24px; background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(3px);
+}
+.keys-backdrop[hidden] { display: none; }
+.keys-card {
+  width: 100%; max-width: 520px; max-height: 82vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 24px 26px;
+}
+.keys-card header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.keys-card h2 { font-size: 1rem; }
+.keys-group { margin-top: 18px; }
+.keys-group h3 {
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600; margin-bottom: 8px;
+}
+.keys-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: .85rem;
+}
+.keys-row:last-child { border-bottom: 0; }
+.keys-row .combo { display: flex; gap: 3px; }
+
 </style>
 </head>
 <body>
@@ -385,6 +432,7 @@ pre.code {
     <span class="gate" data-state="" id="gateLaw"><span class="dot"></span>의료법</span>
     <span class="gate" data-state="" id="gatePos"><span class="dot"></span>포지셔닝</span>
     <span class="gate" data-state="" id="gateSeo"><span class="dot"></span>검색 최적화</span>
+    <button type="button" class="lan" id="keysBtn" title="단축키 (?)">단축키 <kbd>?</kbd></button>
     {% if auth_on %}<a href="{{ url_for('logout') }}" class="lan" style="text-decoration:none">나가기</a>{% endif %}
   </div>
 </header>
@@ -406,9 +454,9 @@ pre.code {
         <p class="hint" id="parseHint">카테고리와 주키워드는 제목에서 자동으로 잡습니다.</p>
       </div>
 
-      <button class="btn" id="runBtn" style="width:100%">원고 생성</button>
+      <button class="btn" id="runBtn" style="width:100%">원고 생성<span class="keyhint"><kbd class="mod">Ctrl</kbd><kbd>↵</kbd></span></button>
       <p class="hint" id="genHint" style="margin-top:8px"></p>
-      <p class="hint" style="margin-top:4px">1편당 1~3분. 검사 미통과 시 자동으로 다시 씁니다.</p>
+      <p class="hint" style="margin-top:4px">1편당 1~3분. 검사 미통과 시 자동으로 다시 씁니다. 단축키는 <kbd>?</kbd></p>
     </section>
 
     <section class="panel">
@@ -422,7 +470,7 @@ pre.code {
       <div class="field">
         <textarea id="lintInput" rows="5" placeholder="검사할 원고를 붙여 넣으세요"></textarea>
       </div>
-      <button class="btn quiet" id="lintBtn" style="width:100%">검사하기</button>
+      <button class="btn quiet" id="lintBtn" style="width:100%">검사하기<span class="keyhint"><kbd class="mod">Ctrl</kbd><kbd>↵</kbd></span></button>
       <div id="lintOut" style="margin-top:12px"></div>
     </section>
 
@@ -458,7 +506,7 @@ pre.code {
     <section class="panel">
       <header>
         <h2>CMS 기본 정보</h2>
-        <button class="btn quiet tiny" id="copyAll">전체 복사</button>
+        <button class="btn quiet tiny" id="copyAll">전체 복사<span class="keyhint"><kbd class="mod">Ctrl</kbd><kbd>S</kbd></span></button>
       </header>
       <div class="fields" id="cmsFields"></div>
     </section>
@@ -539,6 +587,54 @@ pre.code {
 
   </div>
 </div>
+
+<div class="keys-backdrop" id="keysModal" hidden role="dialog" aria-modal="true"
+     aria-labelledby="keysTitle">
+  <div class="keys-card">
+    <header>
+      <h2 id="keysTitle">단축키</h2>
+      <button class="btn quiet tiny" id="keysClose">닫기 <kbd>Esc</kbd></button>
+    </header>
+    <p class="hint">글자를 입력하는 중에는 <kbd class="mod">Ctrl</kbd> 조합만 동작합니다.</p>
+
+    <div class="keys-group">
+      <h3>작업</h3>
+      <div class="keys-row"><span>원고 생성</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>↵</kbd></span></div>
+      <div class="keys-row"><span>원고 검사 (검사창에 커서를 두고)</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>↵</kbd></span></div>
+      <div class="keys-row"><span>CMS에 업로드</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>U</kbd></span></div>
+    </div>
+
+    <div class="keys-group">
+      <h3>복사</h3>
+      <div class="keys-row"><span>CMS 기본 정보 전체</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>S</kbd></span></div>
+      <div class="keys-row"><span>본문 HTML</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>⇧</kbd><kbd>C</kbd></span></div>
+    </div>
+
+    <div class="keys-group">
+      <h3>이동</h3>
+      <div class="keys-row"><span>제목 입력으로</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>K</kbd></span></div>
+      <div class="keys-row"><span>원고 검사창으로</span>
+        <span class="combo"><kbd class="mod">Ctrl</kbd><kbd>L</kbd></span></div>
+      <div class="keys-row"><span>본문 탭 (미리보기·HTML·평문·JSON-LD·점검)</span>
+        <span class="combo"><kbd>1</kbd>–<kbd>5</kbd></span></div>
+      <div class="keys-row"><span>썸네일 레이아웃 바꾸기</span>
+        <span class="combo"><kbd>T</kbd></span></div>
+    </div>
+
+    <div class="keys-group">
+      <h3>기타</h3>
+      <div class="keys-row"><span>이 창 열기 / 닫기</span>
+        <span class="combo"><kbd>?</kbd> · <kbd>Esc</kbd></span></div>
+    </div>
+  </div>
+</div>
+
 <script>const BOOT = {{ boot | tojson }};</script>
 
 <script>
@@ -812,6 +908,85 @@ async function loadHistory() {
     }));
   } catch (e) { /* 이력은 없어도 작업에 지장 없다 */ }
 }
+
+/* ── 단축키 ───────────────────────────────────────────── */
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+
+// 맥에서는 Ctrl 대신 ⌘로 표시한다.
+if (IS_MAC) document.querySelectorAll("kbd.mod").forEach(k => { k.textContent = "⌘"; });
+
+const mod = e => (IS_MAC ? e.metaKey : e.ctrlKey) && !e.altKey;
+const typing = el =>
+  el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+
+function toggleKeys(show) {
+  const m = $("keysModal");
+  const open = show == null ? m.hidden : show;
+  m.hidden = !open;
+  if (open) $("keysClose").focus();
+}
+$("keysBtn").addEventListener("click", () => toggleKeys(true));
+$("keysClose").addEventListener("click", () => toggleKeys(false));
+$("keysModal").addEventListener("click", e => {
+  if (e.target === $("keysModal")) toggleKeys(false);
+});
+
+function selectTab(container, index) {
+  const tabs = $(container).querySelectorAll(".tab");
+  if (index >= 0 && index < tabs.length) tabs[index].click();
+}
+
+document.addEventListener("keydown", e => {
+  const el = document.activeElement;
+
+  // Esc — 열려 있는 창 닫기
+  if (e.key === "Escape") {
+    if (!$("keysModal").hidden) { toggleKeys(false); e.preventDefault(); }
+    return;
+  }
+
+  // Ctrl/⌘ 조합 — 입력 중에도 동작한다
+  if (mod(e)) {
+    const k = e.key.toLowerCase();
+    if (e.key === "Enter") {
+      // 검사창에 커서가 있으면 검사, 아니면 생성
+      e.preventDefault();
+      (el === $("lintInput") ? $("lintBtn") : $("runBtn")).click();
+      return;
+    }
+    if (k === "k") { e.preventDefault(); $("titleInput").focus(); $("titleInput").select(); return; }
+    if (k === "l") { e.preventDefault(); $("lintInput").focus(); return; }
+    if (k === "s") { e.preventDefault(); $("copyAll").click(); return; }
+    if (k === "u") {
+      e.preventDefault();
+      const b = $("publishBtn");
+      if (b.disabled) toast("업로드 조건이 아직 갖춰지지 않았습니다.", "bad");
+      else b.click();
+      return;
+    }
+    if (k === "c" && e.shiftKey) {
+      e.preventDefault();
+      const src = $("htmlSrc").textContent;
+      navigator.clipboard.writeText(src)
+        .then(() => toast("본문 HTML을 복사했습니다.", "ok"))
+        .catch(() => toast("복사에 실패했습니다.", "bad"));
+      return;
+    }
+    return;
+  }
+
+  // 아래는 글자 입력 중이 아닐 때만
+  if (typing(el)) return;
+
+  if (e.key === "?" || (e.key === "/" && e.shiftKey)) { e.preventDefault(); toggleKeys(); return; }
+  if (e.key >= "1" && e.key <= "5") { e.preventDefault(); selectTab("bodyTabs", +e.key - 1); return; }
+  if (e.key.toLowerCase() === "t") {
+    e.preventDefault();
+    const tabs = $("layoutTabs").querySelectorAll(".tab");
+    const cur = [...tabs].findIndex(x => x.getAttribute("aria-selected") === "true");
+    tabs[(cur + 1) % tabs.length].click();
+  }
+});
 
 /* ── 기동 ─────────────────────────────────────────────── */
 render(BOOT);
