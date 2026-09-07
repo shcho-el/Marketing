@@ -1,0 +1,2202 @@
+<title>문제성발톱 콘텐츠 콘솔</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Nanum+Myeongjo:wght@400;700&display=swap" />
+
+<style>
+:root {
+  --ground:   #F7F4EE;
+  --surface:  #FFFDFA;
+  --raised:   #F1ECE2;
+  --line:     #E2DACB;
+  --line-soft:#EDE7DC;
+  --ink:      #1E1B16;
+  --ink-2:    #564F44;
+  --ink-3:    #8A8277;
+  --brass:    #8A6A32;
+  --brass-2:  #B08D4C;
+  --ok:       #2C6249;
+  --ok-bg:    #E2EDE6;
+  --warn:     #8A6110;
+  --warn-bg:  #F6EBD5;
+  --bad:      #9C3A2E;
+  --bad-bg:   #F6E2DE;
+  --cream:    #F5EBDC;
+  --on-accent:#FFFFFF;
+
+  --r-sm: 4px;
+  --r:    8px;
+  --r-lg: 14px;
+
+  --sans: "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+  --serif:"Nanum Myeongjo", "Batang", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:   #15130F;
+    --surface:  #1D1A15;
+    --raised:   #262119;
+    --line:     #3A3227;
+    --line-soft:#2C2620;
+    --ink:      #F0EAE0;
+    --ink-2:    #BDB3A4;
+    --ink-3:    #857C6F;
+    --brass:    #CDA664;
+    --brass-2:  #E0BC82;
+    --ok:       #7FC0A0;
+    --ok-bg:    #1D3229;
+    --warn:     #DCB158;
+    --warn-bg:  #362B15;
+    --bad:      #E0897C;
+    --bad-bg:   #3A211C;
+    --on-accent:#1A1610;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:   #15130F;
+  --surface:  #1D1A15;
+  --raised:   #262119;
+  --line:     #3A3227;
+  --line-soft:#2C2620;
+  --ink:      #F0EAE0;
+  --ink-2:    #BDB3A4;
+  --ink-3:    #857C6F;
+  --brass:    #CDA664;
+  --brass-2:  #E0BC82;
+  --ok:       #7FC0A0;
+  --ok-bg:    #1D3229;
+  --warn:     #DCB158;
+  --warn-bg:  #362B15;
+  --bad:      #E0897C;
+  --bad-bg:   #3A211C;
+  --on-accent:#1A1610;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; font-weight: 600; }
+p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+a { color: var(--brass); }
+
+/* ─── 상단 바 ─────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 14px 26px;
+  background: color-mix(in srgb, var(--ground) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.wordmark { display: flex; align-items: baseline; gap: 10px; }
+.wordmark .name {
+  font-family: var(--serif); font-size: 1.15rem; letter-spacing: .01em;
+}
+.wordmark .unit {
+  font-size: .72rem; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.gates { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.gate {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px 5px 9px; border-radius: 100px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: .78rem; font-weight: 500;
+}
+.gate .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.gate[data-state="ok"]   { border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); color: var(--ok); }
+.gate[data-state="ok"] .dot   { background: var(--ok); }
+.gate[data-state="warn"] { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); color: var(--warn); }
+.gate[data-state="warn"] .dot { background: var(--warn); }
+.gate[data-state="bad"]  { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); color: var(--bad); }
+.gate[data-state="bad"] .dot  { background: var(--bad); }
+
+/* ─── 레이아웃 ─────────────────────────────────────── */
+.shell {
+  display: grid; grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 26px; align-items: start;
+  max-width: 1440px; margin: 0 auto; padding: 26px;
+}
+@media (max-width: 940px) { .shell { grid-template-columns: 1fr; } }
+.rail { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 940px) { .rail { position: static; } }
+.stream { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+/* ─── 패널 ─────────────────────────────────────────── */
+.panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 20px 22px;
+}
+.panel > header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft);
+}
+.panel > header h2 { font-size: .95rem; }
+.eyebrow {
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600;
+}
+.hint { font-size: .8rem; color: var(--ink-3); line-height: 1.6; }
+
+/* ─── 폼 ───────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field > label { font-size: .78rem; color: var(--ink-2); font-weight: 500; }
+textarea, input[type="text"], select {
+  width: 100%; padding: 10px 12px;
+  background: var(--ground); border: 1px solid var(--line);
+  border-radius: var(--r); resize: vertical; line-height: 1.6;
+}
+textarea:focus-visible, input:focus-visible, select:focus-visible,
+button:focus-visible, .tab:focus-visible {
+  outline: 2px solid var(--brass); outline-offset: 2px;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; border: 1px solid transparent; border-radius: var(--r);
+  background: var(--brass); color: var(--on-accent); font-weight: 600; font-size: .87rem;
+  cursor: pointer; transition: filter .15s ease;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.quiet {
+  background: transparent; border-color: var(--line);
+  color: var(--ink-2); font-weight: 500;
+}
+.btn.quiet:hover:not(:disabled) { background: var(--raised); }
+.btn.tiny { padding: 4px 10px; font-size: .74rem; border-radius: var(--r-sm); }
+.check-row { display: flex; align-items: flex-start; gap: 8px; font-size: .83rem; margin-bottom: 8px; }
+.check-row input { margin-top: 3px; accent-color: var(--brass); }
+
+/* ─── 점수 ─────────────────────────────────────────── */
+.scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 560px) { .scores { grid-template-columns: repeat(2, 1fr); } }
+.score {
+  padding: 12px 10px; border-radius: var(--r); background: var(--raised);
+  border: 1px solid var(--line-soft); text-align: center;
+}
+.score .v {
+  font-family: var(--mono); font-size: 1.5rem; font-weight: 500;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.score .k { font-size: .68rem; color: var(--ink-3); letter-spacing: .06em; margin-top: 3px; }
+.score[data-grade="ok"]   { background: var(--ok-bg); border-color: transparent; }
+.score[data-grade="ok"] .v   { color: var(--ok); }
+.score[data-grade="warn"] { background: var(--warn-bg); border-color: transparent; }
+.score[data-grade="warn"] .v { color: var(--warn); }
+.score[data-grade="bad"]  { background: var(--bad-bg); border-color: transparent; }
+.score[data-grade="bad"] .v  { color: var(--bad); }
+
+/* ─── 지적사항 ─────────────────────────────────────── */
+.finding {
+  display: grid; grid-template-columns: 3px 1fr; gap: 12px;
+  padding: 0 0 0 0; margin-bottom: 10px;
+}
+.finding .stripe { border-radius: 2px; background: var(--warn); }
+.finding[data-sev="block"] .stripe { background: var(--bad); }
+.finding .body { padding: 2px 0; min-width: 0; }
+.finding .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 100px;
+  background: var(--warn-bg); color: var(--warn); white-space: nowrap;
+}
+.finding[data-sev="block"] .tag { background: var(--bad-bg); color: var(--bad); }
+.finding .term { font-family: var(--mono); font-size: .85rem; font-weight: 500; }
+.finding .ctx {
+  font-size: .78rem; color: var(--ink-3); margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.finding .why { font-size: .8rem; color: var(--ink-2); margin-top: 2px; }
+.finding .fix { font-size: .8rem; color: var(--ok); margin-top: 2px; }
+
+/* ─── CMS 필드 ─────────────────────────────────────── */
+.fields { display: flex; flex-direction: column; }
+.fld {
+  display: grid; grid-template-columns: 130px minmax(0, 1fr) auto;
+  gap: 12px; align-items: start;
+  padding: 10px 0; border-bottom: 1px solid var(--line-soft);
+}
+.fld:last-child { border-bottom: 0; }
+@media (max-width: 640px) { .fld { grid-template-columns: 1fr; gap: 4px; } }
+.fld .k { font-size: .78rem; color: var(--ink-3); padding-top: 2px; }
+.fld .v {
+  font-family: var(--mono); font-size: .84rem; overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.counter {
+  font-family: var(--mono); font-size: .72rem; color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.counter[data-over="1"] { color: var(--bad); font-weight: 500; }
+
+/* ─── 탭 ───────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab {
+  padding: 6px 13px; border-radius: 100px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink-3); font-size: .78rem;
+  cursor: pointer; font-weight: 500;
+}
+.tab[aria-selected="true"] {
+  background: var(--ink); color: var(--ground); border-color: var(--ink);
+}
+.pane[hidden] { display: none; }
+pre.code {
+  margin: 0; padding: 14px; border-radius: var(--r);
+  background: var(--raised); border: 1px solid var(--line-soft);
+  font-family: var(--mono); font-size: .76rem; line-height: 1.7;
+  max-height: 460px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* ─── 본문 미리보기 ────────────────────────────────── */
+.doc {
+  border: 1px solid var(--line-soft); border-radius: var(--r);
+  padding: 26px 30px; background: var(--ground);
+  max-height: 620px; overflow-y: auto; line-height: 1.9;
+}
+.doc h1 { font-family: var(--serif); font-size: 1.5rem; margin-bottom: 16px; }
+.doc h2 { font-size: 1.05rem; margin: 26px 0 8px; }
+.doc h3 { font-size: .92rem; margin: 16px 0 4px; }
+.doc p { margin-bottom: 10px; }
+.doc ul, .doc ol { margin: 0 0 12px; padding-left: 20px; }
+.doc li { margin-bottom: 5px; }
+.doc .capsule, .doc .takeaways {
+  background: var(--raised); border-left: 3px solid var(--brass);
+  padding: 14px 18px; margin: 16px 0; border-radius: 0 var(--r) var(--r) 0;
+}
+.doc .capsule h2, .doc .takeaways h2 { margin: 0 0 6px; font-size: .88rem; }
+.doc .direct { font-weight: 600; }
+.doc .notice {
+  background: var(--warn-bg); border-radius: var(--r);
+  padding: 16px 20px; margin-top: 22px;
+}
+.doc .notice h2 { margin-top: 0; font-size: .92rem; color: var(--warn); }
+.doc table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+.doc .tw { overflow-x: auto; margin: 12px 0; }
+.doc th, .doc td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+.doc th { background: var(--raised); font-weight: 600; }
+.doc .byline, .doc .tags { color: var(--ink-3); font-size: .82rem; }
+
+/* ─── 썸네일 ───────────────────────────────────────── */
+.thumb-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 18px; }
+@media (max-width: 720px) { .thumb-wrap { grid-template-columns: 1fr; } }
+#thumbCanvas {
+  width: 100%; height: auto; display: block;
+  border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--raised);
+}
+.thumb-side { display: flex; flex-direction: column; gap: 10px; }
+.file-btn {
+  display: block; padding: 9px 12px; border: 1px dashed var(--line);
+  border-radius: var(--r); font-size: .78rem; color: var(--ink-2);
+  cursor: pointer; text-align: center;
+}
+.file-btn:hover { background: var(--raised); }
+.file-btn input { display: none; }
+
+/* ─── 이력 ─────────────────────────────────────────── */
+.hist { display: flex; flex-direction: column; gap: 2px; }
+.hist button {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  width: 100%; text-align: left; padding: 9px 10px; border: 0;
+  border-radius: var(--r-sm); background: transparent; cursor: pointer;
+}
+.hist button:hover { background: var(--raised); }
+.hist .t { font-size: .82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist .s { font-family: var(--mono); font-size: .74rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ─── 알림 ─────────────────────────────────────────── */
+.note {
+  padding: 12px 15px; border-radius: var(--r); font-size: .83rem; line-height: 1.6;
+  border: 1px solid transparent;
+}
+.note.ok   { background: var(--ok-bg);   color: var(--ok); }
+.note.warn { background: var(--warn-bg); color: var(--warn); }
+.note.bad  { background: var(--bad-bg);  color: var(--bad); }
+.note.flat { background: var(--raised); color: var(--ink-2); border-color: var(--line-soft); }
+.note strong { font-weight: 600; }
+
+.spin {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent;
+  animation: sp .7s linear infinite;
+}
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition: none !important; } }
+
+.sample-flag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .72rem; color: var(--ink-3);
+  border: 1px dashed var(--line); border-radius: 100px; padding: 3px 10px;
+}
+.empty { color: var(--ink-3); font-size: .83rem; padding: 6px 0; }
+
+/* ─── 생성 진행 창 ─────────────────────────────────── */
+.load-backdrop {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center;
+  padding: 24px; background: color-mix(in srgb, var(--ink) 55%, transparent);
+  backdrop-filter: blur(4px);
+}
+.load-backdrop[hidden] { display: none; }
+.load-card {
+  width: 100%; max-width: 480px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg); padding: 26px 28px;
+}
+.load-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.load-head h2 { font-size: 1.02rem; }
+.load-timer { font-variant-numeric: tabular-nums; font-size: .82rem; color: var(--ink-3); }
+.load-title { margin-top: 6px; font-size: .84rem; color: var(--ink-2); overflow-wrap: anywhere; }
+.load-bar {
+  height: 3px; border-radius: 3px; background: var(--raised);
+  margin: 18px 0 4px; overflow: hidden;
+}
+.load-bar i {
+  display: block; height: 100%; width: 0%; border-radius: 3px;
+  background: var(--brass); transition: width .5s ease;
+}
+.steps { margin-top: 14px; display: flex; flex-direction: column; }
+/* 설명이 길어 이름 칸을 밀어내지 않도록, 이름 아래로 내려 쌓는다. */
+.step {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 12px; row-gap: 2px;
+  align-items: center; padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.step:last-child { border-bottom: 0; }
+.step .ico {
+  grid-row: 1 / span 2; align-self: start;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--raised); color: var(--ink-3);
+  transition: background .2s ease, color .2s ease;
+}
+.step .ico svg { width: 15px; height: 15px; display: block; }
+.step .name {
+  grid-column: 2; font-size: .87rem; color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.step .note {
+  grid-column: 2; font-size: .76rem; color: var(--ink-3);
+  line-height: 1.5; overflow-wrap: anywhere;
+}
+.step .note:empty { display: none; }
+.step[data-state="run"] .ico {
+  background: color-mix(in srgb, var(--brass) 22%, transparent); color: var(--brass);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.step[data-state="run"] .name { color: var(--ink); font-weight: 600; }
+.step[data-state="done"] .ico { background: var(--ok-bg); color: var(--ok); }
+.step[data-state="done"] .name { color: var(--ink-2); }
+.step[data-state="skip"] .name,
+.step[data-state="skip"] .note { opacity: .55; }
+.step[data-state="fail"] .ico { background: var(--bad-bg); color: var(--bad); }
+.step[data-state="fail"] .name { color: var(--bad); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  .step[data-state="run"] .ico { animation: none; }
+  .load-bar i { transition: none; }
+}
+.load-foot { margin-top: 16px; font-size: .78rem; color: var(--ink-3); }
+.load-error {
+  margin-top: 14px; padding: 12px 14px; border-radius: var(--r);
+  background: var(--bad-bg); color: var(--bad); font-size: .83rem; line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* ─── 내보내기 ─────────────────────────────────────── */
+.export-row { margin-top: 14px; }
+.export-row textarea {
+  font-family: var(--mono); font-size: .74rem; line-height: 1.6;
+  white-space: pre; overflow-wrap: normal; overflow-x: auto;
+}
+.export-btns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+</style>
+
+<div class="load-backdrop" id="loadModal" hidden role="dialog" aria-modal="true"
+     aria-labelledby="loadTitle" aria-live="polite">
+  <div class="load-card">
+    <div class="load-head">
+      <h2 id="loadTitle">원고를 만들고 있습니다</h2>
+      <span class="load-timer" id="loadTimer">0초</span>
+    </div>
+    <p class="load-title" id="loadSubject"></p>
+    <div class="load-bar"><i id="loadBar"></i></div>
+    <div class="steps" id="loadSteps"></div>
+    <p class="load-foot" id="loadFoot">
+      의료법 검사에 걸리면 자동으로 다시 씁니다. 그만큼 시간이 더 걸립니다.
+    </p>
+    <div id="loadError"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="wordmark">
+    <span class="name">Obliv Clinic</span>
+    <span class="unit">문제성발톱 콘텐츠 콘솔</span>
+  </div>
+  <div class="gates" id="gates">
+    <span class="gate" data-state="" id="gateLaw"><span class="dot"></span>의료법</span>
+    <span class="gate" data-state="" id="gatePos"><span class="dot"></span>포지셔닝</span>
+    <span class="gate" data-state="" id="gateSeo"><span class="dot"></span>검색 최적화</span>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- ─────────────── 좌측: 입력 ─────────────── -->
+  <div class="rail">
+    <section class="panel">
+      <header>
+        <h2>제목으로 원고 만들기</h2>
+        <span class="eyebrow">01</span>
+      </header>
+
+      <div class="field">
+        <label for="titleInput">제목</label>
+        <textarea id="titleInput" rows="2"
+          placeholder="송도 발톱무좀 병원 선택 기준"></textarea>
+        <p class="hint" id="parseHint">카테고리와 주키워드는 제목에서 자동으로 잡습니다.</p>
+      </div>
+
+      <button class="btn" id="runBtn" style="width:100%">원고 생성</button>
+      <p class="hint" id="genHint" style="margin-top:8px"></p>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>원고 검사</h2>
+        <span class="eyebrow">02</span>
+      </header>
+      <p class="hint" style="margin-bottom:10px">
+        이미 써 둔 원고를 붙여 넣으면 의료법·포지셔닝 표현만 점검합니다. 생성 없이 동작합니다.
+      </p>
+      <div class="field">
+        <textarea id="lintInput" rows="5" placeholder="검사할 원고를 붙여 넣으세요"></textarea>
+      </div>
+      <button class="btn quiet" id="lintBtn" style="width:100%">검사하기</button>
+      <div id="lintOut" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>이력</h2>
+        <span class="eyebrow">03</span>
+      </header>
+      <div class="hist" id="hist"><p class="empty">아직 없습니다.</p></div>
+    </section>
+  </div>
+
+  <!-- ─────────────── 우측: 결과 ─────────────── -->
+  <div class="stream" id="stream">
+
+    <section class="panel" id="headPanel">
+      <header>
+        <div>
+          <span class="eyebrow">현재 원고</span>
+          <h2 id="docTitle" style="margin-top:4px">—</h2>
+        </div>
+        <span class="sample-flag" id="sampleFlag" hidden>예시 원고</span>
+      </header>
+      <div class="scores" id="scores"></div>
+      <p class="hint" id="verdict" style="margin-top:12px"></p>
+    </section>
+
+    <section class="panel" id="gatePanel" hidden>
+      <header><h2 id="gateTitle">발행 전 확인</h2></header>
+      <div id="gateBody"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>CMS 기본 정보</h2>
+        <button class="btn quiet tiny" id="copyAll">전체 복사</button>
+      </header>
+      <div class="fields" id="cmsFields"></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>썸네일</h2>
+        <div class="tabs" id="layoutTabs">
+          <button class="tab" data-layout="center" aria-selected="true" role="tab">중앙형</button>
+          <button class="tab" data-layout="bottom" aria-selected="false" role="tab">하단형</button>
+        </div>
+      </header>
+      <div class="thumb-wrap">
+        <canvas id="thumbCanvas" width="880" height="580"
+                aria-label="썸네일 미리보기"></canvas>
+        <div class="thumb-side">
+          <div class="field" style="margin:0">
+            <label for="thumbCopy">썸네일 문구</label>
+            <input type="text" id="thumbCopy" />
+          </div>
+          <label class="file-btn">
+            배경 사진 선택
+            <input type="file" id="photoInput" accept="image/*" />
+          </label>
+          <label class="file-btn">
+            로고 PNG (누끼)
+            <input type="file" id="logoInput" accept="image/png,image/webp" />
+          </label>
+          <p class="hint" id="logoStatus">로고 미등록 — 텍스트로 표시됩니다.</p>
+          <button class="btn quiet" id="saveThumb">이미지 저장</button>
+          <p class="hint">880×580 · 300KB 이하로 맞춰 저장됩니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>본문</h2>
+        <div class="tabs" id="bodyTabs">
+          <button class="tab" data-pane="preview" aria-selected="true" role="tab">미리보기</button>
+          <button class="tab" data-pane="html" aria-selected="false" role="tab">HTML</button>
+          <button class="tab" data-pane="text" aria-selected="false" role="tab">평문</button>
+          <button class="tab" data-pane="schema" aria-selected="false" role="tab">JSON-LD</button>
+          <button class="tab" data-pane="audit" aria-selected="false" role="tab">항목별 점검</button>
+        </div>
+      </header>
+      <div class="pane" id="pane-preview"><div class="doc" id="docPreview"></div></div>
+      <div class="pane" id="pane-html" hidden>
+        <button class="btn quiet tiny" data-copy="htmlSrc" style="margin-bottom:8px">복사</button>
+        <pre class="code" id="htmlSrc"></pre>
+      </div>
+      <div class="pane" id="pane-text" hidden>
+        <button class="btn quiet tiny" data-copy="textSrc" style="margin-bottom:8px">복사</button>
+        <pre class="code" id="textSrc"></pre>
+      </div>
+      <div class="pane" id="pane-schema" hidden>
+        <p class="hint" style="margin-bottom:8px">
+          구글 리치 결과 테스트로 검증한 뒤 &lt;head&gt;에 넣으세요.
+        </p>
+        <button class="btn quiet tiny" data-copy="schemaSrc" style="margin-bottom:8px">복사</button>
+        <pre class="code" id="schemaSrc"></pre>
+      </div>
+      <div class="pane" id="pane-audit" hidden><div id="auditOut"></div></div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>CMS로 넘기기</h2>
+        <button class="btn" id="exportBtn">원고 내보내기</button>
+      </header>
+      <div class="note flat">
+        이 페이지는 브라우저 보안 정책상 병원 관리자 페이지에 직접 접속할 수 없습니다.
+        <strong>원고 내보내기</strong>를 누르면 원고 전체가 복사됩니다.
+        복사가 막힌 환경(앱 안에서 열었을 때 등)에서는 아래 칸에 원고가 그대로 뜨니
+        직접 복사하면 됩니다.
+        사내 PC의 콘솔 앱을 열고 <strong>원고 가져오기</strong> 칸에 붙여넣으면
+        검사·썸네일·CMS 자동 업로드까지 그대로 이어집니다.
+      </div>
+      <p class="hint" id="exportHint" style="margin-top:10px"></p>
+      <div class="export-row" id="exportRow" hidden>
+        <textarea id="exportBox" rows="7" readonly spellcheck="false"
+          aria-label="내보낼 원고"></textarea>
+        <div class="export-btns">
+          <button class="btn quiet tiny" id="exportCopy">다시 복사</button>
+          <button class="btn quiet tiny" id="exportSave" hidden>파일로 저장</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   병원 프로필 — 본문에 등장할 수 있는 사실의 전부
+   ══════════════════════════════════════════════════════════════ */
+const CLINIC = {
+  official: "오블리브 송도 호라이즌의원",
+  unit: "문제성발톱클리닉",
+  short: "오블리브의원",
+  region: "인천광역시 연수구 송도동",
+  areas: ["인천 송도", "연수구", "송도동", "인천 논현동", "부평"],
+  homepage: "https://obliv.kr",
+  blogBase: "https://blog.obliv.kr/blog",
+  strengths: [
+    "문제성발톱치료", "내성발톱 비수술 교정치료", "발톱무좀 레이저치료",
+  ],
+  devices: "오니코·AF·아톰(비가열성), 클라레 다이오드(가열성)",
+  steps: [
+    "정밀 진단 — 발톱 두께·변색 범위와 기저질환을 확인해 조갑하 혈종·건선 등과 감별",
+    "프리컨디셔닝 — 두꺼워진 발톱 층을 정리해 레이저와 도포제가 병변까지 닿을 통로 확보",
+    "레이저 치료 — 단단한 발톱 조직을 투과해 진균 서식 심부에 에너지 전달",
+    "비수술 교정치료 — 절개·제거 없이 교정 기구로 파고든 발톱의 형태를 바로잡음",
+    "복합 치료 플랜 — 진행 단계(1기~5기)에 따라 레이저·도포제·경구약 조합",
+    "경과 추적 — 새 발톱이 자라는 속도에 맞춰 주기적 재평가",
+  ],
+  sources: [
+    { org: "질병관리청 국가건강정보포털", topic: "조갑진균증 일반 정보", url: "https://health.kdca.go.kr" },
+    { org: "식품의약품안전처", topic: "경구 항진균제 안전성 정보", url: "https://nedrug.mfds.go.kr" },
+  ],
+  notice: [
+    "가열성 레이저 시술 시 개인의 민감도에 따라 일시적인 열감, 화끈거림, 홍반 등이 나타날 수 있습니다.",
+    "진균 감염 정도와 발톱 성장 속도에 따라 치료 기간과 경과에는 개인차가 있습니다.",
+    "경구 항진균제는 간 기능 이상, 위장 장애, 약물 상호작용 등이 보고되어 있어 복용 전 의료진 상담과 필요 시 혈액검사가 권장됩니다.",
+    "시술 후에는 발을 건조하게 유지하고, 재감염 방지를 위해 신발·양말을 소독하거나 교체하는 것이 권장됩니다.",
+    "본 내용은 의학 정보 제공을 목적으로 하며 특정 치료 효과를 보장하지 않습니다. 정확한 진단과 치료 방법은 의료진 진료를 통해 결정됩니다.",
+  ],
+};
+
+const CATEGORIES = ["발톱무좀치료", "내성발톱치료", "문제성발톱"];
+
+const CORE_KEYWORDS = {
+  "발톱무좀치료": ["발톱무좀", "발톱무좀치료", "발톱무좀병원", "발톱무좀레이저", "조갑진균증", "두꺼워진발톱"],
+  "내성발톱치료": ["내성발톱", "내성발톱치료", "내성발톱병원", "내성발톱교정", "비수술교정", "함입조갑"],
+  "문제성발톱":   ["문제성발톱", "문제성발톱병원", "문제성발톱치료", "발톱변형", "발톱변색"],
+};
+
+const MONITORED = [
+  "송도내성발톱", "인천내성발톱", "인천문제성발톱", "송도문제성발톱", "인천내성발톱병원",
+  "인천발톱무좀", "인천발톱무좀병원", "송도발톱무좀", "송도발톱무좀병원",
+  "문제성발톱병원", "문제성발톱", "인천문제성발톱병원",
+];
+
+const CATEGORY_SIGNALS = [
+  ["내성발톱치료", ["내성발톱", "내성 발톱", "함입조갑", "파고드", "살을 파고", "교정"]],
+  ["발톱무좀치료", ["발톱무좀", "발톱 무좀", "조갑진균", "무좀", "두꺼워진 발톱", "발톱이 두꺼", "발톱 변색"]],
+  ["문제성발톱",   ["문제성발톱", "문제성 발톱", "발톱 변형", "발톱이 이상"]],
+];
+
+const LOCAL_MODIFIERS = ["송도", "인천", "연수구", "인천송도"];
+
+const HASHTAG_POOL = [
+  "#송도발톱무좀", "#인천발톱무좀", "#연수구발톱무좀", "#송도동발톱무좀치료",
+  "#인천논현동발톱무좀", "#배곧발톱무좀", "#송도내성발톱", "#인천내성발톱",
+  "#내성발톱비수술", "#내성발톱교정", "#문제성발톱", "#문제성발톱병원",
+  "#인천문제성발톱", "#송도문제성발톱", "#발톱무좀레이저", "#두꺼워진발톱",
+  "#조갑진균증", "#발톱무좀병원",
+];
+
+/* ══════════════════════════════════════════════════════════════
+   의료법 제56조 검사 — 파이썬 모듈과 같은 규칙
+   ══════════════════════════════════════════════════════════════ */
+const BLOCK = "block", WARN = "warn", INFO = "info";
+
+const LAW_RULES = [
+  { id: "guarantee_cure", sev: BLOCK, art: "제56조 제2항 제2호",
+    re: /완치\s*(?:됩니다|됨|가능|보장|율|를\s*보장)|100\s*%|100퍼센트|재발\s*(?:없|제로|0)/g,
+    why: "치료효과를 보장·단정하는 표현은 소비자 현혹 광고로 금지됩니다.",
+    fix: "'치료 경과에는 개인차가 있습니다'처럼 결과를 단정하지 않는 서술로 바꾸세요." },
+  { id: "guarantee_verb", sev: BLOCK, art: "제56조 제2항 제2호",
+    re: /(?:반드시|무조건|틀림없이|확실히)\s*(?:낫|좋아|개선|호전|해결|사라)/g,
+    why: "결과를 단정하는 부사 표현은 치료효과 보장 광고에 해당합니다.",
+    fix: "'개선을 기대할 수 있습니다'로 완화하세요." },
+  { id: "guarantee_noun", sev: BLOCK, art: "제56조 제2항 제2호",
+    re: /(?:효과|결과|완치)\s*(?:보장|확실|만점)|보장\s*(?:해\s*드립니다|합니다)/g,
+    why: "효과 보장 문구는 금지 대상입니다.",
+    fix: "보장 표현을 삭제하고 치료 과정 설명으로 대체하세요." },
+  { id: "pain_free_absolute", sev: BLOCK, art: "제56조 제2항 제2호·제6호",
+    re: /(?:무통|통증\s*(?:제로|없습니다|없어요|없음))|부작용\s*(?:없|제로)/g,
+    why: "통증·부작용이 전혀 없다는 단정은 객관적 근거가 없는 과장 광고입니다.",
+    fix: "'개인에 따라 열감이 느껴질 수 있습니다'로 서술하세요." },
+  { id: "superlative", sev: BLOCK, art: "제56조 제2항 제6호",
+    re: /최고|최상급|최상|가장\s*(?:좋은|뛰어난|우수한|효과적)|넘버\s*원|No\.?\s*1|1위|톱\s*클래스/g,
+    why: "입증되지 않은 최상급 표현은 과장 광고입니다.",
+    fix: "최상급을 빼고 어떤 절차를 어떻게 진행하는지 구체적으로 쓰세요." },
+  { id: "exclusivity", sev: BLOCK, art: "제56조 제2항 제6호",
+    re: /유일(?:한|하게)?|국내\s*(?:유일|최초|최대)|독보적|타의\s*추종/g,
+    why: "배타적 표현은 객관적 입증이 어려워 과장 광고로 판단됩니다.",
+    fix: "'본원에서는 ~를 시행합니다'처럼 사실 서술로 바꾸세요." },
+  { id: "authority_claim", sev: BLOCK, art: "제56조 제2항 제6호",
+    re: /권위자|명의|손꼽히는|정평이\s*나/g,
+    why: "의료인의 권위를 과장하는 표현은 금지됩니다.",
+    fix: "경력·자격은 사실만 담백하게 기재하세요." },
+  { id: "fabricated_stats", sev: BLOCK, art: "제56조 제2항 제2호·제6호",
+    re: /만족도\s*\d{2,3}\s*%|성공률\s*\d{1,3}\s*%|치료율\s*\d{1,3}\s*%/g,
+    why: "출처 없는 성공률·만족도 수치는 소비자 오인을 유발합니다.",
+    fix: "출처를 제시할 수 없다면 수치를 삭제하세요." },
+  { id: "specialty_hospital", sev: BLOCK, art: "제56조 제2항 제7호",
+    re: /전문병원|특화병원|전문\s*센터/g,
+    why: "보건복지부 지정 전문병원이 아니면 '전문병원' 명칭을 쓸 수 없습니다.",
+    fix: "'문제성발톱클리닉', '중점 진료' 등으로 바꾸세요." },
+  { id: "testimonial", sev: BLOCK, art: "제56조 제2항 제12호",
+    re: /환자\s*(?:후기|리뷰|경험담|체험담)|치료\s*(?:후기|경험담)|실제\s*후기|생생한\s*후기/g,
+    why: "환자 치료경험담은 치료효과 오인 우려로 광고에 쓸 수 없습니다.",
+    fix: "후기 대신 치료 원리와 절차를 의학적으로 설명하세요." },
+  { id: "price_inducement", sev: BLOCK, art: "제56조 제2항 제14호",
+    re: /할인|무료|이벤트\s*가|특가|반값|공짜|사은품|경품|선착순/g,
+    why: "비급여 진료비 할인·면제나 금품 제공은 환자 유인 행위로 금지됩니다.",
+    fix: "가격 유인 문구를 모두 삭제하고 진료 내용 안내만 남기세요." },
+  { id: "comparison", sev: BLOCK, art: "제56조 제2항 제3호",
+    re: /타\s*(?:병원|의원|기관)(?:보다|와\s*달리|과\s*달리)|다른\s*병원(?:보다|과\s*달리|와\s*달리)/g,
+    why: "다른 의료기관과의 비교·비방은 금지됩니다.",
+    fix: "타 기관 언급 없이 본원 진료 절차만 설명하세요." },
+  { id: "safe_absolute", sev: BLOCK, art: "제56조 제2항 제2호·제6호",
+    re: /(?:절대|전혀)\s*안전|안전(?:성)?\s*보장|위험\s*(?:제로|없)/g,
+    why: "절대적 안전성 주장은 과장 광고입니다.",
+    fix: "'시술 전 상태를 확인해 진행합니다'처럼 절차 중심으로 서술하세요." },
+  { id: "price_disclosure", sev: WARN, art: "제56조 제2항 제14호",
+    re: /\d{1,3}\s*만\s*원|\d{2,3},\d{3}\s*원/g,
+    why: "구체적 진료비 표기는 유인성 판단을 받을 수 있어 신중해야 합니다.",
+    fix: "'비용은 상태에 따라 달라 진료 후 안내드립니다'로 대체하세요." },
+  { id: "insurance_claim", sev: WARN, art: "제56조 제2항 제2호·제14호",
+    re: /실(?:손|비)\s*(?:보험\s*)?(?:청구|적용)\s*(?:가|이|를|은|는)?\s*가능/g,
+    why: "실손보험 적용을 단정하면 오인·유인 소지가 있습니다.",
+    fix: "'가입하신 약관에 따라 다르므로 보험사 확인이 필요합니다'를 함께 쓰세요." },
+  { id: "vulnerable_group", sev: WARN, art: "제56조 제2항 제2호·제6호",
+    re: /(?:임(?:신|산)부|수유부|소아|노약자|고령\s*환자|기저질환자)[^.\n]{0,40}(?:부담\s*없이|안전(?:하게|합니다)|걱정\s*없이|문제\s*없)/g,
+    why: "특수 대상군에 대한 안전성 단정은 근거 없이 쓰면 오인을 유발합니다.",
+    fix: "'상태에 따라 시행 여부를 진료로 판단합니다'를 함께 쓰세요." },
+  { id: "news_style", sev: WARN, art: "제56조 제2항 제8호",
+    re: /기자|취재(?:진|결과)|보도(?:에\s*따르면|자료)|매스컴|방송\s*출연/g,
+    why: "기사 형식을 빌린 광고나 방송 출연 이력 활용은 제한됩니다.",
+    fix: "기사체 표현을 없애고 병원 안내 문체로 바꾸세요." },
+  { id: "endorsement", sev: WARN, art: "제56조 제2항 제13호",
+    re: /수상|감사장|표창|공식\s*(?:인증|후원|파트너)|추천\s*병원/g,
+    why: "상장·감사장·추천 표시는 광고에 사용할 수 없습니다.",
+    fix: "삭제하세요." },
+  { id: "urgency_push", sev: WARN, art: "제56조 제2항 제14호",
+    re: /지금\s*(?:바로\s*)?(?:전화|예약|신청)|서두르|마감\s*임박/g,
+    why: "즉시 행동을 압박하는 문구는 유인성으로 해석될 수 있습니다.",
+    fix: "'궁금한 점은 진료 시 문의해 주세요' 정도로 낮추세요." },
+  { id: "low_pain_claim", sev: INFO, art: "제56조 제2항 제5호",
+    re: /통증(?:이|은)?\s*거의\s*없|아프지\s*않(?:습니다|아요)|마취\s*없이/g,
+    why: "통증이 적다는 서술은 가능하나 개인차를 함께 적지 않으면 중요정보 누락이 됩니다.",
+    fix: "'통증에는 개인차가 있습니다'를 같은 문단에 덧붙이세요." },
+];
+
+const REQUIRED_TOPICS = [
+  { id: "side_effects", label: "부작용 안내", re: /부작용|열감|홍반|화끈거림|이상반응/,
+    hint: "발생 가능한 이상반응을 명시해야 합니다." },
+  { id: "variation", label: "치료 결과의 개인차", re: /개인(?:마다\s*)?차|개인에\s*따라|차이가?\s*있/,
+    hint: "치료 기간·경과에 개인차가 있다는 점을 명시해야 합니다." },
+  { id: "consult", label: "진료 상담 안내", re: /진료(?:를 통해|후)|상담(?:을 통해|이 필요)|의료진(?:과|의)\s*(?:상담|진료|판단)/,
+    hint: "정확한 진단·치료는 의료진 진료로 결정된다는 안내가 필요합니다." },
+];
+
+/* ── 포지셔닝: 본원이 하지 않는 시술 / 쓰지 않을 표현 ── */
+const NOT_PERFORMED = [
+  { terms: ["내성발톱 절개", "발톱 절개", "절개술", "부분절제술", "조갑모기질 절제"],
+    why: "본원은 절개·절제 방식의 내성발톱 수술을 시행하지 않습니다.",
+    fix: "비수술 교정치료로 서술하세요." },
+  { terms: ["내성발톱 수술", "발톱 수술", "발톱 제거술", "발톱을 뽑", "발톱 뽑기", "발치"],
+    why: "본원은 발톱을 제거하거나 뽑는 수술적 처치를 시행하지 않습니다.",
+    fix: "'발톱을 뽑지 않고 교정한다'는 방향으로 쓰고, 수술이 필요한 상태는 외과 진료 안내로만 다루세요." },
+];
+
+const AVOID_TERMS = [
+  { terms: ["스케일링", "발톱 스케일링", "네일 스케일링"],
+    why: "관리숍 시술로 읽혀 의료기관의 치료 행위와 혼동됩니다.",
+    fix: "'프리컨디셔닝', '발톱 정리' 등 치료 과정 용어를 쓰세요." },
+  { terms: ["관리 프로그램", "케어 프로그램", "맞춤 관리", "관리숍", "케어숍", "발톱 관리사", "관리를 받으"],
+    why: "본원은 관리가 아니라 치료를 하는 의료기관입니다.",
+    fix: "'치료', '치료 계획', '진료'로 바꾸세요." },
+  { terms: ["약만 처방", "약 처방만", "처방으로 끝", "약만 받"],
+    why: "약 처방만 하는 의원으로 오인됩니다. 레이저·교정치료가 중심입니다.",
+    fix: "레이저·비수술 교정치료를 중심에 두고 약물은 병행 수단으로 쓰세요." },
+];
+
+// 본원이 하지 않는다고 밝히거나 타과를 안내하는 문맥이면 위반으로 보지 않는다.
+const THIRD_PARTY = /정형외과|일반외과|외과\s*(?:진료|방문|에서)|타\s*병원|다른\s*병원|필요한\s*경우|시행하지\s*않|하지\s*않습니다|권유하지\s*않|않고|없이/;
+</script>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   검사 엔진
+   ══════════════════════════════════════════════════════════════ */
+const squash = s => String(s || "").replace(/\s+/g, "");
+const has = (hay, needle) => !!needle && squash(hay).includes(squash(needle));
+const countIn = (hay, needle) => {
+  if (!needle) return 0;
+  const h = squash(hay), n = squash(needle);
+  let i = 0, c = 0;
+  while ((i = h.indexOf(n, i)) !== -1) { c++; i += n.length; }
+  return c;
+};
+
+function context(text, start, end, w = 28) {
+  const lo = Math.max(0, start - w), hi = Math.min(text.length, end + w);
+  return (lo > 0 ? "…" : "") + text.slice(lo, hi).replace(/\n/g, " ") + (hi < text.length ? "…" : "");
+}
+
+const SEV_ORDER = { block: 0, warn: 1, info: 2 };
+
+/** 겹치는 구간은 더 심각한 것 하나만 남긴다. */
+function dedupe(hits) {
+  hits.sort((a, b) => (SEV_ORDER[a.sev] - SEV_ORDER[b.sev]) || (b.end - b.start) - (a.end - a.start));
+  const kept = [];
+  for (const h of hits) {
+    if (kept.some(k => h.start < k.end && k.start < h.end)) continue;
+    kept.push(h);
+  }
+  kept.sort((a, b) => (SEV_ORDER[a.sev] - SEV_ORDER[b.sev]) || a.start - b.start);
+  return kept;
+}
+
+function reviewLaw(text) {
+  text = String(text || "");
+  const hits = [];
+  for (const rule of LAW_RULES) {
+    rule.re.lastIndex = 0;
+    let m;
+    while ((m = rule.re.exec(text)) !== null) {
+      if (m[0] === "") { rule.re.lastIndex++; continue; }
+      hits.push({
+        start: m.index, end: m.index + m[0].length,
+        sev: rule.sev, tag: rule.art, term: m[0],
+        ctx: context(text, m.index, m.index + m[0].length),
+        why: rule.why, fix: rule.fix,
+      });
+    }
+  }
+  const findings = dedupe(hits);
+  const missing = REQUIRED_TOPICS.filter(t => !t.re.test(text));
+  const blocks = findings.filter(f => f.sev === BLOCK).length;
+  const warns = findings.filter(f => f.sev === WARN).length;
+
+  const parts = [];
+  if (blocks) parts.push(`수정 필요 ${blocks}건`);
+  if (missing.length) parts.push(`필수 기재 누락 ${missing.length}건`);
+  if (warns) parts.push(`검토 권고 ${warns}건`);
+
+  return {
+    passed: blocks === 0 && missing.length === 0,
+    blocks, warns, findings, missing,
+    summary: parts.length ? parts.join(" · ") : "자동 점검에서 걸린 표현이 없습니다.",
+  };
+}
+
+function reviewPositioning(text) {
+  text = String(text || "");
+  const scan = (group, sev, kind) => {
+    const hits = [];
+    for (const entry of group) {
+      for (const term of entry.terms) {
+        const idx = text.indexOf(term);
+        if (idx === -1) continue;
+        if (sev === BLOCK) {
+          const win = text.slice(Math.max(0, idx - 90), Math.min(text.length, idx + term.length + 90));
+          if (THIRD_PARTY.test(win)) continue;   // 본원이 안 한다고 쓴 문맥
+        }
+        hits.push({
+          start: idx, end: idx + term.length, sev, tag: kind, term,
+          ctx: context(text, idx, idx + term.length),
+          why: entry.why, fix: entry.fix,
+        });
+      }
+    }
+    return hits;
+  };
+
+  const findings = dedupe([
+    ...scan(NOT_PERFORMED, BLOCK, "미시행 시술"),
+    ...scan(AVOID_TERMS, WARN, "지양 표현"),
+  ]);
+  const blocks = findings.filter(f => f.sev === BLOCK).length;
+  const warns = findings.filter(f => f.sev === WARN).length;
+  const parts = [];
+  if (blocks) parts.push(`미시행 시술 언급 ${blocks}건`);
+  if (warns) parts.push(`지양 표현 ${warns}건`);
+
+  return {
+    passed: blocks === 0, blocks, warns, findings,
+    summary: parts.length ? parts.join(" · ") : "포지셔닝 문제 없음",
+  };
+}
+
+/* ── SEO / AEO / GEO 채점 ── */
+const META_TITLE_MAX = 40, META_DESC_MAX = 80;
+const QUESTION = /[?？]|까요|나요|일까|무엇|어떻게|왜|언제|어디|어느|얼마/;
+
+function bodyText(doc) {
+  const parts = [doc.intro, doc.answer_capsule, doc.closing, ...(doc.key_takeaways || [])];
+  for (const s of doc.sections || []) {
+    parts.push(s.h2, s.answer);
+    for (const b of s.blocks || []) {
+      parts.push(b.text, ...(b.items || []), ...(b.headers || []));
+      for (const r of b.rows || []) parts.push(...r);
+    }
+  }
+  for (const f of doc.faq || []) parts.push(f.q, f.a);
+  return parts.filter(Boolean).join("\n");
+}
+
+function fullText(doc) {
+  return [
+    doc.h1, doc.meta_title, doc.meta_description, doc.thumbnail_copy,
+    (doc.hashtags || []).join(" "), bodyText(doc),
+  ].filter(Boolean).join("\n");
+}
+
+const chk = (ok, w, label, detail, fix) => ({ ok: !!ok, w, label, detail, fix: ok ? "" : (fix || "") });
+
+function audit(doc) {
+  const kw = doc.primary_keyword || "";
+  const body = bodyText(doc);
+  const secs = doc.sections || [], faq = doc.faq || [], take = doc.key_takeaways || [];
+  const mt = doc.meta_title || "", md = doc.meta_description || "", h1 = doc.h1 || "";
+  const density = body && kw ? countIn(body, kw) * squash(kw).length / squash(body).length : 0;
+  const hasRegion = ["송도", "인천", "연수구"].some(m => h1.includes(m));
+
+  const seo = [
+    chk(mt.length > 0 && mt.length <= META_TITLE_MAX, 10, "MetaTitle 길이", `${mt.length}자 / 최대 ${META_TITLE_MAX}자`, "40자 이내로 줄이세요. CMS가 초과분을 잘라냅니다."),
+    chk(has(mt, kw), 10, "MetaTitle 주키워드", `'${kw}' ${has(mt, kw) ? "포함" : "누락"}`, "MetaTitle 앞쪽에 주키워드를 넣으세요."),
+    chk(md.length > 0 && md.length <= META_DESC_MAX, 10, "MetaDescription 길이", `${md.length}자 / 최대 ${META_DESC_MAX}자`, "80자 이내로 줄이세요."),
+    chk(has(md, kw), 8, "MetaDescription 주키워드", `'${kw}' ${has(md, kw) ? "포함" : "누락"}`, "설명문에도 주키워드를 자연스럽게 넣으세요."),
+    chk(h1.length >= 25 && h1.length <= 60, 8, "H1 길이", `${h1.length}자 (권장 25~60자)`, "짧으면 정보가 부족하고 길면 검색결과에서 잘립니다."),
+    chk(has(h1, kw), 10, "H1 주키워드", `'${kw}' ${has(h1, kw) ? "포함" : "누락"}`, "제목에 주키워드를 반드시 포함하세요."),
+    chk(hasRegion, 8, "H1 지역명", hasRegion ? "포함" : "누락", "지역 검색 노출을 위해 '송도' 또는 '인천'을 제목에 넣으세요."),
+    chk(doc.post_url && has(doc.post_url.replace(/-/g, ""), kw), 8, "포스트URL 키워드", doc.post_url || "-", "슬러그에 주키워드가 들어가도록 제목을 조정하세요."),
+    chk((doc.hashtags || []).length >= 8 && (doc.hashtags || []).length <= 15, 6, "해시태그 개수", `${(doc.hashtags || []).length}개 (권장 8~15개)`, "너무 적으면 노출 경로가 좁고 많으면 스팸으로 처리됩니다."),
+    chk(body.length >= 1500, 10, "본문 분량", `${body.length}자 (최소 1500자)`, "정보량이 적으면 상위 노출이 어렵습니다."),
+    chk(density >= 0.005 && density <= 0.025, 6, "주키워드 밀도", `${(density * 100).toFixed(2)}% (권장 0.5~2.5%)`, "과하면 남용, 부족하면 주제 신호 부족으로 판단됩니다."),
+    chk(secs.length >= 4, 6, "H2 섹션 수", `${secs.length}개 (최소 4개)`, "주제를 소제목으로 충분히 나누세요."),
+  ];
+
+  const cap = doc.answer_capsule || "";
+  const qHeads = secs.filter(s => QUESTION.test(s.h2 || ""));
+  const answered = secs.filter(s => (s.answer || "").trim());
+  const goodAns = answered.filter(s => { const n = (s.answer || "").trim().length; return n >= 40 && n <= 220; });
+  const qFaq = faq.filter(f => QUESTION.test(f.q || ""));
+
+  const aeo = [
+    chk(cap.length >= 40 && cap.length <= 220, 14, "핵심 답변 캡슐", `${cap.length}자 (권장 40~220자)`, "글 첫머리에 질문에 대한 직답 2~3문장을 두세요. 발췌 답변으로 뽑히는 자리입니다."),
+    chk(secs.length && qHeads.length / secs.length >= 0.5, 12, "질문형 소제목 비율", `${qHeads.length}/${secs.length}개 (권장 50% 이상)`, "소제목을 실제 검색 질문 형태로 바꾸세요."),
+    chk(secs.length && answered.length === secs.length, 14, "소제목 직후 직답", `${answered.length}/${secs.length}개 섹션`, "각 소제목 바로 아래 결론 문장을 먼저 두세요."),
+    chk(answered.length && goodAns.length / answered.length >= 0.7, 8, "직답 길이 적정성", `${goodAns.length}/${answered.length}개가 40~220자`, "직답은 2~3문장으로 자르세요."),
+    chk(faq.length >= 3, 12, "FAQ 개수", `${faq.length}개 (최소 3개)`, "FAQ는 FAQPage 구조화 데이터로 검색결과에 직접 노출됩니다."),
+    chk(faq.length && qFaq.length === faq.length, 6, "FAQ 질문 형식", `${qFaq.length}/${faq.length}개가 질문형`, "FAQ 질문은 실제 검색어 형태의 의문문으로 쓰세요."),
+  ];
+
+  const text = fullText(doc);
+  const hasTable = secs.some(s => (s.blocks || []).some(b => b.type === "table"));
+  const hasList = secs.some(s => (s.blocks || []).some(b => b.type === "list" || b.type === "steps"));
+  const entity = countIn(text, CLINIC.official) + countIn(text, CLINIC.short);
+  const orgs = CLINIC.sources.filter(s => text.includes(s.org.split(" ")[0]));
+  const standalone = take.filter(t => t.length >= 25 && t.length <= 120 && !/^[이그저]/.test(t));
+
+  const geo = [
+    chk(take.length >= 3, 14, "핵심 요약 블록", `${take.length}개 항목`, "AI가 통째로 인용할 요약 불릿 3개 이상을 두세요."),
+    chk(take.length && standalone.length / take.length >= 0.7, 12, "인용 가능한 독립 문장", `${standalone.length}/${take.length}개가 문맥 없이 성립`, "지시어를 빼고 주어를 명시한 완결 문장으로 쓰세요."),
+    chk(hasTable, 10, "표 형식 데이터", hasTable ? "포함" : "없음", "비교·분류 내용을 표로 만들면 생성형 검색이 구조를 그대로 읽어갑니다."),
+    chk(hasList, 8, "목록/단계 구조", hasList ? "포함" : "없음", "절차와 조건은 번호 목록으로 정리하세요."),
+    chk(entity >= 3, 12, "기관명 일관성", `${entity}회 언급`, `'${CLINIC.official}' 정식 표기를 3회 이상 일관되게 쓰세요.`),
+    chk(orgs.length >= 1, 12, "공신력 있는 출처 언급", orgs.length ? `${orgs.length}개 기관 인용` : "없음", "질병관리청·식약처 등을 근거로 언급하면 인용 확률이 올라갑니다."),
+    chk((doc.citations || []).length >= 1, 8, "출처 목록", `${(doc.citations || []).length}건`, "본문 하단에 참고 출처를 URL과 함께 명시하세요."),
+    chk((doc.internal_link_suggestions || []).length >= 2, 8, "내부링크", `${(doc.internal_link_suggestions || []).length}개`, "관련 글로 이어지는 내부링크 2개 이상으로 주제 클러스터를 만드세요."),
+    chk(true, 16, "NAP·구조화 데이터", "JSON-LD 자동 생성", ""),
+  ];
+
+  const score = list => {
+    const total = list.reduce((a, c) => a + c.w, 0) || 1;
+    return Math.round(list.filter(c => c.ok).reduce((a, c) => a + c.w, 0) / total * 100);
+  };
+  const scores = { seo: score(seo), aeo: score(aeo), geo: score(geo) };
+  scores.total = Math.round((scores.seo + scores.aeo + scores.geo) / 3);
+  const grade = scores.total >= 90 ? "발행 가능"
+    : scores.total >= 75 ? "보완 후 발행 권장"
+    : scores.total >= 60 ? "보완 필요" : "재작성 권장";
+
+  return { scores, grade, checks: { seo, aeo, geo } };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   제목 해석 · 슬러그
+   ══════════════════════════════════════════════════════════════ */
+function slugify(title, max = 80) {
+  let s = String(title || "").replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, "")
+    .replace(/\s+/g, " ").trim().replace(/ /g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  return (cut.includes("-") ? cut.slice(0, cut.lastIndexOf("-")) : cut).replace(/^-|-$/g, "");
+}
+
+function parseTitle(title) {
+  title = String(title || "").trim();
+  if (!title) return null;
+  const flat = squash(title);
+
+  let category = CATEGORIES[CATEGORIES.length - 1];
+  for (const [cat, signals] of CATEGORY_SIGNALS) {
+    if (signals.some(sig => flat.includes(squash(sig)))) { category = cat; break; }
+  }
+
+  const longest = arr => arr.reduce((a, b) => (b.length > a.length ? b : a), "");
+  let keyword = "";
+  const mon = MONITORED.filter(k => flat.includes(squash(k)));
+  if (mon.length) keyword = longest(mon);
+  else {
+    const core = CORE_KEYWORDS[category] || [];
+    const hits = core.filter(k => flat.includes(squash(k)));
+    if (hits.length) keyword = longest(hits);
+    else {
+      const base = core[0] || category;
+      const region = LOCAL_MODIFIERS.find(r => flat.includes(r));
+      keyword = region ? (MONITORED.find(k => squash(k) === squash(region + base)) || region + base) : base;
+    }
+  }
+
+  return {
+    title, category, primary_keyword: keyword,
+    topic: title.split(/[_|]/)[0].trim() || title,
+    hasRegion: LOCAL_MODIFIERS.some(r => flat.includes(r)),
+    monitored: MONITORED.includes(keyword),
+  };
+}
+
+function suggestHashtags(category, kw, limit = 12) {
+  const score = tag => {
+    const b = tag.slice(1);
+    let s = 0;
+    if (kw && b.includes(squash(kw))) s += 3;
+    if ((CORE_KEYWORDS[category] || []).some(k => b.includes(k))) s += 2;
+    if (LOCAL_MODIFIERS.some(m => b.includes(m))) s += 1;
+    return s;
+  };
+  return [...HASHTAG_POOL].sort((a, b) => score(b) - score(a)).slice(0, limit);
+}
+</script>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   렌더링 — 본문 HTML / 평문 / JSON-LD
+   ══════════════════════════════════════════════════════════════ */
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function renderBlock(b) {
+  if (b.type === "paragraph") return `<p>${esc(b.text)}</p>`;
+  if (b.type === "callout") return `<blockquote class="callout"><p>${esc(b.text)}</p></blockquote>`;
+  if (b.type === "list") {
+    const li = (b.items || []).map(i => `<li>${esc(i)}</li>`).join("");
+    return li ? `<ul>${li}</ul>` : "";
+  }
+  if (b.type === "steps") {
+    const li = (b.items || []).map(i => `<li>${esc(i)}</li>`).join("");
+    return li ? `<ol>${li}</ol>` : "";
+  }
+  if (b.type === "table") {
+    const hs = b.headers || [], rows = b.rows || [];
+    if (!hs.length || !rows.length) return "";
+    const head = hs.map(h => `<th scope="col">${esc(h)}</th>`).join("");
+    const body = rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
+    return `<div class="tw"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+  return "";
+}
+
+function renderBody(doc) {
+  const out = [`<h1>${esc(doc.h1)}</h1>`];
+  if (doc.intro) out.push(`<p>${esc(doc.intro)}</p>`);
+  if (doc.answer_capsule) {
+    out.push(`<section class="capsule"><h2>한눈에 보는 답</h2><p>${esc(doc.answer_capsule)}</p></section>`);
+  }
+  const secs = doc.sections || [];
+  secs.forEach((s, i) => {
+    out.push(`<h2 id="s${i + 1}">${esc(s.h2)}</h2>`);
+    if (s.answer) out.push(`<p class="direct">${esc(s.answer)}</p>`);
+    for (const b of s.blocks || []) { const r = renderBlock(b); if (r) out.push(r); }
+  });
+  const take = doc.key_takeaways || [];
+  if (take.length) {
+    out.push(`<section class="takeaways"><h2>핵심 요약</h2><ul>${take.map(t => `<li>${esc(t)}</li>`).join("")}</ul></section>`);
+  }
+  const faq = doc.faq || [];
+  if (faq.length) {
+    out.push(`<section class="faq"><h2>자주 묻는 질문</h2>${
+      faq.map(f => `<h3>Q. ${esc(f.q)}</h3><p>A. ${esc(f.a)}</p>`).join("")}</section>`);
+  }
+  if (doc.closing) out.push(`<p>${esc(doc.closing)}</p>`);
+  out.push(`<section class="notice"><h2>시술 전 반드시 확인해 주세요</h2><ol>${
+    CLINIC.notice.map(n => `<li>${esc(n)}</li>`).join("")}</ol></section>`);
+  const cites = doc.citations || [];
+  if (cites.length) {
+    out.push(`<section class="citations"><h2>참고 자료</h2><ul>${cites.map(c =>
+      `<li>${esc(c.org)} — ${esc(c.title || c.org)}${c.url
+        ? ` <a href="${esc(c.url)}" rel="nofollow noopener" target="_blank">바로가기</a>` : ""}</li>`
+    ).join("")}</ul></section>`);
+  }
+  if ((doc.hashtags || []).length) {
+    out.push(`<p class="tags">${esc(doc.hashtags.join(" "))}</p>`);
+  }
+  return out.join("\n");
+}
+
+function renderPlain(doc) {
+  const out = [doc.h1 || "", ""];
+  if (doc.intro) out.push(doc.intro, "");
+  if (doc.answer_capsule) out.push("[한눈에 보는 답]", doc.answer_capsule, "");
+  (doc.sections || []).forEach((s, i) => {
+    out.push(`${i + 1}. ${s.h2}`);
+    if (s.answer) out.push(s.answer);
+    for (const b of s.blocks || []) {
+      if ((b.type === "paragraph" || b.type === "callout") && b.text) out.push(b.text);
+      else if (b.type === "list") (b.items || []).forEach(i2 => out.push(`  · ${i2}`));
+      else if (b.type === "steps") (b.items || []).forEach((v, n) => out.push(`  ${n + 1}) ${v}`));
+      else if (b.type === "table") {
+        if ((b.headers || []).length) out.push("  | " + b.headers.join(" | ") + " |");
+        (b.rows || []).forEach(r => out.push("  | " + r.join(" | ") + " |"));
+      }
+    }
+    out.push("");
+  });
+  if ((doc.key_takeaways || []).length) {
+    out.push("핵심 요약"); doc.key_takeaways.forEach(t => out.push(`  · ${t}`)); out.push("");
+  }
+  if ((doc.faq || []).length) {
+    out.push("자주 묻는 질문");
+    doc.faq.forEach(f => out.push(`Q. ${f.q}`, `A. ${f.a}`, ""));
+  }
+  if (doc.closing) out.push(doc.closing, "");
+  out.push("시술 전 반드시 확인해 주세요");
+  CLINIC.notice.forEach((n, i) => out.push(`  ${i + 1}. ${n}`));
+  out.push("", (doc.hashtags || []).join(" "));
+  return out.join("\n");
+}
+
+function buildSchema(doc) {
+  const today = new Date().toISOString().slice(0, 10);
+  const url = `${CLINIC.blogBase}/${doc.category || ""}/${doc.post_url || ""}`;
+  const graph = [
+    {
+      "@type": ["MedicalClinic", "MedicalBusiness"],
+      "@id": `${CLINIC.homepage}#clinic`,
+      name: `${CLINIC.official} ${CLINIC.unit}`,
+      alternateName: [CLINIC.official, CLINIC.short],
+      url: CLINIC.homepage,
+      medicalSpecialty: "Dermatology",
+      availableService: CLINIC.strengths.map(n => ({ "@type": "MedicalTherapy", name: n })),
+      areaServed: CLINIC.areas.map(a => ({ "@type": "AdministrativeArea", name: a })),
+      address: { "@type": "PostalAddress", addressCountry: "KR", addressRegion: "인천광역시", addressLocality: "연수구" },
+    },
+    {
+      "@type": ["MedicalWebPage", "Article"],
+      "@id": `${url}#webpage`,
+      url, name: doc.h1, headline: doc.h1,
+      description: doc.meta_description, inLanguage: "ko-KR",
+      datePublished: today, dateModified: today, lastReviewed: today,
+      publisher: { "@id": `${CLINIC.homepage}#clinic` },
+      author: { "@id": `${CLINIC.homepage}#clinic` },
+      medicalAudience: { "@type": "MedicalAudience", audienceType: "Patient" },
+      about: [
+        { "@type": "MedicalCondition", name: "발톱무좀", alternateName: "조갑진균증(Onychomycosis)" },
+        { "@type": "MedicalCondition", name: "내성발톱", alternateName: "함입조갑(Ingrown toenail)" },
+      ],
+      abstract: (doc.key_takeaways || []).join(" "),
+      citation: (doc.citations || []).map(c => ({
+        "@type": "CreativeWork", name: c.title || c.org, publisher: c.org, url: c.url,
+      })),
+    },
+  ];
+  const faq = (doc.faq || []).filter(f => f.q && f.a);
+  if (faq.length) {
+    graph.push({
+      "@type": "FAQPage", "@id": `${url}#faq`,
+      mainEntity: faq.map(f => ({
+        "@type": "Question", name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+  }
+  graph.push({
+    "@type": "BreadcrumbList", "@id": `${url}#breadcrumb`,
+    itemListElement: [
+      { name: "홈", item: CLINIC.homepage },
+      { name: "블로그", item: CLINIC.blogBase },
+      { name: doc.category || "", item: `${CLINIC.blogBase}/${doc.category || ""}` },
+      { name: doc.h1 || "", item: url },
+    ].map((it, i) => ({ "@type": "ListItem", position: i + 1, name: it.name, item: it.item })),
+  });
+  return { "@context": "https://schema.org", "@graph": graph };
+}
+
+function cmsFields(doc) {
+  return [
+    ["노출 여부", "미노출 (검수 후 노출로 변경)", null],
+    ["카테고리", doc.category || "", null],
+    ["제목( H1 )", doc.h1 || "", { len: (doc.h1 || "").length }],
+    ["포스트URL", doc.post_url || "", null],
+    ["MetaTitle", doc.meta_title || "", { len: (doc.meta_title || "").length, max: META_TITLE_MAX }],
+    ["MetaDescription", doc.meta_description || "", { len: (doc.meta_description || "").length, max: META_DESC_MAX }],
+    ["해시태그", (doc.hashtags || []).join("\n"), null],
+    ["썸네일 문구", doc.thumbnail_copy || "", null],
+    ["발행 예정 URL", `${CLINIC.blogBase}/${doc.category || ""}/${doc.post_url || ""}`, null],
+  ];
+}
+</script>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   썸네일 — 사진 배경 + 명조 제목 (의원 실제 썸네일 구성)
+   ══════════════════════════════════════════════════════════════ */
+const TH = { W: 880, H: 580, CREAM: "#F5EBDC", FALLBACK: "#2b2622", TARGET_LUMA: 95 };
+let bgImage = null, logoImage = null, thumbLayout = "center";
+
+function coverDraw(ctx, img) {
+  const sr = img.width / img.height, dr = TH.W / TH.H;
+  let w, h;
+  if (sr > dr) { h = TH.H; w = Math.round(TH.H * sr); }
+  else { w = TH.W; h = Math.round(TH.W / sr); }
+  ctx.drawImage(img, (TH.W - w) / 2, (TH.H - h) / 2, w, h);
+}
+
+function bandLuma(ctx, top, bottom) {
+  top = Math.max(0, Math.round(top)); bottom = Math.min(TH.H, Math.round(bottom));
+  if (bottom <= top) return 0;
+  const d = ctx.getImageData(0, top, TH.W, bottom - top).data;
+  let sum = 0, n = 0;
+  for (let i = 0; i < d.length; i += 4 * 37) {   // 성긴 표본으로 충분
+    sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++;
+  }
+  return n ? sum / n : 0;
+}
+
+/** 글자 영역이 읽히도록 필요한 만큼만 어둡게. 경계는 smoothstep으로 잇는다. */
+function applyScrim(ctx, bands) {
+  const profile = new Float32Array(TH.H);
+  for (const [top, bottom, feather] of bands) {
+    const luma = bandLuma(ctx, top, bottom);
+    const needed = luma <= TH.TARGET_LUMA ? 0 : (luma - TH.TARGET_LUMA) / 255 * 1.9;
+    const strength = Math.min(0.74, Math.max(0.16, needed + 0.16));
+    for (let y = 0; y < TH.H; y++) {
+      let v;
+      if (y >= top && y <= bottom) v = strength;
+      else {
+        const dist = y < top ? top - y : y - bottom;
+        if (dist >= feather) continue;
+        const t = dist / feather;
+        v = strength * (1 - (3 * t * t - 2 * t * t * t));
+      }
+      if (v > profile[y]) profile[y] = v;
+    }
+  }
+  for (let y = 0; y < TH.H; y++) {
+    const a = Math.max(profile[y], 0.10);
+    ctx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`;
+    ctx.fillRect(0, y, TH.W, 1);
+  }
+}
+
+function tracked(ctx, text, tracking) {
+  if (!text) return 0;
+  let w = 0;
+  for (const ch of text) w += ctx.measureText(ch).width;
+  return w + tracking * (Math.max(0, [...text].length - 1));
+}
+function drawTracked(ctx, text, cx, y, tracking) {
+  const w = tracked(ctx, text, tracking);
+  let x = cx - w / 2;
+  for (const ch of text) {
+    ctx.fillText(ch, x, y);
+    x += ctx.measureText(ch).width + tracking;
+  }
+}
+
+function wrapTitle(text, korean) {
+  text = String(text || "").trim();
+  const limit = korean ? 10 : 16;
+  if (!text) return [""];
+  if ([...text].length <= limit) return [text];
+  const words = text.split(/\s+/);
+  const lines = []; let cur = "";
+  for (const w of words) {
+    if (!cur) { cur = w; continue; }
+    if ([...(cur + " " + w)].length <= limit) cur += " " + w;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > 2) return [lines[0], lines.slice(1).join(" ")];
+  return lines;
+}
+
+function fitFont(ctx, lines, maxW, start, tracking, family) {
+  let size = start;
+  while (size > 20) {
+    ctx.font = `${size}px ${family}`;
+    const widest = Math.max(...lines.map(l => tracked(ctx, l, tracking)));
+    if (widest <= maxW) return size;
+    size -= 3;
+  }
+  return 20;
+}
+
+function drawThumbnail() {
+  const canvas = document.getElementById("thumbCanvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const title = (document.getElementById("thumbCopy").value || "문제성발톱").trim();
+  const korean = /[가-힣]/.test(title);
+  const serif = korean ? '"Nanum Myeongjo", serif' : '"Nanum Myeongjo", Georgia, serif';
+
+  ctx.clearRect(0, 0, TH.W, TH.H);
+  if (bgImage) coverDraw(ctx, bgImage);
+  else { ctx.fillStyle = TH.FALLBACK; ctx.fillRect(0, 0, TH.W, TH.H); }
+
+  const lines = wrapTitle(title, korean);
+  const bottom = thumbLayout === "bottom";
+  const maxW = bottom ? TH.W - 110 : TH.W - 150;
+  const tracking = bottom ? 2 : 1;
+  const size = fitFont(ctx, lines, maxW, bottom ? 92 : 118, tracking, serif);
+  const lineH = Math.round(size * 1.16);
+  const titleH = lineH * lines.length;
+
+  const brandSize = korean ? 25 : 27;
+  const logoW = 200;
+  const logoH = logoImage ? Math.round(logoImage.height * logoW / logoImage.width) : 0;
+  const brandH = logoImage ? logoH : brandSize + 8;
+  const dividerH = 76, gap = 22;
+
+  let titleY, dividerY, brandY, bands;
+  if (bottom) {
+    brandY = 46;
+    dividerY = brandY + brandH + 14;
+    titleY = TH.H - 78 - titleH;
+    bands = [[brandY - 24, dividerY + dividerH + 16, 130], [titleY - 26, TH.H, 190]];
+  } else {
+    const blockH = titleH + gap + dividerH + gap + brandH;
+    titleY = Math.round((TH.H - blockH) / 2);
+    dividerY = titleY + titleH + gap;
+    brandY = dividerY + dividerH + gap;
+    bands = [[titleY - 30, brandY + brandH + 30, 150]];
+  }
+
+  applyScrim(ctx, bands);
+
+  ctx.fillStyle = TH.CREAM;
+  ctx.textBaseline = "top";
+  ctx.font = `${size}px ${serif}`;
+  let y = titleY;
+  for (const line of lines) { drawTracked(ctx, line, TH.W / 2, y, tracking); y += lineH; }
+
+  ctx.fillRect(TH.W / 2, dividerY, 1.4, dividerH);
+
+  if (logoImage) {
+    // 누끼 로고를 크림색으로 다시 칠해 어두운 배경 위에서 읽히게 한다.
+    const off = document.createElement("canvas");
+    off.width = logoW; off.height = logoH;
+    const octx = off.getContext("2d");
+    octx.drawImage(logoImage, 0, 0, logoW, logoH);
+    octx.globalCompositeOperation = "source-in";
+    octx.fillStyle = TH.CREAM;
+    octx.fillRect(0, 0, logoW, logoH);
+    ctx.drawImage(off, Math.round((TH.W - logoW) / 2), brandY);
+  } else {
+    ctx.font = `${brandSize}px ${serif}`;
+    drawTracked(ctx, "Obliv Clinic", TH.W / 2, brandY, 3);
+  }
+}
+
+/** 300KB 이하가 될 때까지 품질을 낮춘다. */
+function thumbBlob() {
+  const canvas = document.getElementById("thumbCanvas");
+  return new Promise(resolve => {
+    const qualities = [0.92, 0.86, 0.8, 0.74, 0.68, 0.6, 0.52, 0.44];
+    const tryNext = i => {
+      if (i >= qualities.length) return resolve(null);
+      canvas.toBlob(b => {
+        if (b && (b.size <= 300 * 1024 || i === qualities.length - 1)) resolve(b);
+        else tryNext(i + 1);
+      }, "image/jpeg", qualities[i]);
+    };
+    tryNext(0);
+  });
+}
+
+function loadImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("이미지를 열지 못했습니다.")); };
+    img.src = url;
+  });
+}
+</script>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   예시 원고 — 페이지가 빈 껍데기로 열리지 않도록
+   ══════════════════════════════════════════════════════════════ */
+const SAMPLE_DOC = {
+  _sample: true,
+  category: "발톱무좀치료",
+  primary_keyword: "송도발톱무좀",
+  h1: "송도 발톱무좀, 겉에만 약을 발라도 낫지 않는 이유",
+  meta_title: "송도 발톱무좀, 약이 안 듣는 이유",
+  meta_description: "약을 발라도 송도 발톱무좀이 그대로인 구조적 이유와 치료 순서를 정리했습니다.",
+  thumbnail_copy: "약이 안 듣는 이유",
+  post_url: "송도-발톱무좀-겉에만-약을-발라도-낫지-않는-이유",
+  hashtags: ["#송도발톱무좀", "#인천발톱무좀", "#연수구발톱무좀", "#발톱무좀레이저",
+    "#두꺼워진발톱", "#조갑진균증", "#문제성발톱", "#발톱무좀병원", "#송도동발톱무좀치료", "#인천논현동발톱무좀"],
+  answer_capsule: "발톱무좀에 약을 발라도 낫지 않는 가장 큰 이유는 두꺼워진 발톱이 물리적 장벽이 되어 약물이 병변까지 닿지 못하기 때문입니다. 두꺼워진 층을 먼저 정리해 약물과 레이저가 지나갈 통로를 확보하는 과정이 필요합니다.",
+  intro: "인천 송도에서 문제성 발톱을 중점 진료하는 오블리브 송도 호라이즌의원 문제성발톱클리닉입니다. 약국에서 구한 외용액만으로 해결하려다 시간을 보내는 분이 많습니다. 정성껏 발라도 발톱이 여전히 두껍고 노랗다면 그것은 정성의 문제가 아니라 구조의 문제입니다.",
+  sections: [
+    { h2: "왜 바르는 약만으로는 부족한가요?",
+      answer: "발톱이 두꺼워지면 약물이 발톱 아래 병변까지 도달하기 어렵기 때문입니다. 발톱은 단단한 케라틴 층으로 이루어져 있어, 진균이 침투하면 방어 기전으로 더 두껍고 딱딱해집니다.",
+      blocks: [{ type: "list", text: "", items: [
+        "진균은 발톱 표면이 아니라 발톱 밑바닥(조상)과 뿌리 쪽에 자리 잡습니다.",
+        "두꺼워진 케라틴 층은 외용제의 유효 성분이 지나가기 어려운 장벽이 됩니다.",
+        "표면에만 도포하면 균 서식지에 약이 닿지 않아 상태가 유지될 수 있습니다.",
+      ], headers: [], rows: [] }] },
+    { h2: "치료는 어떤 순서로 진행되나요?",
+      answer: "오블리브의원은 진단 후 두꺼워진 발톱을 먼저 정리하고, 그 통로로 레이저와 약물을 적용하는 순서로 진행합니다. 진행 단계에 따라 조합을 달리합니다.",
+      blocks: [{ type: "steps", text: "", items: [
+        "정밀 진단으로 무좀 외 원인과 감별합니다.",
+        "프리컨디셔닝으로 두꺼워진 발톱 층을 정리합니다.",
+        "비가열성 또는 가열성 레이저로 심부에 에너지를 전달합니다.",
+        "상태에 따라 국소 도포제와 경구 항진균제를 병행합니다.",
+        "새 발톱이 자라는 경과를 주기적으로 재평가합니다.",
+      ], headers: [], rows: [] }] },
+    { h2: "발톱 변색은 모두 무좀인가요?",
+      answer: "아닙니다. 발톱 변색과 두꺼워짐은 무좀 외에도 여러 원인으로 나타나므로 감별 진단이 먼저입니다. 원인이 다르면 치료 방향도 달라집니다.",
+      blocks: [
+        { type: "table", text: "", items: [], headers: ["감별 대상", "특징"], rows: [
+          ["조갑하 혈종", "외상 후 발생하며 자라면서 위치가 이동합니다."],
+          ["조갑 건선", "다른 부위 피부 병변이 동반되는 경우가 있습니다."],
+          ["외상성 변형", "반복적인 압박이나 충격 이력이 확인됩니다."],
+        ] },
+        { type: "callout", text: "자가 판단으로 발톱을 깎아내면 2차 감염 위험이 있어 권장되지 않습니다.", items: [], headers: [], rows: [] },
+      ] },
+    { h2: "치료 기간은 얼마나 걸리나요?",
+      answer: "새 발톱이 끝까지 자라 나오는 시간이 필요해 수개월 이상의 경과 관찰이 권장됩니다. 발톱 성장 속도와 감염 범위에 따라 개인차가 있습니다.",
+      blocks: [{ type: "paragraph", text: "질병관리청 국가건강정보포털에서도 조갑진균증은 손발톱이 새로 자라는 기간을 고려해 장기적으로 관리하는 질환으로 안내하고 있습니다. 치료 중단 여부는 의료진 진료를 통해 판단하는 것이 안전합니다.", items: [], headers: [], rows: [] }] },
+  ],
+  key_takeaways: [
+    "발톱무좀은 발톱 밑바닥과 뿌리 쪽에 진균이 서식하는 감염 질환입니다.",
+    "두꺼워진 발톱은 외용제의 침투를 막는 물리적 장벽으로 작용합니다.",
+    "오블리브의원은 프리컨디셔닝으로 통로를 확보한 뒤 레이저와 약물을 적용합니다.",
+    "발톱 변색은 조갑하 혈종이나 건선일 수 있어 감별 진단이 먼저 필요합니다.",
+    "치료 기간은 새 발톱이 자라는 속도에 따라 수개월 이상 걸리며 개인차가 있습니다.",
+  ],
+  faq: [
+    { q: "발톱무좀 레이저 치료는 아픈가요?", a: "비가열성 레이저는 온열감 정도로 느껴지는 경우가 많습니다. 다만 통증 민감도에는 개인차가 있으므로 진료 시 상태를 확인한 뒤 방식을 정합니다." },
+    { q: "먹는 무좀약을 먹을 수 없는데 방법이 있나요?", a: "간 기능 이상이나 다약제 복용으로 경구 항진균제가 어려운 경우 국소 치료와 레이저를 고려할 수 있습니다. 복용 가능 여부는 의료진 진료로 판단합니다." },
+    { q: "치료 후 재감염을 막으려면 어떻게 하나요?", a: "발을 건조하게 유지하고 신발과 양말을 소독하거나 교체하는 것이 권장됩니다. 가족 간 슬리퍼·발톱깎이 공유도 피하는 것이 좋습니다." },
+    { q: "당뇨가 있는데 발톱무좀을 두어도 되나요?", a: "당뇨병이나 말초혈관질환이 있으면 작은 상처도 합병증으로 이어질 수 있어 조기 진료가 권장됩니다. 자가 처치보다 의료진 확인이 안전합니다." },
+  ],
+  closing: "발톱 상태는 사람마다 달라 같은 방법이 모두에게 맞지는 않습니다. 현재 상태가 어떤 단계인지 확인하는 것이 치료의 첫걸음입니다.",
+  internal_link_suggestions: [
+    { anchor_text: "내성발톱 비수술 교정치료", target_topic: "내성발톱 교정" },
+    { anchor_text: "발톱무좀 재발 방지 생활 관리", target_topic: "재감염 예방" },
+  ],
+  citations: [{ org: "질병관리청 국가건강정보포털", title: "조갑진균증(손발톱무좀)", url: "https://health.kdca.go.kr" }],
+};
+
+/* ══════════════════════════════════════════════════════════════
+   Claude 호출
+   ══════════════════════════════════════════════════════════════ */
+function buildPrompt(parsed) {
+  const tags = suggestHashtags(parsed.category, parsed.primary_keyword);
+  const regionNote = parsed.hasRegion ? ""
+    : "\n제목에 지역 신호가 없습니다. h1과 본문에 '송도' 또는 '인천'을 자연스럽게 넣으십시오.";
+
+  return `당신은 ${CLINIC.official} ${CLINIC.unit}의 콘텐츠 에디터입니다.
+대한민국 의료법과 의료광고 심의 기준을 지키면서, 환자가 읽고 판단할 수 있는 의학 정보 글을 씁니다.
+
+[허용된 사실 — 여기 없는 내용은 쓰지 마십시오]
+기관: ${CLINIC.official} ${CLINIC.unit} (본문 호칭 ${CLINIC.short})
+소재지: ${CLINIC.region} / 진료지역: ${CLINIC.areas.join(", ")}
+강점 진료: ${CLINIC.strengths.join(", ")}
+보유 장비: ${CLINIC.devices}
+치료 절차:
+${CLINIC.steps.map(s => "  - " + s).join("\n")}
+인용 가능한 근거 기관:
+${CLINIC.sources.map(s => `  - ${s.org}: ${s.topic}`).join("\n")}
+
+장비명·시술명·통계 수치·원장 경력·언론 보도를 지어내지 마십시오.
+제시된 기관 목록 밖의 URL을 만들지 마십시오. 불확실하면 쓰지 않습니다.
+
+[본원에서 시행하지 않는 시술 — 본원이 하는 것처럼 쓰면 허위광고]
+${NOT_PERFORMED.map(n => `  - ${n.terms.join(", ")} → ${n.fix}`).join("\n")}
+수술적 처치가 필요한 상태는 "외과 진료가 필요할 수 있습니다"처럼 타 진료과 안내로만 다루십시오.
+
+[쓰지 않을 표현]
+${AVOID_TERMS.map(a => `  - ${a.terms.join(", ")} → ${a.fix}`).join("\n")}
+
+[의료법 제56조 — 절대 금지]
+${LAW_RULES.filter(r => r.sev === BLOCK).map(r => `  - [${r.art}] ${r.why} → ${r.fix}`).join("\n")}
+
+[반드시 포함]
+${REQUIRED_TOPICS.map(t => `  - ${t.label}: ${t.hint}`).join("\n")}
+
+[구조 원칙]
+- MetaTitle은 ${META_TITLE_MAX}자, MetaDescription은 ${META_DESC_MAX}자를 절대 넘기지 마십시오(공백 포함).
+- h1에 주키워드와 지역명을 모두 넣고 25~60자로 씁니다.
+- answer_capsule에 제목이 던진 질문의 직답을 2~3문장(40~220자)으로 먼저 씁니다.
+- h2의 절반 이상을 사용자가 실제로 검색하는 질문 형태로 만듭니다.
+- 모든 h2 바로 아래 answer에 결론 2~3문장(40~220자)을 먼저 놓고 blocks로 근거를 폅니다.
+- key_takeaways의 각 문장은 앞뒤 문맥 없이 인용해도 뜻이 통해야 합니다.
+  지시어로 시작하지 말고 주어를 명시하며 한 문장에 한 사실만 담습니다(각 25~120자).
+- 비교·분류 정보는 반드시 table 블록으로 만듭니다.
+- 기관명은 첫 등장 시 "${CLINIC.official} ${CLINIC.unit}", 이후 "${CLINIC.short}"로 일관되게 씁니다.
+- 근거 기관을 본문에서 1회 이상 언급하고 citations에 담습니다.
+- 본문(intro+sections+faq) 합계 1,800자 이상. h2는 4~6개.
+- 부작용 고지는 시스템이 덧붙이므로 별도 섹션으로 쓰지 마십시오. 다만 본문에서 개인차와
+  이상반응 가능성은 자연스럽게 언급합니다.
+
+[이번 글]
+카테고리: ${parsed.category}
+주키워드: ${parsed.primary_keyword}
+주제: ${parsed.topic}
+원래 제목: ${parsed.title}${regionNote}
+해시태그 후보: ${tags.join(" ")}
+후보 중 주제에 맞는 것을 고르고 본문 핵심어 기반 태그를 2~3개 더해 총 10~14개로 구성하십시오.
+
+아래 JSON 객체 하나만 출력하십시오. 다른 말을 덧붙이지 마십시오.
+{
+  "h1": string,
+  "meta_title": string,
+  "meta_description": string,
+  "thumbnail_copy": string,        // 썸네일 정중앙 문구, 12자 이내
+  "hashtags": string[],            // '#'으로 시작
+  "answer_capsule": string,
+  "intro": string,
+  "sections": [{"h2": string, "answer": string, "blocks": [
+      {"type": "paragraph"|"list"|"steps"|"table"|"callout",
+       "text": string, "items": string[], "headers": string[], "rows": string[][]}
+  ]}],
+  "key_takeaways": string[],
+  "faq": [{"q": string, "a": string}],
+  "closing": string,
+  "internal_link_suggestions": [{"anchor_text": string, "target_topic": string}],
+  "citations": [{"org": string, "title": string, "url": string}]
+}
+블록 규칙: paragraph·callout은 text만 채우고 items/headers/rows는 빈 배열.
+list·steps는 items만, table은 headers와 rows만 채우고 나머지는 빈 값.
+table의 모든 행 길이는 headers 길이와 같아야 합니다.`;
+}
+
+function repairPrompt(doc, law, pos, seoRep) {
+  const lines = ["직전에 작성한 글에서 아래 문제가 발견되었습니다. 해당 부분만 고쳐 전체 JSON을 다시 출력하십시오.", ""];
+  const blocks = law.findings.filter(f => f.sev === BLOCK);
+  if (blocks.length) {
+    lines.push("■ 의료법 위반 (반드시 수정)");
+    blocks.forEach(f => lines.push(`  - "${f.term}" (${f.tag}): ${f.why} → ${f.fix}`));
+    lines.push("");
+  }
+  if (law.missing.length) {
+    lines.push("■ 필수 기재 누락");
+    law.missing.forEach(m => lines.push(`  - ${m.label}: ${m.hint}`));
+    lines.push("");
+  }
+  const pb = pos.findings.filter(f => f.sev === BLOCK || f.sev === WARN);
+  if (pb.length) {
+    lines.push("■ 본원 포지셔닝");
+    pb.forEach(f => lines.push(`  - [${f.tag}] "${f.term}": ${f.why} → ${f.fix}`));
+    lines.push("");
+  }
+  const fails = [...seoRep.checks.seo, ...seoRep.checks.aeo, ...seoRep.checks.geo]
+    .filter(c => !c.ok && c.fix).sort((a, b) => b.w - a.w).slice(0, 5);
+  if (fails.length) {
+    lines.push("■ 검색 최적화 보완");
+    fails.forEach(c => lines.push(`  - ${c.label} (${c.detail}): ${c.fix}`));
+    lines.push("");
+  }
+  lines.push(`지적되지 않은 부분은 유지하고 전체 JSON을 완전한 형태로 다시 출력하십시오.`);
+  lines.push(`MetaTitle ${META_TITLE_MAX}자, MetaDescription ${META_DESC_MAX}자 제한을 다시 확인하십시오.`);
+  return lines.join("\n");
+}
+
+function normalize(doc, parsed) {
+  doc.category = parsed.category;
+  doc.primary_keyword = parsed.primary_keyword;
+  doc.post_url = slugify(doc.h1 || parsed.title);
+
+  const seen = new Set(), tags = [];
+  for (let t of doc.hashtags || []) {
+    t = String(t).trim().replace(/\s+/g, "");
+    if (!t) continue;
+    if (!t.startsWith("#")) t = "#" + t;
+    if (!seen.has(t)) { seen.add(t); tags.push(t); }
+  }
+  doc.hashtags = tags;
+
+  for (const s of doc.sections || []) {
+    for (const b of s.blocks || []) {
+      if (b.type !== "table") continue;
+      const w = (b.headers || []).length;
+      b.rows = (b.rows || []).map(r => {
+        const row = Array.isArray(r) ? r.slice(0, w) : [];
+        while (row.length < w) row.push("");
+        return row;
+      });
+    }
+  }
+  return doc;
+}
+</script>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   UI 배선
+   ══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+let current = null, currentReports = null;
+let sampleNs = null, dbNs = null, downloadsNs = null;
+
+function findingHTML(f) {
+  return `<div class="finding" data-sev="${f.sev}">
+    <div class="stripe"></div>
+    <div class="body">
+      <div class="head"><span class="tag">${esc(f.tag)}</span>
+        <span class="term">“${esc(f.term)}”</span></div>
+      ${f.ctx ? `<div class="ctx">${esc(f.ctx)}</div>` : ""}
+      <div class="why">${esc(f.why)}</div>
+      <div class="fix">→ ${esc(f.fix)}</div>
+    </div></div>`;
+}
+
+function setGate(el, state, label) {
+  el.dataset.state = state;
+  el.innerHTML = `<span class="dot"></span>${label}`;
+}
+
+function renderAll(doc, reports) {
+  current = doc; currentReports = reports;
+  const { law, pos, seo } = reports;
+
+  $("docTitle").textContent = doc.h1 || "—";
+  $("sampleFlag").hidden = !doc._sample;
+
+  setGate($("gateLaw"), law.passed ? "ok" : "bad",
+    law.passed ? "의료법 통과" : `의료법 ${law.blocks + law.missing.length}건`);
+  setGate($("gatePos"), pos.passed ? (pos.warns ? "warn" : "ok") : "bad",
+    pos.passed ? (pos.warns ? `포지셔닝 ${pos.warns}건` : "포지셔닝 통과") : `미시행 시술 ${pos.blocks}건`);
+  const sg = seo.scores.total >= 85 ? "ok" : seo.scores.total >= 70 ? "warn" : "bad";
+  setGate($("gateSeo"), sg, `검색 최적화 ${seo.scores.total}`);
+
+  const grade = v => v >= 85 ? "ok" : v >= 70 ? "warn" : "bad";
+  $("scores").innerHTML = [
+    ["SEO", seo.scores.seo, "검색"], ["AEO", seo.scores.aeo, "답변"],
+    ["GEO", seo.scores.geo, "생성형"], ["종합", seo.scores.total, "전체"],
+  ].map(([k, v, sub]) =>
+    `<div class="score" data-grade="${grade(v)}"><div class="v">${v}</div><div class="k">${k} · ${sub}</div></div>`
+  ).join("");
+
+  $("verdict").textContent =
+    `${seo.grade} · 의료법: ${law.summary} · 포지셔닝: ${pos.summary}`;
+
+  // 게이트 패널
+  const gateItems = [];
+  if (law.missing.length) {
+    gateItems.push(`<div class="note warn" style="margin-bottom:12px"><strong>필수 기재 누락</strong><br />${
+      law.missing.map(m => `${esc(m.label)} — ${esc(m.hint)}`).join("<br />")}</div>`);
+  }
+  const allFindings = [...pos.findings, ...law.findings];
+  if (allFindings.length) gateItems.push(allFindings.map(findingHTML).join(""));
+  $("gatePanel").hidden = !gateItems.length;
+  if (gateItems.length) {
+    const blocked = !law.passed || !pos.passed;
+    $("gateTitle").textContent = blocked ? "발행 전 반드시 수정" : "검토 권고";
+    $("gateBody").innerHTML = gateItems.join("");
+  }
+
+  // CMS 필드
+  $("cmsFields").innerHTML = cmsFields(doc).map(([k, v, meta]) => {
+    const counter = meta
+      ? `<span class="counter" data-over="${meta.max && meta.len > meta.max ? 1 : 0}">${
+          meta.len}${meta.max ? " / " + meta.max : ""}자</span>`
+      : "";
+    return `<div class="fld"><div class="k">${esc(k)}</div>
+      <div class="v">${esc(v)}</div>
+      <div style="display:flex;gap:8px;align-items:center">${counter}
+        <button class="btn quiet tiny" data-copy-text="${esc(v)}">복사</button></div></div>`;
+  }).join("");
+
+  // 본문
+  const html = renderBody(doc);
+  $("docPreview").innerHTML = html;
+  $("htmlSrc").textContent = html;
+  $("textSrc").textContent = renderPlain(doc);
+  $("schemaSrc").textContent =
+    `<script type="application/ld+json">\n${JSON.stringify(buildSchema(doc), null, 2)}\n<\/script>`;
+
+  // 항목별 점검
+  $("auditOut").innerHTML = [
+    ["seo", "SEO — 검색엔진"], ["aeo", "AEO — 답변엔진"], ["geo", "GEO — 생성형엔진"],
+  ].map(([k, label]) =>
+    `<h3 style="margin:14px 0 6px;font-size:.86rem">${label} · ${seo.scores[k]}점</h3>` +
+    seo.checks[k].map(c =>
+      `<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:.82rem">
+        <span style="width:16px">${c.ok ? "✓" : "!"}</span>
+        <span style="width:170px;flex-shrink:0">${esc(c.label)}</span>
+        <span style="color:var(--ink-3);flex:1">${esc(c.detail)}${
+          c.ok ? "" : `<br /><em style="color:var(--ok)">→ ${esc(c.fix)}</em>`}</span></div>`
+    ).join("")
+  ).join("");
+
+  $("thumbCopy").value = doc.thumbnail_copy || doc.primary_keyword || "";
+  drawThumbnail();
+}
+
+function evaluate(doc) {
+  const text = fullText(doc);
+  return { law: reviewLaw(text), pos: reviewPositioning(text), seo: audit(doc) };
+}
+
+/* ── 생성 진행 창 ──
+   1~3분이 걸리는 작업이라 버튼만 도는 화면으로는 무엇을 하고 있는지 알 수 없다.
+   단계·경과 시간·진행률을 함께 보여 준다. */
+const STEP_ICONS = {
+  parse:  '<circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/>',
+  draft:  '<path d="M12.5 2.5l3 3L6 15H3v-3z"/><path d="M10.5 4.5l3 3"/>',
+  check:  '<path d="M8 1.5l5.5 2v4.2c0 3.4-2.3 6.2-5.5 7.3-3.2-1.1-5.5-3.9-5.5-7.3V3.5z"/><path d="M5.6 8.2l1.7 1.7 3.1-3.4"/>',
+  repair: '<path d="M11.4 2.6a3.6 3.6 0 00-4.8 4.4L2.4 11.2a1.4 1.4 0 002 2l4.2-4.2a3.6 3.6 0 004.4-4.8L11 5.4 9.5 4.9 9 3z"/>',
+  save:   '<path d="M2.5 8.5l3.6 3.6L13.5 4.7"/>',
+};
+
+const STAGES = [
+  ["parse",  "제목 분석"],
+  ["draft",  "원고 작성"],
+  ["check",  "의료법·포지셔닝 검사"],
+  ["repair", "자동 교정"],
+  ["save",   "저장"],
+];
+
+function stepIcon(key) {
+  return `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+    aria-hidden="true">${STEP_ICONS[key] || STEP_ICONS.check}</svg>`;
+}
+
+let loadTick = null, loadStart = 0;
+
+function loadOpen(title) {
+  $("loadSubject").textContent = title;
+  $("loadSteps").innerHTML = STAGES.map(([key, label]) =>
+    `<div class="step" data-key="${key}" data-state="wait">
+       <span class="ico">${stepIcon(key)}</span>
+       <span class="name">${esc(label)}</span>
+       <span class="note"></span>
+     </div>`).join("");
+  $("loadError").innerHTML = "";
+  $("loadBar").style.width = "0%";
+  $("loadFoot").hidden = false;
+  $("loadModal").hidden = false;
+  loadStart = Date.now();
+  clearInterval(loadTick);
+  $("loadTimer").textContent = "0초";
+  loadTick = setInterval(() => {
+    const s = Math.floor((Date.now() - loadStart) / 1000);
+    $("loadTimer").textContent = s < 60 ? `${s}초` : `${Math.floor(s / 60)}분 ${s % 60}초`;
+  }, 1000);
+}
+
+function loadClose() {
+  clearInterval(loadTick);
+  $("loadModal").hidden = true;
+}
+
+function loadStep(key, state, detail) {
+  const row = $("loadSteps").querySelector(`.step[data-key="${key}"]`);
+  if (!row) return;
+  row.dataset.state = state === "start" ? "run" : state === "skip" ? "skip" : "done";
+  if (detail != null) row.querySelector(".note").textContent = detail;
+  const rows = [...$("loadSteps").querySelectorAll(".step")];
+  const settled = rows.filter(r => r.dataset.state === "done" || r.dataset.state === "skip").length;
+  $("loadBar").style.width = `${Math.round(settled / rows.length * 100)}%`;
+}
+
+function loadFail(message) {
+  clearInterval(loadTick);
+  const running = $("loadSteps").querySelector('.step[data-state="run"]');
+  if (running) running.dataset.state = "fail";
+  $("loadFoot").hidden = true;
+  $("loadError").innerHTML =
+    `<div class="load-error">${esc(message)}</div>
+     <button class="btn quiet" style="margin-top:12px;width:100%" id="loadCloseBtn">닫기</button>`;
+  $("loadCloseBtn").addEventListener("click", loadClose);
+  $("loadCloseBtn").focus();
+}
+
+/* 화면이 다시 그려질 틈을 준다. 아니면 단계 표시가 한꺼번에 몰려 보인다. */
+const paint = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+/* ── 생성 ── */
+async function generate() {
+  const raw = $("titleInput").value.trim();
+  const parsed = parseTitle(raw);
+  if (!parsed) { $("genHint").textContent = "제목을 입력하세요."; return; }
+  if (!sampleNs) {
+    $("genHint").innerHTML =
+      '이 화면에서는 생성 기능을 쓸 수 없습니다. 저장소의 파이썬 앱에서 <code>python main.py auto "제목"</code>을 쓰세요.';
+    return;
+  }
+
+  const btn = $("runBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>작성 중';
+  $("genHint").textContent = "";
+  loadOpen(raw);
+
+  const summary = r => {
+    const parts = [];
+    if (!r.law.passed || r.law.warns) parts.push(`의료법 ${r.law.summary}`);
+    if (!r.pos.passed || r.pos.warns) parts.push(`포지셔닝 ${r.pos.summary}`);
+    return (parts.length ? parts.join(" · ") : "걸린 표현 없음") + ` · 점수 ${r.seo.scores.total}`;
+  };
+
+  try {
+    loadStep("parse", "start");
+    await paint();
+    loadStep("parse", "done",
+      `카테고리 ${parsed.category} · 주키워드 ${parsed.primary_keyword}`);
+
+    loadStep("draft", "start", "Claude가 초안을 쓰는 중입니다. 1~3분 걸립니다.");
+    let doc = normalize(await sampleNs.json(buildPrompt(parsed), { modelTier: "complex" }), parsed);
+    loadStep("draft", "done", `소제목 ${(doc.sections || []).length}개 · FAQ ${(doc.faq || []).length}개`);
+
+    loadStep("check", "start");
+    await paint();
+    let reports = evaluate(doc);
+    loadStep("check", "done", summary(reports));
+
+    // 의료법·포지셔닝 위반이 남으면 지적사항을 담아 다시 쓴다 (최대 2회)
+    let repaired = 0;
+    for (let i = 0; i < 2; i++) {
+      const hard = reports.law.blocks + reports.law.missing.length + reports.pos.blocks;
+      const soft = reports.pos.warns;
+      if (!hard && !soft && reports.seo.scores.total >= 80) break;
+      repaired++;
+      loadStep("repair", "start",
+        hard ? `걸린 표현을 고쳐 다시 쓰는 중 (${i + 1}차)` : `점수를 보완해 다시 쓰는 중 (${i + 1}차)`);
+      const fixed = normalize(await sampleNs.json([
+        { role: "user", content: buildPrompt(parsed) },
+        { role: "assistant", content: JSON.stringify(doc) },
+        { role: "user", content: repairPrompt(doc, reports.law, reports.pos, reports.seo) },
+      ], { modelTier: "complex" }), parsed);
+      const nr = evaluate(fixed);
+      const nHard = nr.law.blocks + nr.law.missing.length + nr.pos.blocks;
+      if (nHard < hard || (nHard === 0 && nr.seo.scores.total >= reports.seo.scores.total - 5)) {
+        doc = fixed; reports = nr;
+      } else break;
+    }
+    if (repaired) loadStep("repair", "done", `${repaired}회 교정 · ${summary(reports)}`);
+    else loadStep("repair", "skip", "고칠 곳이 없어 건너뜁니다.");
+
+    loadStep("save", "start");
+    await paint();
+    renderAll(doc, reports);
+    $("genHint").textContent = reports.law.passed && reports.pos.passed
+      ? "검사를 통과했습니다. CMS 필드와 본문을 복사해 쓰세요."
+      : "검사에서 걸린 표현이 남아 있습니다. 위 지적을 확인하고 수정하세요.";
+    saveHistory(doc, reports);
+    loadStep("save", "done", "이력에 남겼습니다.");
+    await paint();
+    loadClose();
+  } catch (e) {
+    const code = e && e.code;
+    const message =
+      code === "rate_limited" ? "요청이 몰렸습니다. 잠시 후 다시 시도하세요."
+      : code === "invalid_json" ? "응답을 읽지 못했습니다. 제목을 조금 더 구체적으로 써 보세요."
+      : code === "cancelled" ? "취소했습니다."
+      : `생성하지 못했습니다: ${(e && e.message) || e}`;
+    $("genHint").textContent = message;
+    loadFail(message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "원고 생성";
+  }
+}
+
+/* ── 이력 (db) ── */
+async function saveHistory(doc, reports) {
+  if (!dbNs) return;
+  try {
+    await dbNs.doc(`posts/${Date.now()}`).set({
+      h1: doc.h1, category: doc.category, keyword: doc.primary_keyword,
+      total: reports.seo.scores.total,
+      lawPassed: reports.law.passed, posPassed: reports.pos.passed,
+      doc: JSON.stringify(doc), at: Date.now(),
+    });
+  } catch (e) { /* 이력 저장 실패는 작업을 막지 않는다 */ }
+}
+
+function renderHistory(rows) {
+  const el = $("hist");
+  if (!rows.length) { el.innerHTML = '<p class="empty">아직 없습니다.</p>'; return; }
+  el.innerHTML = rows.map(r =>
+    `<button data-doc="${esc(r.id)}"><span class="t">${esc(r.h1 || "제목 없음")}</span>
+      <span class="s">${r.total ?? "-"}</span></button>`).join("");
+  el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    const row = rows.find(r => r.id === b.dataset.doc);
+    if (!row) return;
+    try {
+      const doc = JSON.parse(row.doc);
+      renderAll(doc, evaluate(doc));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) { /* 손상된 이력은 건너뛴다 */ }
+  }));
+}
+
+/* ── 이벤트 ── */
+$("titleInput").addEventListener("input", () => {
+  const p = parseTitle($("titleInput").value);
+  $("parseHint").textContent = p
+    ? `카테고리 ${p.category} · 주키워드 ${p.primary_keyword}${p.monitored ? " (순위 모니터링 중)" : ""}`
+    : "카테고리와 주키워드는 제목에서 자동으로 잡습니다.";
+});
+$("runBtn").addEventListener("click", generate);
+
+$("lintBtn").addEventListener("click", () => {
+  const text = $("lintInput").value;
+  if (!text.trim()) { $("lintOut").innerHTML = '<p class="empty">검사할 원고를 넣으세요.</p>'; return; }
+  const law = reviewLaw(text), pos = reviewPositioning(text);
+  const clean = law.passed && pos.passed && !law.warns && !pos.warns;
+  const items = [...pos.findings, ...law.findings];
+  $("lintOut").innerHTML =
+    `<div class="note ${clean ? "ok" : (law.blocks || pos.blocks) ? "bad" : "warn"}" style="margin-bottom:10px">
+      ${esc(law.summary)} · ${esc(pos.summary)}</div>` +
+    (law.missing.length
+      ? `<div class="note warn" style="margin-bottom:10px"><strong>필수 기재 누락</strong><br />${
+          law.missing.map(m => esc(m.label)).join(", ")}</div>` : "") +
+    (items.length ? items.map(findingHTML).join("") : '<p class="empty">걸린 표현이 없습니다.</p>');
+});
+
+/* 클립보드는 앱 안의 화면·비보안 출처에서 막히는 일이 잦다.
+   막히면 화면에 남겨 손으로 복사할 수 있게 하고, 성공 여부를 그대로 알린다. */
+function selectAll(el) {
+  el.focus();
+  try { el.setSelectionRange(0, el.value.length); } catch (e) { el.select(); }
+}
+
+async function copyText(text) {
+  text = String(text == null ? "" : text);
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      // 화면에 포커스가 없으면 이 약속이 끝나지 않고 매달리는 브라우저가 있다.
+      // 버튼이 아무 반응 없이 멈춘 것처럼 보이므로 시간을 끊어 두 번째 방식으로 넘긴다.
+      const done = await Promise.race([
+        navigator.clipboard.writeText(text).then(() => true),
+        new Promise(r => setTimeout(() => r(false), 1200)),
+      ]);
+      if (done) return true;
+    }
+  } catch (e) { /* 아래 방식으로 한 번 더 시도한다 */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+    document.body.appendChild(ta);
+    selectAll(ta);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (e) { return false; }
+}
+
+/** 버튼 글자를 잠깐 바꿔 결과를 알린다. */
+function flash(btn, text, back, ms) {
+  btn.textContent = text;
+  setTimeout(() => { btn.textContent = back; }, ms || 1400);
+}
+
+document.addEventListener("click", async e => {
+  const copyBtn = e.target.closest("[data-copy-text],[data-copy]");
+  if (copyBtn) {
+    const text = copyBtn.dataset.copyText != null
+      ? copyBtn.dataset.copyText : ($(copyBtn.dataset.copy) || {}).textContent || "";
+    const back = copyBtn.dataset.back || (copyBtn.dataset.back = copyBtn.textContent);
+    flash(copyBtn, (await copyText(text)) ? "복사됨" : "복사 실패", back, 1300);
+  }
+});
+
+$("copyAll").addEventListener("click", async () => {
+  if (!current) return;
+  const text = cmsFields(current).map(([k, v]) => `${k}\n${v}`).join("\n\n");
+  flash($("copyAll"), (await copyText(text)) ? "복사됨" : "복사 실패", "전체 복사", 1300);
+});
+
+$("bodyTabs").addEventListener("click", e => {
+  const tab = e.target.closest(".tab"); if (!tab) return;
+  $("bodyTabs").querySelectorAll(".tab").forEach(t => {
+    const on = t === tab;
+    t.setAttribute("aria-selected", on ? "true" : "false");
+    $("pane-" + t.dataset.pane).hidden = !on;
+  });
+});
+
+$("layoutTabs").addEventListener("click", e => {
+  const tab = e.target.closest(".tab"); if (!tab) return;
+  thumbLayout = tab.dataset.layout;
+  $("layoutTabs").querySelectorAll(".tab").forEach(t =>
+    t.setAttribute("aria-selected", t === tab ? "true" : "false"));
+  drawThumbnail();
+});
+
+$("thumbCopy").addEventListener("input", drawThumbnail);
+
+$("photoInput").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { bgImage = await loadImageFile(f); drawThumbnail(); }
+  catch (err) { alert("배경 사진을 열지 못했습니다."); }
+});
+function setLogoStatus(text, ok) {
+  const el = $("logoStatus");
+  el.textContent = text;
+  el.style.color = ok ? "var(--ok)" : "var(--ink-3)";
+}
+
+/** 로고를 폭 400px PNG로 줄여 data URL로 만든다(저장 용량을 줄이기 위함). */
+function logoToDataURL(img) {
+  const w = 400, h = Math.max(1, Math.round(img.height * w / img.width));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  return c.toDataURL("image/png");
+}
+
+function loadImageFromURL(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("로고를 읽지 못했습니다."));
+    img.src = url;
+  });
+}
+
+/** 투명 영역이 없으면 사진 위에 사각형이 그대로 얹힌다. 미리 알려 준다. */
+function hasTransparency(img) {
+  const c = document.createElement("canvas");
+  const w = Math.min(img.width, 200), h = Math.max(1, Math.round(img.height * w / img.width));
+  c.width = w; c.height = h;
+  const cx = c.getContext("2d");
+  cx.drawImage(img, 0, 0, w, h);
+  try {
+    const d = cx.getImageData(0, 0, w, h).data;
+    for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true;
+    return false;
+  } catch (e) { return true; }   // 판정할 수 없으면 통과시킨다
+}
+
+async function applyLogo(img, { persist } = { persist: true }) {
+  logoImage = img;
+  const clear = hasTransparency(img);
+  setLogoStatus(clear ? "로고 사용 중" : "투명 영역이 없습니다 — 배경을 지운 PNG로 교체하세요.", clear);
+  drawThumbnail();
+  if (persist && dbNs) {
+    try { await dbNs.doc("settings/brand").set({ logo: logoToDataURL(img), at: Date.now() }); }
+    catch (e) { /* 저장 실패해도 이번 세션에서는 쓴다 */ }
+  }
+}
+
+$("logoInput").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { await applyLogo(await loadImageFile(f)); }
+  catch (err) { setLogoStatus("로고를 열지 못했습니다.", false); }
+});
+
+$("saveThumb").addEventListener("click", async () => {
+  const btn = $("saveThumb");
+  const blob = await thumbBlob();
+  if (!blob) { btn.textContent = "저장 실패"; return; }
+  const name = `${(current && current.post_url || "thumb").slice(0, 40)}.jpg`;
+  if (downloadsNs) {
+    try {
+      await downloadsNs.save({ filename: name, data: blob });
+      btn.textContent = "저장됨";
+    } catch (err) {
+      btn.textContent = err && err.code === "declined" ? "저장 취소됨" : "저장 실패";
+    }
+  } else {
+    btn.textContent = "이미지를 길게 눌러 저장";
+  }
+  setTimeout(() => { btn.textContent = "이미지 저장"; }, 2200);
+});
+
+/* ── CMS로 넘기기 ──
+   로컬 콘솔 앱의 '원고 가져오기'가 그대로 읽을 수 있는 JSON을 만든다.
+   밑줄로 시작하는 키(_sample 등)는 화면 표시용이라 빼고 내보낸다. */
+function exportJSON(doc) {
+  const clean = {};
+  for (const k of Object.keys(doc)) if (!k.startsWith("_")) clean[k] = doc[k];
+  return JSON.stringify(clean, null, 2);
+}
+
+async function runExport() {
+  if (!current) { $("exportHint").textContent = "내보낼 원고가 없습니다."; return; }
+  const text = exportJSON(current);
+  const box = $("exportBox");
+  box.value = text;
+  $("exportRow").hidden = false;
+  $("exportSave").hidden = !downloadsNs;
+  $("exportHint").textContent = "복사하는 중…";
+
+  const copied = await copyText(text);
+  if (!copied) selectAll(box);
+  const warn = current._sample
+    ? " (지금 화면은 예시 원고입니다 — 제목을 넣고 생성한 뒤 다시 내보내세요.)" : "";
+  $("exportHint").textContent = copied
+    ? "복사했습니다. 콘솔 앱의 '원고 가져오기' 칸에 붙여넣으세요." + warn
+    : "복사가 막힌 환경입니다. 아래 칸이 전체 선택돼 있으니 Ctrl+C(맥은 ⌘C)로 복사하세요." + warn;
+}
+
+$("exportBtn").addEventListener("click", runExport);
+$("exportCopy").addEventListener("click", async () => {
+  const ok = await copyText($("exportBox").value);
+  if (!ok) selectAll($("exportBox"));
+  flash($("exportCopy"), ok ? "복사됨" : "직접 복사하세요", "다시 복사", 1600);
+});
+$("exportSave").addEventListener("click", async () => {
+  const btn = $("exportSave");
+  if (!downloadsNs) { flash(btn, "저장을 쓸 수 없습니다", "파일로 저장"); return; }
+  const name = `${(current && current.post_url || "post").slice(0, 40)}.json`;
+  try {
+    await downloadsNs.save({
+      filename: name,
+      data: new Blob([$("exportBox").value], { type: "application/json" }),
+    });
+    flash(btn, "저장됨", "파일로 저장");
+  } catch (err) {
+    flash(btn, err && err.code === "declined" ? "저장 취소됨" : "저장 실패", "파일로 저장");
+  }
+});
+
+/* ── 기동 ── */
+renderAll(SAMPLE_DOC, evaluate(SAMPLE_DOC));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawThumbnail);
+
+// 플랫폼 밖(저장된 파일 등)에서는 window.claude가 아예 없다.
+const use = (typeof window !== "undefined" && window.claude && window.claude.use)
+  ? window.claude.use.bind(window.claude)
+  : () => Promise.resolve(null);
+
+use("sample").then(ns => {
+  sampleNs = ns;
+  $("genHint").textContent = ns
+    ? "" : '이 화면에서는 생성을 쓸 수 없습니다. 검사·미리보기·복사는 그대로 동작합니다.';
+}).catch(() => {});
+
+use("downloads").then(ns => {
+  downloadsNs = ns;
+  if (ns && !$("exportRow").hidden) $("exportSave").hidden = false;
+}).catch(() => {});
+
+use("db").then(async ns => {
+  dbNs = ns;
+  if (!ns) return;
+  ns.collection("posts").orderBy("at", "desc").limit(20).onSnapshot(snap => {
+    renderHistory(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, () => {});
+
+  // 한 번 올린 로고는 다음에 열어도 그대로 쓴다.
+  try {
+    const snap = await ns.doc("settings/brand").get();
+    const saved = snap && snap.data && snap.data();
+    if (saved && saved.logo) {
+      await applyLogo(await loadImageFromURL(saved.logo), { persist: false });
+    }
+  } catch (e) { /* 저장된 로고가 없으면 텍스트로 둔다 */ }
+}).catch(() => {});
+</script>
