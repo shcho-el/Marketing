@@ -71,8 +71,11 @@ def driver(headless: bool = None):
                 drv = webdriver.Chrome(options=options)
 
         drv.set_page_load_timeout(config.TIMEOUT + 20)
-        yield drv
     except Exception as exc:
+        # 여기까지가 '드라이버 시작'이다. 그 뒤에 난 오류를 이 문구로 덮으면
+        # 엉뚱한 곳을 뒤지게 된다.
+        if drv:
+            drv.quit()
         raise BrowserError(
             f"크롬 드라이버를 시작하지 못했습니다: {exc}\n\n"
             "다음을 확인하세요.\n"
@@ -84,9 +87,11 @@ def driver(headless: bool = None):
             "       CHROME_BINARY=크롬 실행파일 경로\n"
             "     드라이버는 pip install chromedriver-py 로도 받을 수 있습니다."
         ) from exc
+
+    try:
+        yield drv
     finally:
-        if drv:
-            drv.quit()
+        drv.quit()
 
 
 def _find_login_form(drv):

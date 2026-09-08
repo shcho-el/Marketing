@@ -123,6 +123,32 @@ def _set_body(drv, mapping: dict, html: str) -> None:
     time.sleep(config.STEP_DELAY)
 
 
+def _take_alert(drv, wait: float = 1.2) -> str:
+    """알림창이 떠 있으면 내용을 읽고 닫는다. 없으면 빈 문자열.
+
+    이 CMS 는 썸네일을 고르면 "파일이 업로드 준비되었습니다"라는 알림을
+    띄웁니다. 알림이 떠 있는 동안에는 셀레니움이 아무 것도 만지지 못해,
+    그다음 동작이 전부 UnexpectedAlertPresentException 으로 죽습니다.
+    닫아 주되, 내용은 버리지 않고 기록에 남깁니다.
+    """
+    from selenium.common.exceptions import NoAlertPresentException, TimeoutException
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.support.ui import WebDriverWait
+
+    try:
+        WebDriverWait(drv, wait).until(EC.alert_is_present())
+        alert = drv.switch_to.alert
+        text = alert.text
+        alert.accept()
+        logger.info("알림창을 닫았습니다: %s", text)
+        return text
+    except (TimeoutException, NoAlertPresentException):
+        return ""
+    except Exception as exc:  # 드라이버가 알림을 다루지 못하는 경우
+        logger.debug("알림창 처리 실패: %s", exc)
+        return ""
+
+
 def _upload_thumbnail(drv, selector: str, path: str) -> None:
     el = _find(drv, selector, "썸네일 업로드")
     # 숨겨진 file input도 send_keys는 동작한다. 필요하면 보이게 만든다.
@@ -269,7 +295,15 @@ def publish(
             drv, fields["hashtags"], "\n".join(doc.get("hashtags", []) or []), "해시태그"
         )
         _upload_thumbnail(drv, fields["thumbnail"], thumb)
+        # 파일을 고르면 CMS 가 알림을 띄운다. 닫지 않으면 이 뒤가 전부 막힌다.
+        picked = _take_alert(drv)
+        if picked:
+            result.setdefault("alerts", []).append(picked)
+
         _set_body(drv, mapping, body_html)
+        alert_after_body = _take_alert(drv, wait=0.4)
+        if alert_after_body:
+            result.setdefault("alerts", []).append(alert_after_body)
 
         shot = _screenshot(drv, "before-save")
         if shot:
@@ -292,13 +326,11 @@ def publish(
 
         result["saved"] = True
         result["final_url"] = drv.current_url
-        # 알림창이 떠 있으면 내용을 기록한다(저장 실패 사유가 여기 담기는 경우가 많다).
-        try:
-            alert = drv.switch_to.alert
-            result["alert"] = alert.text
-            alert.accept()
-        except Exception:
-            pass
+        # 저장 실패 사유가 알림창에 담기는 경우가 많다.
+        saved_alert = _take_alert(drv, wait=2.0)
+        if saved_alert:
+            result["alert"] = saved_alert
+            result.setdefault("alerts", []).append(saved_alert)
 
         result["message"] = (
             "미노출 상태로 저장했습니다. CMS에서 내용을 확인한 뒤 노출로 바꾸세요."

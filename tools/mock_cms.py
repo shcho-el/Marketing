@@ -91,7 +91,8 @@ WRITE_HTML = """<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
   </tr>
   <tr>
     <th align="left">썸네일 등록</th>
-    <td><input type="file" name="bf_file" id="bf_file">
+    <td><input type="file" name="bf_file" id="bf_file"
+               onchange="alert('파일이 업로드 준비되었습니다. 현재 파일 : ' + this.value)">
       <p style="color:#c00;font-size:12px">
         *썸네일 이미지 규격 사이즈 = 880(가로) x 580(세로)<br>
         *썸네일 이미지 첨부용량 제한은 300kb입니다.<br>
