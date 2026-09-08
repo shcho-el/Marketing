@@ -46,8 +46,11 @@ LOGIN_HTML = """<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
 WRITE_HTML = """<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
 <title>블로그 글쓰기</title></head>
 <body style="font-family:sans-serif;padding:30px;max-width:1100px">
-<h2>기본 정보</h2>
+<div style="position:fixed;top:0;left:0;right:0;height:70px;
+            background:rgba(255,255,255,.01);z-index:999"></div>
 <form method="post" enctype="multipart/form-data" action="/write">
+<p style="text-align:right"><button type="submit" id="btn_submit">등록</button></p>
+<h2>기본 정보</h2>
 <table border="1" cellpadding="10" style="border-collapse:collapse;width:100%">
   <tr>
     <th align="left" width="180">노출 여부</th>
@@ -104,7 +107,7 @@ WRITE_HTML = """<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
 <textarea name="wr_content" id="wr_content" rows="18" style="width:100%"></textarea>
 
 <p style="margin-top:20px">
-  <button type="submit" id="btn_submit">저장</button>
+  <button type="submit">등록</button>
   <button type="button">취소</button>
 </p>
 </form>

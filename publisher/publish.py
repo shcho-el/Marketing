@@ -163,6 +163,35 @@ def _upload_thumbnail(drv, selector: str, path: str) -> None:
     time.sleep(config.STEP_DELAY * 2)
 
 
+def _click(drv, el, what: str = "") -> None:
+    """눌린다는 보장을 만든다.
+
+    붙박이 머리글에 가려 있거나 화면 밖으로 밀려 있으면 셀레니움의 클릭은
+    "element click intercepted"로 거절당한다. 본문을 채우느라 페이지가
+    내려가 있으면 맨 위의 등록 버튼이 딱 그 상태가 된다.
+
+    화면 안으로 옮겨 보고, 그래도 막히면 자바스크립트로 누른다.
+    버튼에 걸린 동작은 어느 쪽으로 눌러도 같게 실행된다.
+    """
+    try:
+        drv.execute_script(
+            "arguments[0].scrollIntoView({block:'center', inline:'center'});", el
+        )
+        time.sleep(0.3)
+    except Exception:
+        pass
+
+    try:
+        el.click()
+        return
+    except Exception as exc:
+        logger.info(
+            "%s 을(를) 직접 누르지 못했습니다(%s). 자바스크립트로 누릅니다.",
+            what or "버튼", type(exc).__name__,
+        )
+    drv.execute_script("arguments[0].click();", el)
+
+
 def _set_expose(drv, mapping: dict, expose: bool) -> None:
     key = "show" if expose else "hide"
     selector = (mapping.get("expose") or {}).get(key)
@@ -170,7 +199,7 @@ def _set_expose(drv, mapping: dict, expose: bool) -> None:
         logger.warning("노출 여부 라디오 셀렉터가 없습니다. CMS 기본값을 그대로 둡니다.")
         return
     el = _find(drv, selector, f"노출여부({key})")
-    drv.execute_script("arguments[0].click();", el)
+    _click(drv, el, f"노출여부({key})")
     time.sleep(config.STEP_DELAY)
 
 
@@ -179,9 +208,7 @@ def _click_submit(drv, mapping: dict) -> None:
 
     selector = mapping.get("submit")
     if selector:
-        el = _find(drv, selector, "저장 버튼")
-        drv.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
-        el.click()
+        _click(drv, _find(drv, selector, "저장 버튼"), "저장 버튼")
         return
 
     # 셀렉터가 없으면 버튼 텍스트로 찾는다.
@@ -189,8 +216,7 @@ def _click_submit(drv, mapping: dict) -> None:
         for el in drv.find_elements(By.CSS_SELECTOR, "button, input[type='submit'], a.btn"):
             text = (el.text or el.get_attribute("value") or "").strip()
             if word in text and el.is_displayed():
-                drv.execute_script("arguments[0].scrollIntoView({block:'center'});", el)
-                el.click()
+                _click(drv, el, f"저장 버튼('{text}')")
                 return
     raise PublishError(
         "저장 버튼을 찾지 못했습니다. cms_mapping.json의 submit에 셀렉터를 직접 넣으세요."
