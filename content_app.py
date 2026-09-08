@@ -365,7 +365,25 @@ def api_publish():
 
     if result.get("saved"):
         store.set_status(record["id"], "published" if expose else "uploaded")
+
+    # "캡처를 확인하세요"라고만 하고 볼 방법을 주지 않으면 안내가 아니다.
+    # 파일 이름만 내려보내고, 그림은 아래 /shot 으로 받아 화면에 띄운다.
+    result["shot_names"] = [os.path.basename(p) for p in result.get("shots", []) if p]
     return jsonify(result)
+
+
+@app.route("/shot/<name>")
+@login_required
+def cms_shot(name: str):
+    """업로드 과정에서 남긴 화면 캡처를 보여 준다."""
+    # 파일 이름만 받는다. 경로가 섞여 들어오면 폴더 밖 파일을 읽을 수 있다.
+    safe = os.path.basename(name)
+    if safe != name or not safe.endswith(".png"):
+        abort(404)
+    path = os.path.join(cms_publish.SHOT_DIR, safe)
+    if not os.path.exists(path):
+        abort(404)
+    return send_file(path, mimetype="image/png")
 
 
 @app.route("/api/audit", methods=["POST"])

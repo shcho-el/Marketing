@@ -205,6 +205,7 @@
       </div>
       <button class="btn" id="publishBtn" style="margin-top:12px">CMS에 업로드</button>
       <p class="hint" id="publishHint" style="margin-top:8px"></p>
+      <div id="pubShots"></div>
     </section>
 
   </div>
@@ -626,6 +627,22 @@ $("lintBtn").addEventListener("click", async () => {
   } catch (e) { $("lintOut").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; }
 });
 
+// 캡처는 폴더를 뒤져 찾을 것이 아니라 여기서 바로 보여 준다.
+function renderShots(names) {
+  const box = $("pubShots");
+  if (!names.length) { box.innerHTML = ""; return; }
+  box.innerHTML = names.map(n => {
+    const when = n.startsWith("before") || n.includes("before") ? "저장 전" : "저장 후";
+    return `<figure class="shot">
+      <figcaption>${esc(when)} 화면 — <a href="/shot/${encodeURIComponent(n)}"
+        target="_blank" rel="noopener">새 창으로 크게 보기</a></figcaption>
+      <a href="/shot/${encodeURIComponent(n)}" target="_blank" rel="noopener">
+        <img src="/shot/${encodeURIComponent(n)}" alt="${esc(when)} CMS 화면 캡처" />
+      </a>
+    </figure>`;
+  }).join("");
+}
+
 $("publishBtn").addEventListener("click", async () => {
   if (!current || !current.post_id) return;
   const dry = $("pubDry").checked, expose = $("pubExpose").checked;
@@ -644,6 +661,7 @@ $("publishBtn").addEventListener("click", async () => {
       body: JSON.stringify({ post_id: current.post_id, dry_run: dry, expose }),
     });
     $("publishHint").textContent = d.message + (d.alert ? ` / CMS 알림: ${d.alert}` : "");
+    renderShots(d.shot_names || []);
     toast(d.message, d.saved ? "ok" : null);
   } catch (e) {
     $("publishHint").textContent = e.message;

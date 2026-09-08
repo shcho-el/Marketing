@@ -328,7 +328,7 @@ def _field_count(elements: list) -> int:
     )
 
 
-def _goto_write_form(drv):
+def goto_write_form(drv):
     """목록 화면에 있으면 글쓰기 폼으로 이동한다. 이동했으면 그 주소를 돌려준다."""
     link = drv.execute_script(_FIND_WRITE_LINK_JS)
     if not link:
@@ -385,7 +385,7 @@ def inspect(headless: bool = None, save: bool = True) -> dict:
             found_url = ""
             if _field_count(elements) < 5:
                 logger.info("입력칸이 %d개뿐입니다. 글쓰기 폼을 찾습니다.", _field_count(elements))
-                found_url = _goto_write_form(drv)
+                found_url = goto_write_form(drv)
                 if found_url:
                     logger.info("글쓰기 폼으로 이동했습니다: %s", found_url)
                     elements = drv.execute_script(_COLLECT_JS)

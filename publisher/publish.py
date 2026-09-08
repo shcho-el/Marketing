@@ -274,12 +274,27 @@ def publish(
         "shots": [],
     }
 
+    from selenium.webdriver.common.by import By
+
     with browser.driver(headless=headless) as drv:
         browser.login(drv)
 
         if drv.current_url.rstrip("/") != config.WRITE_URL.rstrip("/"):
             drv.get(config.WRITE_URL)
             time.sleep(config.STEP_DELAY * 2)
+
+        # 설정된 주소가 글쓰기 폼이 아니라 목록 화면일 수 있다. 그러면 칸을
+        # 하나도 못 찾고 "셀렉터가 없다"는 엉뚱한 오류를 낸다. 한 걸음 더 간다.
+        if fields.get("title") and not drv.find_elements(
+            By.CSS_SELECTOR, fields["title"]
+        ):
+            from publisher import inspector
+
+            logger.info("글쓰기 폼이 아닌 화면입니다. 폼을 찾습니다.")
+            moved = inspector.goto_write_form(drv)
+            if moved:
+                logger.info("글쓰기 폼으로 이동했습니다: %s", moved)
+                result["write_url"] = moved
 
         _set_expose(drv, mapping, expose)
         _select_category(drv, fields["category"], doc.get("category", ""))
@@ -313,7 +328,8 @@ def publish(
             logger.info("dry_run: 저장 버튼을 누르지 않고 종료합니다.")
             result["saved"] = False
             result["message"] = (
-                "폼을 채웠지만 저장하지 않았습니다(dry run). 캡처를 확인하세요."
+                "폼을 채웠지만 저장하지 않았습니다. 아래 캡처에서 값이 "
+                "제대로 들어갔는지 확인하세요."
             )
             return result
 
