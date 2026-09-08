@@ -14,6 +14,8 @@
 
 import re
 
+from content import sentences
+
 from content import clinic
 
 BLOCK = "block"
@@ -24,9 +26,17 @@ WARN = "warn"
 _THIRD_PARTY = re.compile(
     r"정형외과|일반외과|외과\s*(?:진료|방문|에서)|타\s*병원|다른\s*병원|"
     r"필요한\s*경우|해당하지\s*않|시행하지\s*않|하지\s*않습니다|권유하지\s*않|"
-    r"본원(?:은|에서는)\s*[^.\n]{0,30}(?:않|없)"
+    r"본원(?:은|에서는)\s*[^.\n]{0,30}(?:않|없)|"
+    r"아니라|아닌\b|아닙니다|대신"
 )
 _NEAR = 90  # 앞뒤로 살펴볼 글자 수
+
+# 한국어의 부정은 서술어 바로 뒤에 붙는다. "발톱을 뽑지 않고", "발톱 제거 없이"
+# 처럼 표현 직후에 부정이 오면 하지 않는다는 말이므로 위반이 아니다.
+# 넓은 창에서 '않'을 찾으면 "절개를 시행합니다. 다른 건 하지 않습니다" 같은
+# 문장까지 통과해 버리므로, 바로 뒤 몇 글자만 본다.
+_NEGATED_AFTER = re.compile(r"^\s*(?:지|하지|을|를|은|는)?\s*(?:않|말|없)")
+_NEGATION_REACH = 14
 
 
 def _context(text: str, start: int, end: int, width: int = 30) -> str:
@@ -36,10 +46,26 @@ def _context(text: str, start: int, end: int, width: int = 30) -> str:
     )
 
 
+def _negated_right_after(text: str, end: int) -> bool:
+    """표현 바로 뒤에 부정이 붙었는지 본다."""
+    return bool(_NEGATED_AFTER.match(text[end:end + _NEGATION_REACH]))
+
+
+def _sentence_around(text: str, start: int, end: int) -> str:
+    """판단은 같은 문장 안에서만 한다.
+
+    앞뒤 90자를 통째로 보면 "발톱 제거술을 진행합니다. 다른 병원은 하지
+    않습니다." 처럼 뒷문장의 부정까지 끌어와 위반을 놓칩니다. 부정은 같은
+    문장 안에 있어야 그 표현을 부정하는 것입니다.
+    """
+    return sentences.around(text, start, end)
+
+
 def _third_party_nearby(text: str, start: int, end: int) -> bool:
     """'본원은 하지 않는다'거나 '외과로 가라'는 문맥인지 확인."""
-    window = text[max(0, start - _NEAR):min(len(text), end + _NEAR)]
-    return bool(_THIRD_PARTY.search(window))
+    if _negated_right_after(text, end):
+        return True
+    return bool(_THIRD_PARTY.search(_sentence_around(text, start, end)))
 
 
 def _scan_group(text: str, group: list, severity: str, kind: str) -> list:
@@ -71,6 +97,8 @@ def _scan_group(text: str, group: list, severity: str, kind: str) -> list:
             "severity": severity,
             "matched": term,
             "context": _context(text, start, end),
+            # 검수자가 그 자리에서 고칠 수 있도록 문장 원문을 함께 싣는다.
+            "sentence": sentences.around(text, start, end),
             "reason": entry["reason"],
             "suggestion": entry["instead"],
         }

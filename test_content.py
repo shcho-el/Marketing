@@ -213,6 +213,29 @@ def main() -> int:
         got = title_parser.infer_category(title)
         failures += not check(f"{expected} ← {title}", got == expected, got)
 
+    print("\n[1-2] 포지셔닝 — 부정 표현을 위반으로 오해하지 않는가")
+    # 부정은 같은 문장 안에서만 인정한다. 앞뒤 몇십 자를 통째로 보면
+    # 뒷문장의 부정까지 끌어와 진짜 위반을 놓친다.
+    from content import positioning as _pos
+
+    for text, should_pass in [
+        ("내성발톱은 발톱을 뽑지 않고 치료할 수 있나요?", True),
+        ("본원은 발톱을 뽑지 않습니다.", True),
+        ("발톱 제거 없이 교정 기구로 형태를 바로잡습니다.", True),
+        ("발톱을 뽑는 방식이 아니라 교정 기구로 형태를 바로잡습니다.", True),
+        ("내성발톱 절개 대신 비수술 교정치료를 시행합니다.", True),
+        ("절개가 필요한 상태라면 외과 진료가 필요할 수 있습니다.", True),
+        ("본원에서 내성발톱 절개를 시행합니다.", False),
+        ("발톱을 뽑아 드립니다.", False),
+        ("내성발톱 수술로 빠르게 해결하세요.", False),
+        ("발톱 제거술을 진행합니다. 다른 병원은 하지 않습니다.", False),
+        ("발톱 수술 후 회복이 빠릅니다.", False),
+    ]:
+        got = _pos.review(text)["passed"]
+        failures += not check(
+            f"{'통과' if should_pass else '차단'} — {text[:30]}", got == should_pass
+        )
+
     print("\n[2] 의료법 검사")
     law = medical_law.review(generator._full_text(doc))
     failures += not check("금지 표현 없음", law["block_count"] == 0, law["summary"])

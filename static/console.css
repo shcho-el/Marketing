@@ -315,6 +315,14 @@ button:focus-visible, .tab:focus-visible {
 .finding .why { font-size: .8rem; color: var(--ink-2); margin-top: 3px; }
 .finding .fix { font-size: .8rem; color: var(--ok); margin-top: 3px; }
 
+/* ─── 지적 문장 고치기 ─────────────────────────────── */
+.mend { margin-top: 10px; }
+.mend-box { margin-top: 8px; }
+.mend-box textarea {
+  font-size: .83rem; line-height: 1.7;
+}
+.mend-btns { display: flex; gap: 8px; margin-top: 8px; }
+
 /* ─── CMS 필드 ─────────────────────────────────────── */
 .fields { display: flex; flex-direction: column; }
 .fld {

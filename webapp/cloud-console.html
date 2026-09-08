@@ -909,7 +909,33 @@ const AVOID_TERMS = [
 ];
 
 // 본원이 하지 않는다고 밝히거나 타과를 안내하는 문맥이면 위반으로 보지 않는다.
-const THIRD_PARTY = /정형외과|일반외과|외과\s*(?:진료|방문|에서)|타\s*병원|다른\s*병원|필요한\s*경우|시행하지\s*않|하지\s*않습니다|권유하지\s*않|않고|없이/;
+// 판단은 같은 문장 안에서만 한다. 앞뒤 몇십 자를 통째로 보면
+// "발톱 제거술을 진행합니다. 다른 병원은 하지 않습니다." 처럼 뒷문장의
+// 부정까지 끌어와 진짜 위반을 놓친다.
+const THIRD_PARTY = /정형외과|일반외과|외과\s*(?:진료|방문|에서)|타\s*병원|다른\s*병원|필요한\s*경우|해당하지\s*않|시행하지\s*않|하지\s*않습니다|권유하지\s*않|본원(?:은|에서는)\s*[^.\n]{0,30}(?:않|없)|아니라|아닌|아닙니다|대신/;
+
+// 한국어의 부정은 서술어 바로 뒤에 붙는다. "발톱을 뽑지 않고", "발톱 제거 없이".
+const NEGATED_AFTER = /^\s*(?:지|하지|을|를|은|는)?\s*(?:않|말|없)/;
+const SENTENCE_END = /[.!?\n]/g;
+
+function sentenceAround(text, start, end) {
+  let lo = 0;
+  SENTENCE_END.lastIndex = 0;
+  let m;
+  while ((m = SENTENCE_END.exec(text)) !== null) {
+    if (m.index >= start) break;
+    lo = m.index + 1;
+  }
+  SENTENCE_END.lastIndex = end;
+  const tail = SENTENCE_END.exec(text);
+  const hi = tail ? tail.index : text.length;
+  return text.slice(Math.max(lo, start - 90), Math.min(hi, end + 90));
+}
+
+function excused(text, start, end) {
+  if (NEGATED_AFTER.test(text.slice(end, end + 14))) return true;
+  return THIRD_PARTY.test(sentenceAround(text, start, end));
+}
 </script>
 
 <script>
@@ -988,10 +1014,7 @@ function reviewPositioning(text) {
       for (const term of entry.terms) {
         const idx = text.indexOf(term);
         if (idx === -1) continue;
-        if (sev === BLOCK) {
-          const win = text.slice(Math.max(0, idx - 90), Math.min(text.length, idx + term.length + 90));
-          if (THIRD_PARTY.test(win)) continue;   // 본원이 안 한다고 쓴 문맥
-        }
+        if (sev === BLOCK && excused(text, idx, idx + term.length)) continue;
         hits.push({
           start: idx, end: idx + term.length, sev, tag: kind, term,
           ctx: context(text, idx, idx + term.length),

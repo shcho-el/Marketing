@@ -303,6 +303,19 @@ const esc = s => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 function findingHTML(f) {
+  // 지적만 하고 고칠 자리를 주지 않으면 원고를 통째로 다시 만들어야 한다.
+  // 문장을 그 자리에서 고쳐 다시 검사한다.
+  const editor = f.sentence ? `
+      <div class="mend">
+        <button class="btn quiet tiny mend-open" type="button">이 문장 고치기</button>
+        <div class="mend-box" hidden>
+          <textarea rows="3" data-old="${esc(f.sentence)}">${esc(f.sentence)}</textarea>
+          <div class="mend-btns">
+            <button class="btn tiny mend-save" type="button">고쳐서 다시 검사</button>
+            <button class="btn quiet tiny mend-cancel" type="button">취소</button>
+          </div>
+        </div>
+      </div>` : "";
   return `<div class="finding" data-sev="${f.severity}">
     <div class="stripe"></div>
     <div class="body">
@@ -311,8 +324,56 @@ function findingHTML(f) {
       ${f.context ? `<div class="ctx">${esc(f.context)}</div>` : ""}
       <div class="why">${esc(f.reason)}</div>
       <div class="fix">→ ${esc(f.suggestion)}</div>
+      ${editor}
     </div></div>`;
 }
+
+/* 지적 카드 안의 고치기 버튼들. 카드는 다시 그려지므로 위임으로 받는다. */
+document.addEventListener("click", async e => {
+  const open = e.target.closest(".mend-open");
+  if (open) {
+    const box = open.parentElement.querySelector(".mend-box");
+    box.hidden = false;
+    open.hidden = true;
+    box.querySelector("textarea").focus();
+    return;
+  }
+
+  const cancel = e.target.closest(".mend-cancel");
+  if (cancel) {
+    const wrap = cancel.closest(".mend");
+    wrap.querySelector(".mend-box").hidden = true;
+    wrap.querySelector(".mend-open").hidden = false;
+    return;
+  }
+
+  const save = e.target.closest(".mend-save");
+  if (!save) return;
+  if (!current || !current.post_id) {
+    toast("먼저 원고를 만들거나 가져오세요.", "bad");
+    return;
+  }
+  const ta = save.closest(".mend-box").querySelector("textarea");
+  save.disabled = true;
+  save.innerHTML = '<span class="spin"></span>고치는 중';
+  try {
+    const v = await api("/api/edit", {
+      method: "POST",
+      body: JSON.stringify({
+        post_id: current.post_id, old: ta.dataset.old, new: ta.value,
+      }),
+    });
+    render(v);
+    const { law, positioning: pos } = v.reports;
+    toast(law.passed && pos.passed
+      ? "고쳤습니다. 검사를 통과했습니다."
+      : "고쳤습니다. 남은 지적을 확인하세요.", law.passed && pos.passed ? "ok" : null);
+  } catch (err) {
+    toast(err.message, "bad");
+    save.disabled = false;
+    save.textContent = "고쳐서 다시 검사";
+  }
+});
 function setGate(el, state, label) {
   el.dataset.state = state;
   el.innerHTML = `<span class="dot"></span>${label}`;

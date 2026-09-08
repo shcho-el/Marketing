@@ -40,6 +40,7 @@ import pipeline
 from content import (
     build,
     clinic,
+    edit,
     generator,
     importer,
     medical_law,
@@ -333,6 +334,36 @@ def api_posts():
 def api_lint():
     text = (request.get_json(silent=True) or {}).get("text", "")
     return jsonify({"law": medical_law.review(text), "positioning": positioning.review(text)})
+
+
+@app.route("/api/edit", methods=["POST"])
+@login_required
+def api_edit():
+    """지적된 문장 하나를 고쳐 다시 검사한다.
+
+    "이 표현은 못 씁니다"라고만 하고 고칠 자리를 주지 않으면, 검수자는
+    원고를 통째로 다시 만들어야 합니다. 그 자리에서 고치게 합니다.
+    """
+    payload = request.get_json(silent=True) or {}
+    record = store.get(int(payload.get("post_id") or 0))
+    if not record:
+        return jsonify({"error": "글을 찾을 수 없습니다."}), 404
+
+    try:
+        doc = edit.replace_sentence(
+            record["doc"], payload.get("old", ""), payload.get("new", "")
+        )
+    except edit.EditError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    text = generator._full_text(doc)
+    reports = {
+        "law": medical_law.review(text),
+        "positioning": positioning.review(text),
+        "seo": seo.audit(doc),
+    }
+    post_id = store.save(doc, reports, record.get("topic", ""))
+    return jsonify(view_model(doc, reports, post_id))
 
 
 @app.route("/api/publish", methods=["POST"])

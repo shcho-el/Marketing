@@ -20,6 +20,8 @@
 
 import re
 
+from content import sentences
+
 BLOCK = "block"   # 발행 전 반드시 수정
 WARN = "warn"     # 맥락에 따라 위반 소지, 검토 필요
 INFO = "info"     # 표현 다듬기 권고
@@ -323,6 +325,7 @@ def scan(text: str) -> list:
                 "article": rule["article"],
                 "matched": m.group(0),
                 "context": _context(text, m.start(), m.end()),
+                "sentence": sentences.around(text, m.start(), m.end()),
                 "reason": rule["reason"],
                 "suggestion": rule["suggestion"],
             }
