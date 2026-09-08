@@ -195,6 +195,24 @@ def main() -> int:
     )
     failures += not check("발행 URL 조립", doc["published_url"].startswith("http"), doc["published_url"])
 
+    print("\n[1-1] 카테고리 배정 규칙")
+    # CMS 카테고리는 하나만 고를 수 있다. 무좀이면 무좀, 내성발톱이면 내성발톱,
+    # 둘이 섞이면 문제성발톱.
+    from content import title_parser
+
+    for title, expected in [
+        ("송도 발톱무좀 병원 선택 기준", "발톱무좀치료"),
+        ("조갑진균증 치료 기간", "발톱무좀치료"),
+        ("내성발톱 비수술 교정 치료 과정", "내성발톱치료"),
+        ("살을 파고드는 발톱, 언제 병원에 가야 하나요", "내성발톱치료"),
+        ("발톱무좀과 내성발톱이 같이 있을 때", "문제성발톱"),
+        ("두꺼워진 발톱, 파고드는 발톱 한 번에", "문제성발톱"),
+        ("인천 문제성발톱 클리닉 진료 순서", "문제성발톱"),
+        ("발톱이 이상할 때 확인할 것", "문제성발톱"),
+    ]:
+        got = title_parser.infer_category(title)
+        failures += not check(f"{expected} ← {title}", got == expected, got)
+
     print("\n[2] 의료법 검사")
     law = medical_law.review(generator._full_text(doc))
     failures += not check("금지 표현 없음", law["block_count"] == 0, law["summary"])

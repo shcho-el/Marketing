@@ -1121,10 +1121,18 @@ function parseTitle(title) {
   if (!title) return null;
   const flat = squash(title);
 
-  let category = CATEGORIES[CATEGORIES.length - 1];
+  // CMS 카테고리는 하나만 고를 수 있다. 무좀이면 무좀, 내성발톱이면 내성발톱,
+  // 둘이 섞이면 문제성발톱. 먼저 걸린 신호로 정하면 신호 순서에 쏠린다.
+  const hit = {};
   for (const [cat, signals] of CATEGORY_SIGNALS) {
-    if (signals.some(sig => flat.includes(squash(sig)))) { category = cat; break; }
+    hit[cat] = signals.some(sig => flat.includes(squash(sig)));
   }
+  const COMBINED = "문제성발톱";
+  const specific = Object.keys(hit).filter(c => hit[c] && c !== COMBINED);
+  const category = hit[COMBINED] ? COMBINED
+    : specific.length > 1 ? COMBINED
+    : specific.length === 1 ? specific[0]
+    : CATEGORIES[CATEGORIES.length - 1];
 
   const longest = arr => arr.reduce((a, b) => (b.length > a.length ? b : a), "");
   let keyword = "";

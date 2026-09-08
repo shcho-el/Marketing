@@ -22,12 +22,35 @@ def _squash(text: str) -> str:
     return re.sub(r"\s+", "", text or "")
 
 
+# CMS 카테고리는 하나만 고를 수 있습니다. 의원이 정한 규칙은 이렇습니다.
+#   발톱무좀 이야기면      발톱무좀치료
+#   내성발톱 이야기면      내성발톱치료
+#   둘이 섞여 있으면       문제성발톱
+_COMBINED_CATEGORY = "문제성발톱"
+
+
 def infer_category(title: str) -> str:
-    """제목에서 카테고리를 정한다."""
+    """제목에서 카테고리 하나를 정한다.
+
+    먼저 걸린 신호로 정하면 안 됩니다. "내성발톱과 발톱무좀 함께 있을 때"
+    같은 제목이 신호 순서에 따라 한쪽으로 쏠립니다. 어떤 신호가 걸렸는지
+    모두 본 다음에 정합니다.
+    """
     flat = _squash(title)
-    for category, signals in _CATEGORY_SIGNALS:
-        if any(_squash(s) in flat for s in signals):
-            return category
+    hit = {
+        category: any(_squash(s) in flat for s in signals)
+        for category, signals in _CATEGORY_SIGNALS
+    }
+
+    # '문제성발톱'이라고 직접 쓴 제목은 그대로 둔다.
+    if hit.get(_COMBINED_CATEGORY):
+        return _COMBINED_CATEGORY
+
+    specific = [c for c, ok in hit.items() if ok and c != _COMBINED_CATEGORY]
+    if len(specific) > 1:
+        return _COMBINED_CATEGORY   # 복합
+    if specific:
+        return specific[0]
     return DEFAULT_CATEGORY
 
 
