@@ -6,7 +6,7 @@
 # which is illegal in a Windows filename, and the save then fails.
 # So the Korean names are built from code points instead of literals.
 $ErrorActionPreference = "Stop"
-$VERSION = "v2"
+$VERSION = "v3"
 
 function U([int[]]$codes) { -join ($codes | ForEach-Object { [char]$_ }) }
 
@@ -61,7 +61,10 @@ function New-Link([string]$path) {
   $lnk.TargetPath       = $target
   $lnk.WorkingDirectory = $root
   $lnk.Description      = "Obliv content console"
-  $lnk.WindowStyle      = 7
+  # 7(minimized) hides startup failures completely: the window closes and the
+  # user only sees a browser tab that will not load.  Keep it visible; launch.bat
+  # exits on its own once the server answers.
+  $lnk.WindowStyle      = 1
   if (Test-Path -LiteralPath $icon) { $lnk.IconLocation = "$icon,0" }
   $lnk.Hotkey = "CTRL+ALT+O"
   $lnk.Save()

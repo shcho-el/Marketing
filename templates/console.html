@@ -466,6 +466,10 @@ kbd {
   border-bottom-width: 1px;
 }
 #keysBtn { cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
+.lan.stale {
+  color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: var(--warn-bg); font-weight: 600;
+}
 .keys-backdrop {
   position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
   padding: 24px; background: color-mix(in srgb, var(--ink) 42%, transparent);
@@ -504,6 +508,15 @@ kbd {
   </div>
   <div class="gates" id="gates">
     <span class="lan" id="lanUrl">{{ lan_url }}</span>
+    {% if build.ok %}
+      {% if build.behind %}
+        <span class="lan stale" title="바탕화면의 '오블리브 콘텐츠 콘솔' 바로가기로 열면 자동으로 받아옵니다. 수동으로는 update.bat 을 실행하세요.">
+          업데이트 {{ build.behind }}개 대기
+        </span>
+      {% else %}
+        <span class="lan" title="지금 돌고 있는 코드 버전">{{ build.commit }} · {{ build.date }}</span>
+      {% endif %}
+    {% endif %}
     <span class="gate" data-state="" id="gateLaw"><span class="dot"></span>의료법</span>
     <span class="gate" data-state="" id="gatePos"><span class="dot"></span>포지셔닝</span>
     <span class="gate" data-state="" id="gateSeo"><span class="dot"></span>검색 최적화</span>

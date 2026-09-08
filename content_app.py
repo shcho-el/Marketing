@@ -37,6 +37,7 @@ from flask import (
 
 import pipeline
 from content import (
+    build,
     clinic,
     generator,
     importer,
@@ -173,6 +174,7 @@ def index():
         boot=sample_view(),
         lan_url=lan_url(),
         auth_on=bool(PASSWORD),
+        build=build.stamp(refresh=True),
     )
 
 
@@ -373,8 +375,37 @@ def api_audit():
 
 
 # ── 기동 ─────────────────────────────────────────────────────────────
+PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "server.pid")
+
+
+def _write_pid():
+    """실행 중인 서버를 launch.bat이 찾아 끌 수 있게 PID를 남긴다.
+
+    코드를 새로 받아도 옛 서버가 계속 떠 있으면 화면은 옛날 그대로다.
+    바로가기가 알아서 껐다 켜려면 어느 프로세스인지 알아야 한다.
+    """
+    import atexit
+
+    try:
+        os.makedirs(os.path.dirname(PID_FILE), exist_ok=True)
+        with open(PID_FILE, "w", encoding="utf-8") as fp:
+            fp.write(str(os.getpid()))
+    except OSError:
+        return  # PID를 못 남겨도 서버는 정상 동작한다
+
+    def clear():
+        try:
+            os.remove(PID_FILE)
+        except OSError:
+            pass
+
+    atexit.register(clear)
+
+
 def run_app():
     store.init_db()
+    _write_pid()
+    stamp = build.stamp()
     url = lan_url()
     print()
     print("  " + "=" * 52)
@@ -389,6 +420,10 @@ def run_app():
         print("                  .env에 APP_PASSWORD를 넣어 잠그세요.")
     if not os.getenv("APP_SECRET"):
         print("   참고           APP_SECRET 미설정 — 재시작하면 로그인이 풀립니다.")
+    if stamp["ok"]:
+        print(f"   코드 버전      {stamp['commit']} ({stamp['date']})")
+        if stamp["behind"]:
+            print(f"   [!] 업데이트    {stamp['behind']}개 뒤처져 있습니다. update.bat 을 실행하세요.")
     print("  " + "=" * 52)
     print("   끄려면 Ctrl+C")
     print()

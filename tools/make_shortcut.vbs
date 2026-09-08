@@ -39,7 +39,8 @@ Set lnk = sh.CreateShortcut(p)
 lnk.TargetPath = target
 lnk.WorkingDirectory = root
 lnk.Description = "Obliv content console"
-lnk.WindowStyle = 7
+' 7(minimized) hides startup failures. Keep the window visible.
+lnk.WindowStyle = 1
 If fso.FileExists(icon) Then lnk.IconLocation = icon & ",0"
 lnk.Hotkey = "CTRL+ALT+O"
 lnk.Save
