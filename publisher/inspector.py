@@ -13,7 +13,9 @@ CMS 글쓰기 폼 구조 분석기.
 
 import json
 import logging
+import os
 import time
+from urllib.parse import urljoin
 
 from publisher import browser, config
 
@@ -227,25 +229,148 @@ def build_mapping(elements: list, buttons: list) -> dict:
     }
 
 
+LOG_DIR = "logs"
+
+
+def _keep_evidence(drv, why: str) -> list:
+    """실패한 순간의 화면을 남긴다.
+
+    "안 되던데"만으로는 로그인에서 막힌 건지, 글쓰기 화면까지 갔는데 칸을
+    못 읽은 건지 알 수 없습니다. 그림 한 장과 주소 한 줄이면 바로 갈립니다.
+    """
+    saved = []
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+    except OSError:
+        return saved
+
+    shot = os.path.join(LOG_DIR, "cms-실패화면.png")
+    page = os.path.join(LOG_DIR, "cms-실패화면.html")
+    try:
+        drv.save_screenshot(shot)
+        saved.append(shot)
+    except Exception:  # 드라이버가 이미 죽었을 수도 있다
+        pass
+    try:
+        with open(page, "w", encoding="utf-8") as fp:
+            fp.write(drv.page_source)
+        saved.append(page)
+    except Exception:
+        pass
+    try:
+        logger.error("%s — 그때 열려 있던 주소: %s", why, drv.current_url)
+    except Exception:
+        pass
+    return saved
+
+
+# 목록 화면에는 입력칸이 거의 없다. 글쓰기 폼으로 넘어가는 링크를 찾아 따라간다.
+_FIND_WRITE_LINK_JS = r"""
+var words = ['포스팅등록','글쓰기','새글','등록하기','글등록','작성하기'];
+var best = null;
+document.querySelectorAll("a, button, input[type='button'], input[type='submit']")
+  .forEach(function (el) {
+    var t = (el.innerText || el.value || '').replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    var flat = t.replace(/\s/g, '');
+    for (var i = 0; i < words.length; i++) {
+      if (flat.indexOf(words[i]) !== -1) {
+        if (!best || i < best.rank) {
+          best = { rank: i, text: t, href: el.getAttribute('href') || '', id: el.id || '' };
+        }
+        break;
+      }
+    }
+  });
+return best;
+"""
+
+
+def _field_count(elements: list) -> int:
+    """폼이라 할 만한 입력칸이 몇 개인지 센다."""
+    return sum(
+        1 for e in elements
+        if e.get("tag") in ("input", "select", "textarea")
+        and e.get("type") not in ("hidden",)
+    )
+
+
+def _goto_write_form(drv):
+    """목록 화면에 있으면 글쓰기 폼으로 이동한다. 이동했으면 그 주소를 돌려준다."""
+    link = drv.execute_script(_FIND_WRITE_LINK_JS)
+    if not link:
+        return ""
+
+    logger.info("글쓰기 링크를 찾았습니다: %s", link.get("text"))
+    href = (link.get("href") or "").strip()
+    before = drv.current_url
+
+    if href and not href.startswith("#") and not href.lower().startswith("javascript"):
+        drv.get(urljoin(before, href))
+    else:
+        # href 가 없으면 눌러 본다
+        from selenium.webdriver.common.by import By
+
+        try:
+            if link.get("id"):
+                drv.find_element(By.ID, link["id"]).click()
+            else:
+                drv.find_element(
+                    By.XPATH, f"//*[normalize-space(text())={_xpath_literal(link['text'])}]"
+                ).click()
+        except Exception as exc:
+            logger.warning("글쓰기 링크를 누르지 못했습니다: %s", exc)
+            return ""
+
+    time.sleep(config.STEP_DELAY * 4)
+    return drv.current_url if drv.current_url != before else ""
+
+
+def _xpath_literal(text: str) -> str:
+    """따옴표가 섞인 문자열을 XPath 리터럴로 만든다."""
+    if "'" not in text:
+        return f"'{text}'"
+    if '"' not in text:
+        return f'"{text}"'
+    parts = text.split("'")
+    return "concat(" + ", \"'\", ".join(f"'{p}'" for p in parts) + ")"
+
+
 def inspect(headless: bool = None, save: bool = True) -> dict:
     """CMS에 로그인해 글쓰기 폼을 분석하고 매핑을 만든다."""
     with browser.driver(headless=headless) as drv:
-        browser.login(drv)
+        try:
+            browser.login(drv)
 
-        if drv.current_url.rstrip("/") != config.WRITE_URL.rstrip("/"):
-            drv.get(config.WRITE_URL)
-            time.sleep(config.STEP_DELAY * 2)
+            if drv.current_url.rstrip("/") != config.WRITE_URL.rstrip("/"):
+                drv.get(config.WRITE_URL)
+                time.sleep(config.STEP_DELAY * 2)
 
-        elements = drv.execute_script(_COLLECT_JS)
-        buttons = drv.execute_script(_BUTTONS_JS)
-        page_title = drv.title
-        html_len = len(drv.page_source)
+            elements = drv.execute_script(_COLLECT_JS)
+
+            # 여기가 목록 화면이면 입력칸이 거의 없다. 글쓰기 폼으로 한 번 더 간다.
+            found_url = ""
+            if _field_count(elements) < 5:
+                logger.info("입력칸이 %d개뿐입니다. 글쓰기 폼을 찾습니다.", _field_count(elements))
+                found_url = _goto_write_form(drv)
+                if found_url:
+                    logger.info("글쓰기 폼으로 이동했습니다: %s", found_url)
+                    elements = drv.execute_script(_COLLECT_JS)
+
+            buttons = drv.execute_script(_BUTTONS_JS)
+            page_title = drv.title
+            html_len = len(drv.page_source)
+        except Exception as exc:
+            files = _keep_evidence(drv, str(exc))
+            exc.evidence = files  # 위쪽에서 사람에게 보여 준다
+            raise
 
     logger.info("입력 요소 %d개, 버튼 %d개 수집", len(elements), len(buttons))
 
     dump = {
         "page_title": page_title,
-        "url": config.WRITE_URL,
+        "url": found_url or config.WRITE_URL,
+        "write_url_found": found_url,
         "html_length": html_len,
         "elements": elements,
         "buttons": buttons,
@@ -258,7 +383,7 @@ def inspect(headless: bool = None, save: bool = True) -> dict:
     mapping = build_mapping(elements, buttons)
     if save:
         config.save_mapping(mapping)
-    return {"mapping": mapping, "dump": dump}
+    return {"mapping": mapping, "dump": dump, "write_url": found_url}
 
 
 def report(mapping: dict) -> str:

@@ -19,6 +19,7 @@
   python main.py fonts        # 썸네일용 프리텐다드 폰트 내려받기
 """
 
+import os
 import sys
 import logging
 import threading
@@ -202,7 +203,42 @@ def cmd_inspect_cms():
     if not headless:
         print("(브라우저 창을 띄웁니다)")
 
-    result = inspector.inspect(headless=headless)
+    # 무엇이 어디서 막혔는지 파일로 남긴다. 화면은 스크롤로 사라진다.
+    os.makedirs("logs", exist_ok=True)
+    handler = logging.FileHandler(os.path.join("logs", "cms.log"), encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(logging.INFO)
+
+    try:
+        result = inspector.inspect(headless=headless)
+    except Exception as exc:
+        logging.getLogger(__name__).exception("폼 읽기 실패")
+        print()
+        print("=" * 60)
+        print("  폼을 읽지 못했습니다.")
+        print("=" * 60)
+        print()
+        print(f"  {exc}")
+        print()
+        for path in getattr(exc, "evidence", []):
+            print(f"  그때 화면을 남겼습니다: {path}")
+        print("  자세한 기록: logs\\cms.log")
+        print()
+        print("  위 내용과 logs 폴더의 '실패화면' 파일을 보내 주시면 원인을 잡겠습니다.")
+        print()
+        return
+
+    # 목록 화면에서 폼으로 넘어갔다면, 다음부터는 곧장 가도록 주소를 적어 둔다.
+    found = result.get("write_url")
+    if found:
+        from publisher import config as cms_config
+
+        cms_config._write_env("CMS_WRITE_URL", found)
+        print()
+        print(f"  글쓰기 폼 주소를 찾았습니다: {found}")
+        print("  .env 의 CMS_WRITE_URL 에 적어 두었습니다. 다음부터는 곧장 갑니다.")
+
     print(inspector.report(result["mapping"]))
 
     fields = result["mapping"]["fields"]

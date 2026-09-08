@@ -127,7 +127,7 @@ def login():
             and request.form.get("mb_password") == PASSWORD
         ):
             session["ok"] = True
-            return redirect(url_for("write"))
+            return redirect(url_for("posts"))
         return LOGIN_HTML.format(msg='<p style="color:red">로그인 실패</p>'), 401
     return LOGIN_HTML.format(msg="")
 
@@ -178,9 +178,30 @@ def write():
     )
 
 
+LIST_HTML = """<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>포스팅글 관리</title></head><body>
+<h1>포스팅글 관리</h1>
+<form><input type="text" name="q" placeholder="검색어"></form>
+<a href="/write" class="btn">포스팅 등록</a>
+<table><tr><th>제목</th><th>노출</th></tr></table>
+</body></html>"""
+
+
+@app.route("/posts")
+def posts():
+    """실제 CMS 처럼 로그인하면 목록이 먼저 나온다.
+
+    글쓰기 폼은 '포스팅 등록'을 눌러야 열린다. 폼 분석기가 이 한 걸음을
+    따라오지 못하면 입력칸을 하나도 찾지 못한다.
+    """
+    if not session.get("ok"):
+        return redirect(url_for("login"))
+    return LIST_HTML
+
+
 @app.route("/")
 def home():
-    return redirect(url_for("write"))
+    return redirect(url_for("posts"))
 
 
 if __name__ == "__main__":
