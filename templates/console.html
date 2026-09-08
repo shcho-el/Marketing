@@ -280,6 +280,7 @@
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
+const BUILD = {{ (build.commit ~ " · " ~ build.date) | tojson if build.ok else "null" }};
 let current = null;
 
 /* ── 공통 ─────────────────────────────────────────────── */
@@ -664,7 +665,9 @@ $("publishBtn").addEventListener("click", async () => {
     renderShots(d.shot_names || []);
     toast(d.message, d.saved ? "ok" : null);
   } catch (e) {
-    $("publishHint").textContent = e.message;
+    $("publishHint").textContent =
+      e.message + (BUILD ? `\n\n(지금 돌고 있는 코드: ${BUILD}. 오류가 그대로면 코드가 갱신되지 않은 것입니다 — update.bat 을 실행하세요.)` : "");
+    $("publishHint").style.whiteSpace = "pre-wrap";
     toast("업로드 실패", "bad");
   } finally {
     btn.disabled = false;
