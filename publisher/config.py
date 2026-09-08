@@ -132,3 +132,68 @@ def status() -> dict:
         "write_url": WRITE_URL,
         "mapping_path": MAPPING_PATH,
     }
+
+
+# ── 로그인 정보 입력 ─────────────────────────────────────────────────
+ENV_PATH = os.getenv("ENV_PATH", ".env")
+
+
+def _write_env(key: str, value: str, path: str = ENV_PATH) -> None:
+    """.env의 한 줄만 바꾸거나 없으면 덧붙인다. 나머지 줄은 그대로 둔다."""
+    lines = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fp:
+            lines = fp.read().splitlines()
+
+    prefix = f"{key}="
+    for i, line in enumerate(lines):
+        if line.strip().startswith(prefix):
+            lines[i] = prefix + value
+            break
+    else:
+        lines.append(prefix + value)
+
+    with open(path, "w", encoding="utf-8") as fp:
+        fp.write("\n".join(lines) + "\n")
+
+
+def ensure_credentials() -> bool:
+    """CMS 로그인 정보가 없으면 이 자리에서 묻고 .env에 넣는다.
+
+    비밀번호를 채팅이나 메모에 적어 옮기지 않아도 되게 하려는 것입니다.
+    입력값은 화면에 표시되지 않고, 저장소에 올라가지 않는 .env에만 적힙니다.
+    """
+    global USERNAME, PASSWORD
+
+    if USERNAME and PASSWORD:
+        return True
+
+    import getpass
+
+    print()
+    print("  CMS 로그인 정보가 아직 없습니다.")
+    print(f"  아래에 입력하면 {ENV_PATH} 에만 저장됩니다. (git에 올라가지 않습니다)")
+    print("  건너뛰려면 그냥 Enter를 누르세요.")
+    print()
+
+    try:
+        user = input("  아이디> ").strip()
+        if not user:
+            print("  건너뛰었습니다.")
+            return False
+        pw = getpass.getpass("  비밀번호> (입력해도 화면에 보이지 않습니다) ")
+    except (EOFError, KeyboardInterrupt):
+        print("\n  취소했습니다.")
+        return False
+
+    if not pw:
+        print("  비밀번호가 비어 있어 저장하지 않았습니다.")
+        return False
+
+    _write_env("CMS_USERNAME", user)
+    _write_env("CMS_PASSWORD", pw)
+    os.environ["CMS_USERNAME"] = user
+    os.environ["CMS_PASSWORD"] = pw
+    USERNAME, PASSWORD = user, pw
+    print(f"  {ENV_PATH} 에 저장했습니다.")
+    return True

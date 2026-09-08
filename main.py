@@ -188,7 +188,12 @@ def cmd_auto():
 
 def cmd_inspect_cms():
     """CMS 글쓰기 폼을 분석해 셀렉터 매핑을 만든다. 최초 1회, 화면 변경 시 재실행."""
+    from publisher import config as cms_config
     from publisher import inspector
+
+    if not cms_config.ensure_credentials():
+        print("\n로그인 정보 없이는 폼을 읽을 수 없습니다.")
+        return
 
     headless = "--show" not in sys.argv
     print("CMS에 로그인해 글쓰기 폼을 분석합니다...")
