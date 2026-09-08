@@ -81,44 +81,67 @@ if not exist ".venv\Scripts\python.exe" (
 :: ── 서버 기동 ─────────────────────────────────────────────────────
 :: 기록을 logs\server.log 에 남긴다. 창이 최소화되어 있어 오류가 그냥
 :: 사라지면 무엇이 잘못됐는지 알 길이 없다.
+del /q "logs\server.log" >nul 2>&1
 echo  서버를 켭니다...
 start "오블리브 콘텐츠 콘솔" /min cmd /c "tools\run_server.bat"
 
-for /l %%i in (1,1,40) do (
-  timeout /t 1 /nobreak >nul
-  call :alive
-  if "!ALIVE!"=="1" (
-    start "" "%URL%"
-    exit /b 0
-  )
-)
+set "WAITED=0"
+<nul set /p "=  준비되기를 기다립니다 "
 
+:waitloop
+call :alive
+if "!ALIVE!"=="1" (
+  echo.
+  echo  준비됐습니다. 브라우저를 엽니다.
+  start "" "%URL%"
+  exit /b 0
+)
+call :crashed
+if "!CRASHED!"=="1" goto :failed
+set /a WAITED+=1
+if !WAITED! GEQ 45 goto :failed
+<nul set /p "=."
+timeout /t 1 /nobreak >nul
+goto :waitloop
+
+:failed
+echo.
 echo.
 echo  ================================================
 echo   서버가 뜨지 않았습니다.
 echo  ================================================
 echo.
 if exist "logs\server.log" (
-  echo  마지막 기록입니다:
+  echo  서버가 남긴 기록입니다:
   echo.
-  powershell -NoProfile -Command "Get-Content -LiteralPath 'logs\server.log' -Tail 25"
+  type "logs\server.log"
   echo.
-  echo  ^(전체 기록: logs\server.log^)
+  echo  ^(같은 내용이 logs\server.log 에 있습니다^)
 ) else (
   echo  기록 파일이 없습니다. 파이썬이 아예 실행되지 않았을 수 있습니다.
+  echo  start.bat 을 한 번 실행해 준비 과정을 다시 밟아 보세요.
 )
 echo.
-echo  ob d  또는  .venv\Scripts\python.exe main.py doctor  로 환경을 점검해 보세요.
+echo  환경 점검:  .venv\Scripts\python.exe main.py doctor
 echo.
 pause
 exit /b 1
 
 :: ── 서브루틴 ──────────────────────────────────────────────────────
+:: 포트가 열렸는지 본다. powershell 은 뜨는 데만 1~2초가 걸려, 40번
+:: 돌리면 아무 표시 없이 1분 넘게 멈춘 것처럼 보였다. netstat 은 즉시 답한다.
 :alive
 set "ALIVE=0"
-powershell -NoProfile -Command ^
-  "try{(New-Object Net.Sockets.TcpClient('127.0.0.1',%PORT%)).Close();exit 0}catch{exit 1}" >nul 2>&1
+netstat -an | findstr /c:":%PORT% " >nul 2>&1
 if not errorlevel 1 set "ALIVE=1"
+exit /b 0
+
+:: 파이썬이 오류로 죽었으면 45초를 다 기다릴 이유가 없다.
+:crashed
+set "CRASHED=0"
+if not exist "logs\server.log" exit /b 0
+findstr /c:"Traceback" /c:"ModuleNotFoundError" /c:"SyntaxError" /c:"ImportError" "logs\server.log" >nul 2>&1
+if not errorlevel 1 set "CRASHED=1"
 exit /b 0
 
 :stopserver

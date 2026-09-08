@@ -35,6 +35,7 @@ from flask import (
     url_for,
 )
 
+import console
 import pipeline
 from content import (
     build,
@@ -403,6 +404,7 @@ def _write_pid():
 
 
 def run_app():
+    console.use_utf8()
     store.init_db()
     _write_pid()
     stamp = build.stamp()
@@ -431,5 +433,6 @@ def run_app():
 
 
 if __name__ == "__main__":
+    console.use_utf8()
     logging.basicConfig(level=logging.INFO)
     run_app()

@@ -23,6 +23,8 @@ import sys
 import logging
 import threading
 
+import console
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -367,6 +369,7 @@ def suggest(name: str) -> None:
 
 
 if __name__ == "__main__":
+    console.use_utf8()
     if len(sys.argv) < 2:
         print_help()
         sys.exit(1)
