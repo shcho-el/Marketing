@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
@@ -36,9 +36,9 @@ if errorlevel 1 (
   echo.
   echo  [!] 로컬에 바뀐 파일이 있어 그냥 합칠 수 없습니다.
   echo      코드를 직접 고치지 않으셨다면 서버 버전으로 맞추면 됩니다.
-  echo      (.env 와 assets 안의 로고/사진은 그대로 유지됩니다)
+  echo      ^(.env 와 assets 안의 로고/사진은 그대로 유지됩니다^)
   echo.
-  set /p FORCE="  서버 버전으로 맞출까요? (y/N) "
+  set /p FORCE="  서버 버전으로 맞출까요? [y/N] "
   if /i "!FORCE!"=="y" (
     for /f "tokens=*" %%B in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%B"
     git reset --hard "origin/!BRANCH!"

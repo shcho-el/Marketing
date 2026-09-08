@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
@@ -103,7 +103,7 @@ if exist "logs\server.log" (
   echo.
   powershell -NoProfile -Command "Get-Content -LiteralPath 'logs\server.log' -Tail 25"
   echo.
-  echo  (전체 기록: logs\server.log)
+  echo  ^(전체 기록: logs\server.log^)
 ) else (
   echo  기록 파일이 없습니다. 파이썬이 아예 실행되지 않았을 수 있습니다.
 )

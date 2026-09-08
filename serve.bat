@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
@@ -21,7 +21,7 @@ set "VPY=.venv\Scripts\python.exe"
 :: 방화벽 규칙 (관리자 권한일 때만 성공. 실패해도 이 PC에서는 동작함)
 netsh advfirewall firewall show rule name="ObliveContentConsole" >nul 2>&1
 if errorlevel 1 (
-  echo  방화벽에 5001 포트를 여는 중... (관리자 권한이 아니면 건너뜁니다)
+  echo  방화벽에 5001 포트를 여는 중... ^(관리자 권한이 아니면 건너뜁니다^)
   netsh advfirewall firewall add rule name="ObliveContentConsole" ^
     dir=in action=allow protocol=TCP localport=5001 >nul 2>&1
   if errorlevel 1 (
