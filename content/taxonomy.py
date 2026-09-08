@@ -32,9 +32,37 @@ def _cms_categories() -> list:
         return []
 
 
-# CMS '카테고리' 드롭다운과 동일한 값이어야 합니다.
-# inspect-cms를 돌렸다면 실제 CMS 목록으로 자동 대체됩니다.
-CATEGORIES = _cms_categories() or list(_SVC["categories"])
+def _resolve_categories() -> list:
+    """이 의원이 쓰는 카테고리 중, CMS에 실제로 있는 것만 남긴다.
+
+    CMS 드롭다운에는 이 클리닉과 무관한 항목이 잔뜩 있습니다(보톡스,
+    리쥬란, 재활의학…). 목록을 통째로 가져오면 생성기가 발톱과 상관없는
+    카테고리로 글을 쓸 수 있습니다. 반대로 목록을 무시하면 CMS에 없는
+    값을 골라 업로드에서 막힙니다.
+
+    그래서 교집합을 씁니다. 고를 수 있는 범위는 이 의원의 진료 분야로
+    한정하되, 표기는 CMS 실물을 따릅니다.
+    """
+    options = _cms_categories()
+    ours = list(_SVC["categories"])
+    if not options:
+        return ours
+
+    by_flat = {o.replace(" ", ""): o for o in options}
+    resolved = [by_flat[c.replace(" ", "")] for c in ours if c.replace(" ", "") in by_flat]
+    missing = [c for c in ours if c.replace(" ", "") not in by_flat]
+    if missing:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "CMS 카테고리에 없는 항목: %s — 업로드 시 선택할 수 없습니다.",
+            ", ".join(missing),
+        )
+    return resolved or ours
+
+
+# CMS '카테고리' 드롭다운과 겹치는 값만 씁니다.
+CATEGORIES = _resolve_categories()
 
 # 카테고리별 대표 키워드(주키워드 후보). 지역명 조합은 build_keyword_set()이 만듭니다.
 CORE_KEYWORDS = _SVC["core_keywords"]

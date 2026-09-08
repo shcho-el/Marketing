@@ -24,13 +24,25 @@ logger = logging.getLogger(__name__)
 
 # 각 요소의 CSS 셀렉터와 주변 라벨 텍스트를 브라우저 안에서 수집한다.
 _COLLECT_JS = r"""
+function unique(sel) {
+  try { return document.querySelectorAll(sel).length === 1; } catch (e) { return false; }
+}
+
+// 위치로 잡은 경로(div:nth-of-type(2) > form > ...)는 화면이 조금만 바뀌어도
+// 틀어진다. id · name · class · 단독 태그 순으로 흔들리지 않는 것을 먼저 쓴다.
 function cssPath(el) {
+  var tag = el.tagName.toLowerCase();
   if (el.id) return '#' + CSS.escape(el.id);
   if (el.name) {
-    var byName = document.querySelectorAll(
-      el.tagName.toLowerCase() + '[name="' + el.name + '"]');
-    if (byName.length === 1) return el.tagName.toLowerCase() + '[name="' + el.name + '"]';
+    var byName = tag + '[name="' + el.name + '"]';
+    if (unique(byName)) return byName;
   }
+  var cls = (el.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean);
+  if (cls.length) {
+    var withCls = tag + '.' + cls.map(function (c) { return CSS.escape(c); }).join('.');
+    if (unique(withCls)) return withCls;
+  }
+  if (unique(tag)) return tag;
   var path = [], node = el;
   while (node && node.nodeType === 1 && node !== document.body) {
     var sel = node.tagName.toLowerCase();
@@ -101,12 +113,16 @@ document.querySelectorAll(
   "button, input[type='submit'], input[type='button'], a.btn, .btn").forEach(function (el) {
   var t = (el.innerText || el.value || '').replace(/\s+/g, ' ').trim();
   if (!t) return;
+  var rect = el.getBoundingClientRect();
   out.push({
     tag: el.tagName.toLowerCase(),
     text: t.slice(0, 40),
     id: el.id || '',
     cls: el.getAttribute('class') || '',
     selector: el.id ? '#' + CSS.escape(el.id) : '',
+    inForm: !!el.closest('form'),
+    type: (el.getAttribute('type') || '').toLowerCase(),
+    visible: rect.width > 0 && rect.height > 0,
   });
 });
 return out;
@@ -178,6 +194,13 @@ def build_mapping(elements: list, buttons: list) -> dict:
                 "label": picked["label"],
                 "confident": _matches(picked["label"], aliases),
             }
+            # 위지윅 에디터는 라벨이 붙지 않는다. 페이지에 iframe 이 하나뿐이면
+            # 그것이 본문이다. 라벨이 없다는 이유로 사람을 부를 일이 아니다.
+            if field == "body" and picked["tag"] == "iframe":
+                only_iframe = sum(1 for e in elements if e["tag"] == "iframe") == 1
+                if only_iframe:
+                    notes[field]["confident"] = True
+                    notes[field]["why"] = "페이지에 iframe 이 하나뿐 — 본문 에디터"
             if field == "category" and picked["options"]:
                 notes[field]["options"] = picked["options"]
         else:
@@ -204,12 +227,19 @@ def build_mapping(elements: list, buttons: list) -> dict:
 
     # 저장 버튼 후보
     save_words = ("저장", "등록", "작성완료", "확인", "완료")
-    save_btn = ""
-    for b in buttons:
-        if any(w in b["text"] for w in save_words):
-            save_btn = b["selector"] or ""
-            if save_btn:
-                break
+    # 같은 글자의 버튼이 여러 개일 수 있다(위·아래 중복). 폼 안에 있고 눈에
+    # 보이는 것을 먼저 고른다. 아무 것이나 누르면 취소를 누를 수도 있다.
+    save_cands = [b for b in buttons if any(w in b["text"] for w in save_words)]
+    ranked = sorted(
+        save_cands,
+        key=lambda b: (
+            0 if b.get("selector") else 1,
+            0 if b.get("inForm") else 1,
+            0 if b.get("visible") else 1,
+        ),
+    )
+    save_btn = next((b["selector"] for b in ranked if b.get("selector")), "")
+
 
     return {
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -218,9 +248,12 @@ def build_mapping(elements: list, buttons: list) -> dict:
         "expose": expose_map,
         "body_is_iframe": body_is_iframe,
         "submit": save_btn,
-        "submit_text_candidates": [
-            b["text"] for b in buttons if any(w in b["text"] for w in save_words)
-        ],
+        "submit_text_candidates": [b["text"] for b in save_cands],
+        # 셀렉터가 없어 글자로 찾아야 할 때, 어느 것을 눌러야 하는지 남긴다.
+        "submit_hint": (
+            {"text": ranked[0]["text"], "in_form": ranked[0].get("inForm", False)}
+            if ranked else {}
+        ),
         "_notes": notes,
         "_hint": (
             "confident=false 인 항목은 자동 매칭에 확신이 없다는 뜻입니다. "
