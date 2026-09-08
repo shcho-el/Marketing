@@ -8,20 +8,27 @@
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" />
 <style>
 :root {
-  --ground:#F7F4EE; --surface:#FFFDFA; --line:#E2DACB;
-  --ink:#1E1B16; --ink-3:#8A8277; --brass:#8A6A32; --bad:#9C3A2E; --bad-bg:#F6E2DE;
+  --ground:#FFFFFF; --surface:#FFFFFF; --line:#E6E1DC;
+  --ink:#16120F; --ink-3:#A0968D;
+  /* PANTONE 16-1459 TCX Mandarin Orange */
+  --accent:#E8703A; --accent-deep:#C85425; --on-accent:#FFFFFF;
+  --bad:#BC2949; --bad-bg:#FAE6EB;
   --sans: Pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont,
           "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground:#15130F; --surface:#1D1A15; --line:#3A3227;
-    --ink:#F0EAE0; --ink-3:#857C6F; --brass:#CDA664; --bad:#E0897C; --bad-bg:#3A211C;
+    --ground:#100E0D; --surface:#171412; --line:#2E2823;
+    --ink:#F4F0EC; --ink-3:#7C7168;
+    --accent:#FF8A57; --accent-deep:#FFA274; --on-accent:#1A0F09;
+    --bad:#F27391; --bad-bg:#2C1219;
   }
 }
 :root[data-theme="dark"] {
-  --ground:#15130F; --surface:#1D1A15; --line:#3A3227;
-  --ink:#F0EAE0; --ink-3:#857C6F; --brass:#CDA664; --bad:#E0897C; --bad-bg:#3A211C;
+  --ground:#100E0D; --surface:#171412; --line:#2E2823;
+  --ink:#F4F0EC; --ink-3:#7C7168;
+  --accent:#FF8A57; --accent-deep:#FFA274; --on-accent:#1A0F09;
+  --bad:#F27391; --bad-bg:#2C1219;
 }
 * { box-sizing: border-box; }
 body {
@@ -29,24 +36,25 @@ body {
   background:var(--ground); color:var(--ink); font-family:var(--sans); font-size:14px;
 }
 .card {
-  width:100%; max-width:360px; background:var(--surface);
-  border:1px solid var(--line); border-radius:14px; padding:30px;
+  width:100%; max-width:340px; background:var(--surface);
+  border:1px solid var(--line); border-radius:8px; padding:32px;
 }
-h1 { font-size:1.1rem; margin:0 0 4px; letter-spacing:-.01em; }
-.sub { font-size:.82rem; color:var(--ink-3); margin:0 0 20px; }
-label { display:block; font-size:.78rem; color:var(--ink-3); margin-bottom:6px; }
+h1 { font-size:1.2rem; font-weight:800; margin:0 0 5px; letter-spacing:-.04em; }
+.sub { font-size:.8rem; color:var(--ink-3); margin:0 0 22px; }
+label { display:block; font-size:.76rem; font-weight:600; color:var(--ink-3); margin-bottom:6px; }
 input {
   width:100%; padding:11px 13px; font:inherit; color:inherit;
-  background:var(--ground); border:1px solid var(--line); border-radius:8px;
+  background:var(--ground); border:1px solid var(--line); border-radius:5px;
 }
-input:focus-visible, button:focus-visible { outline:2px solid var(--brass); outline-offset:2px; }
+input:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 button {
-  width:100%; margin-top:14px; padding:11px; font:inherit; font-weight:600;
-  background:var(--brass); color:#fff; border:0; border-radius:8px; cursor:pointer;
+  width:100%; margin-top:16px; padding:11px; font:inherit; font-weight:700;
+  background:var(--accent); color:var(--on-accent); border:0; border-radius:5px;
+  cursor:pointer; transition:background .15s ease;
 }
-:root[data-theme="dark"] button, :root:not([data-theme="light"]) button { color:#1A1610; }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) button { color:#fff; } }
-.err { margin-top:12px; padding:10px 12px; border-radius:8px;
+button:hover { background:var(--accent-deep); }
+@media (prefers-reduced-motion: reduce) { button { transition:none; } }
+.err { margin-top:12px; padding:11px 13px; border-radius:5px;
        background:var(--bad-bg); color:var(--bad); font-size:.83rem; }
 </style>
 </head>
