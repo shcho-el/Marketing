@@ -111,15 +111,23 @@ echo  ================================================
 echo   서버가 뜨지 않았습니다.
 echo  ================================================
 echo.
-if exist "logs\server.log" (
+set "LOGSIZE=0"
+for %%F in ("logs\server.log") do set "LOGSIZE=%%~zF"
+
+if not exist "logs\server.log" (
+  echo  기록 파일이 없습니다. 파이썬이 아예 실행되지 않았을 수 있습니다.
+  echo  start.bat 을 한 번 실행해 준비 과정을 다시 밟아 보세요.
+) else if "!LOGSIZE!"=="0" (
+  echo  기록이 비어 있습니다. 파이썬이 아무 말도 남기지 못하고 끝났습니다.
+  echo.
+  echo  serve.bat 을 실행해 주세요. 창을 가리거나 기록으로 넘기지 않고
+  echo  그대로 띄우므로, 파이썬이 내는 말이 화면에 바로 보입니다.
+) else (
   echo  서버가 남긴 기록입니다:
   echo.
   type "logs\server.log"
   echo.
   echo  ^(같은 내용이 logs\server.log 에 있습니다^)
-) else (
-  echo  기록 파일이 없습니다. 파이썬이 아예 실행되지 않았을 수 있습니다.
-  echo  start.bat 을 한 번 실행해 준비 과정을 다시 밟아 보세요.
 )
 echo.
 echo  환경 점검:  .venv\Scripts\python.exe main.py doctor

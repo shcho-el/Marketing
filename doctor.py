@@ -28,6 +28,38 @@ def check_python():
     return _row(OK, "파이썬 버전", f"{ver} ({platform.system()})")
 
 
+def check_venv():
+    """가상환경이 성한지 본다.
+
+    .venv\\Scripts\\python.exe 는 바깥의 파이썬을 가리키는 작은 실행파일입니다.
+    윈도우 업데이트나 파이썬 재설치로 그 원본이 사라지면, 아무 말도 없이
+    바로 끝나 버리는 일이 있습니다. 그러면 서버 기록이 텅 빈 채로 남습니다.
+    """
+    root = os.path.dirname(os.path.abspath(__file__))
+    cfg = os.path.join(root, ".venv", "pyvenv.cfg")
+    if not os.path.exists(cfg):
+        return _row(OK, "가상환경", "쓰지 않음 (시스템 파이썬)")
+
+    base = ""
+    try:
+        with open(cfg, encoding="utf-8") as fp:
+            for line in fp:
+                if line.split("=")[0].strip() in ("home", "base-prefix"):
+                    base = line.split("=", 1)[1].strip()
+                    break
+    except OSError:
+        return _row(WARN, "가상환경", "pyvenv.cfg 를 읽지 못했습니다", "")
+
+    if base and not os.path.exists(base):
+        return _row(
+            BAD,
+            "가상환경",
+            f"원본 파이썬이 없습니다: {base}",
+            ".venv 폴더를 지우고 start.bat 을 다시 실행하세요.",
+        )
+    return _row(OK, "가상환경", "정상")
+
+
 def check_packages():
     rows = []
     required = [
@@ -193,7 +225,9 @@ def run() -> int:
         pass
 
     sections = [
-        ("실행 환경", [check_python(), check_env_file(), check_api_key()] + check_webapp()),
+        ("실행 환경",
+         [check_python(), check_venv(), check_env_file(), check_api_key()]
+         + check_webapp()),
         ("패키지", check_packages()),
         ("콘텐츠 설정", [check_service()] + check_clinic()),
         ("썸네일", check_thumbnail()),
