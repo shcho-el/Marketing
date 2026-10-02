@@ -1,7 +1,7 @@
 // 회식 장소 투표 — 누구나 링크로 투표하는 공개 버전.
 // 이 스크립트가 붙은 Google 시트의 "votes" 탭에 한 사람당 한 줄로 저장합니다.
 
-const DEADLINE = new Date('2026-10-02T21:00:00+09:00').getTime();
+const DEADLINE = new Date('2026-10-02T19:08:00+09:00').getTime();
 const PLACES = {
   q1: { gudoro: '구도로통닭 종각점', hoo: '청계천 휴 (HOO)', hansabal: '한사발포차 종각점' },
   q2: { mido: '미도갈비', gogikkun: '고기꾼 김춘배 종로점', daechan: '대찬횟집 종각점', daenamu: '대나무숙성회관 종각점', insaeng: '인생횟집 종각본점' },
