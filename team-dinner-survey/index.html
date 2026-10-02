@@ -47,7 +47,16 @@ p { margin: 0; }
 
 /* 집계 요약 */
 .board { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
-.board-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.turnout { display: flex; align-items: center; gap: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.turnout-text { display: grid; gap: 2px; min-width: 0; }
+.turnout-left { font-size: 13.5px; color: var(--muted); }
+.donut { flex: none; width: 112px; height: 112px; }
+.donut circle { fill: none; stroke-width: 12; }
+.donut-track { stroke: var(--line); }
+.donut-fill { stroke: var(--ink); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; stroke-dasharray: 0 302; transition: stroke-dasharray .5s ease; }
+.donut-pct { fill: var(--ink); font-family: var(--font); font-weight: 800; font-size: 24px; text-anchor: middle; dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+.donut-sub { fill: var(--muted); font-family: var(--font); font-size: 11px; text-anchor: middle; }
+.board-sub { font-size: 17px; }
 .count { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); }
 .count b { font-family: var(--font); font-weight: 800; font-size: 26px; color: var(--ink); margin-right: 2px; }
 .leaders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -143,22 +152,32 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
 
 <div class="wrap">
   <header>
-    <p class="eyebrow">종각 · 파고다타워 집결 · 16인 회식</p>
+    <p class="eyebrow">오블리브 BU 오피스 회식 · 총 15인 참석 예정</p>
     <h1>회식 장소, 당신의 선택은?</h1>
     <div class="meta">
       <span><b>1차</b> 호프·주점</span>
       <span><b>2차</b> 고기 또는 회</span>
-      <span class="deadline" id="deadline">10월 2일(금) 23:59 마감</span>
+      <span class="deadline" id="deadline">10월 2일(금) 17:00 마감</span>
     </div>
   </header>
 
   <p class="notice" id="notice" hidden></p>
 
   <section class="board" aria-label="실시간 집계">
-    <div class="board-head">
-      <h2>지금 1위</h2>
-      <span class="count"><b id="total">0</b>명 참여</span>
+    <div class="turnout">
+      <svg class="donut" viewBox="0 0 120 120" role="img" aria-labelledby="turnout-label">
+        <circle class="donut-track" cx="60" cy="60" r="48"></circle>
+        <circle class="donut-fill" id="donut-fill" cx="60" cy="60" r="48"></circle>
+        <text class="donut-pct" id="donut-pct" x="60" y="60">0%</text>
+        <text class="donut-sub" x="60" y="80">투표율</text>
+      </svg>
+      <div class="turnout-text">
+        <h2>투표율</h2>
+        <p class="count" id="turnout-label"><b id="total">0</b>/ 15명 참여</p>
+        <p class="turnout-left" id="turnout-left">아직 15명이 투표하지 않았어요.</p>
+      </div>
     </div>
+    <h2 class="board-sub">지금 1위</h2>
     <div class="leaders" id="leaders"></div>
     <div class="split">
       <div class="split-bar" aria-hidden="true"><span id="split-meat" style="background:var(--ember);width:0"></span><span id="split-fish" style="background:var(--sea);width:0"></span></div>
@@ -171,7 +190,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
     <div class="q-head">
       <span class="tag">질문 1</span>
       <h2>1차는 어디서 시작할까요?</h2>
-      <p>파고다타워에서 걸어서 가는 호프·주점입니다.</p>
+      <p>오피스 근처, 걸어서 가는 호프·주점입니다.</p>
     </div>
     <div class="opts" data-q="q1"></div>
   </section>
@@ -211,7 +230,7 @@ const PLACES = {
     { id: "gudoro", name: "구도로통닭 종각점", walk: "파고다타워 도보 2~3분",
       link: "https://naver.me/5ulY7gfD",
       rows: [["메뉴", "전기구이 통닭, 먹태, 떡볶이, 생맥주/하이볼"], ["단체석", "1~4층 대형 매장, 16인 통석 및 예약 수용률 최상"]] },
-    { id: "hoo", name: "청계천 휴 (HOO)", walk: "파고다타워 도보 1분",
+    { id: "hoo", name: "청계천 휴 (HOO)", walk: "파고다타워 도보 1분", link: "https://naver.me/FXwBEVxw",
       rows: [["메뉴", "대형 맥주 호프, 청계천 뷰, 먹태, 닭똥집, 생맥주"], ["단체석", "대형 홀 보유, 청계천변 위치라 예열 분위기 우수"]] },
     { id: "hansabal", name: "한사발포차 종각점", walk: "파고다타워 도보 1~2분", link: "https://naver.me/IDFU2tcG",
       rows: [["분위기", "레트로 실내 포차, 다양한 포차 안주"], ["메뉴", "새우부추전, 고추튀김, 통오징어숙회"], ["단체석", "테이블 연장을 통한 16인 일렬 통석 세팅 (전화 예약 권장)"]] },
@@ -237,7 +256,8 @@ const PLACES = {
 const COLOR = { q1: "var(--beer)", meat: "var(--ember)", fish: "var(--sea)" };
 const LABEL = { q1: "1차", q2: "2차" };
 const QS = ["q1", "q2"];
-const DEADLINE = new Date("2026-10-02T23:59:59+09:00").getTime();
+const HEADCOUNT = 15;
+const DEADLINE = new Date("2026-10-02T17:00:00+09:00").getTime();
 const isClosed = () => Date.now() > DEADLINE;
 const byId = {};
 QS.forEach(q => PLACES[q].forEach(p => { byId[p.id] = p; }));
@@ -334,6 +354,11 @@ async function renderResults() {
   const votes = [...state.votes.entries()];
   const total = votes.length;
   $("total").textContent = total;
+  const rate = Math.min(total / HEADCOUNT, 1), C = 2 * Math.PI * 48;
+  $("donut-fill").style.strokeDasharray = total ? `${(rate * C).toFixed(1)} ${C.toFixed(1)}` : `0 ${C.toFixed(1)}`;
+  $("donut-pct").textContent = Math.round(rate * 100) + "%";
+  const left = Math.max(HEADCOUNT - total, 0);
+  $("turnout-left").textContent = left ? `아직 ${left}명이 투표하지 않았어요.` : "참석 예정 인원이 모두 투표했어요.";
   const tally = {}, who = {};
   votes.forEach(([uid, v]) => QS.forEach(q => { if (v[q] && byId[v[q]]) { tally[v[q]] = (tally[v[q]] || 0) + 1; (who[v[q]] ||= []).push(uid); } }));
 
@@ -405,10 +430,10 @@ $("submit").addEventListener("click", async () => {
 
 function checkDeadline() {
   const d = $("deadline");
-  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 23:59"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
+  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 17:00"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
   const left = DEADLINE - Date.now();
   const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
-  d.textContent = `10월 2일(금) 23:59 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
+  d.textContent = `10월 2일(금) 17:00 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
   setTimeout(checkDeadline, Math.min(left + 1000, 60000));
 }
 
