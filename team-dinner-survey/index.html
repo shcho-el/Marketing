@@ -53,10 +53,12 @@ p { margin: 0; }
   .hero-art .ic-sashimi { animation-delay: -2s; }
 }
 @keyframes bob { 50% { translate: 0 -4px; } }
-.q-ic { width: 44px; height: 44px; flex: none; }
-.q-title { display: flex; align-items: center; gap: 10px; }
-.group-label { display: flex; align-items: center; gap: 8px; }
-.group-label img { width: 32px; height: 32px; }
+.q-head.has-art { position: relative; padding-right: 150px; min-height: 120px; align-content: center; }
+.q-art { position: absolute; right: 0; top: 50%; translate: 0 -50%; width: 140px; height: 120px; pointer-events: none; }
+.q-art img { position: absolute; filter: drop-shadow(0 4px 6px rgb(0 0 0 / .14)); }
+.q-art img:only-child { inset: 0; margin: auto; width: 120px; height: 120px; transform: rotate(-8deg); }
+.q-art-2 img:first-child { left: 0; top: 0; width: 84px; height: 84px; transform: rotate(-10deg); }
+.q-art-2 img:last-child { right: 0; bottom: 0; width: 96px; height: 96px; }
 .split-legend img { width: 18px; height: 18px; vertical-align: -4px; margin-right: 3px; }
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: 14px; margin-top: 10px; }
@@ -167,7 +169,11 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
   .hero-art img { width: 46px; height: 46px; }
   .hero-art .ic-chicken { right: 46px; }
   .hero-art .ic-sashimi { right: 22px; top: 36px; width: 52px; height: 52px; }
-  .q-ic { width: 36px; height: 36px; }
+  .q-head.has-art { padding-right: 100px; min-height: 96px; }
+  .q-art { width: 96px; height: 90px; }
+  .q-art img:only-child { width: 88px; height: 88px; }
+  .q-art-2 img:first-child { width: 58px; height: 58px; }
+  .q-art-2 img:last-child { width: 66px; height: 66px; }
   .leaders { grid-template-columns: 1fr; }
   .rows, .bar-line { padding-left: 0; }
 }
@@ -216,18 +222,20 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
   </section>
 
   <section class="q" id="q1" style="--c:var(--beer)">
-    <div class="q-head">
+    <div class="q-head has-art">
+      <div class="q-art q-art-2" aria-hidden="true"><img src="img/beer.png" alt=""><img src="img/chicken.png" alt=""></div>
       <span class="tag">질문 1</span>
-      <div class="q-title"><img class="q-ic" src="img/chicken.png" alt=""><h2>1차는 어디서 시작할까요?</h2></div>
+      <h2>1차는 어디서 시작할까요?</h2>
       <p>오피스 근처, 걸어서 가는 호프·주점입니다.</p>
     </div>
     <div class="opts" data-q="q1"></div>
   </section>
 
   <section class="q" id="q2" style="--c:var(--ember)">
-    <div class="q-head">
+    <div class="q-head has-art">
+      <div class="q-art q-art-2" aria-hidden="true"><img src="img/galbi.png" alt=""><img src="img/sashimi.png" alt=""></div>
       <span class="tag">질문 2</span>
-      <div class="q-title"><img class="q-ic" src="img/galbi.png" alt=""><img class="q-ic" src="img/sashimi.png" alt=""><h2>2차는 어디로 갈까요?</h2></div>
+      <h2>2차는 어디로 갈까요?</h2>
       <p>고기 2곳, 회 3곳 중 하나를 골라 주세요. 모두 1차에서 도보 1~3분입니다.</p>
     </div>
     <div class="opts" data-q="q2"></div>
@@ -302,9 +310,7 @@ function buildOptions() {
     PLACES[q].forEach(p => {
       if (p.group && p.group !== lastGroup) {
         lastGroup = p.group;
-        const g = el("div", "group-label");
-        const gi = el("img"); gi.src = p.group === "meat" ? "img/galbi.png" : "img/sashimi.png"; gi.alt = "";
-        g.append(gi, el("span", "", p.group === "meat" ? "고기 · 갈비" : "회 · 해산물"));
+        const g = el("div", "group-label", p.group === "meat" ? "고기 · 갈비" : "회 · 해산물");
         g.style.setProperty("--c", COLOR[p.group]);
         box.append(g);
       }
