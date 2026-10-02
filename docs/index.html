@@ -302,9 +302,17 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
 </div>
 
 <script>
+const API_URL = "";
+async function call(init, query) {
+  if (!API_URL) throw new Error("no-api");
+  const r = await fetch(API_URL + (query || ""), init);
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "error");
+  return j.votes;
+}
 const api = {
-  list: () => new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).getVotes()),
-  submit: v => new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).submitVote(v)),
+  list: () => call(undefined, "?action=list"),
+  submit: v => call({ method: "POST", body: JSON.stringify(v) }),
 };
 const PLACES = {
   q1: [

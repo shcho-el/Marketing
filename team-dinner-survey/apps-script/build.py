@@ -57,7 +57,7 @@ rep('async function renderResults() {', 'function renderResults() {')
 # Replace the claude.ai save/load code with Google Apps Script calls
 head, sep, _ = s.partition('$("note").addEventListener("input", updateStatus);')
 assert sep
-s = head + img_js + r'''function setVotes(list) {
+body = head + img_js + r'''function setVotes(list) {
   state.votes = new Map(list.map(v => [v.name, v]));
   state.online = true;
   notice("");
@@ -76,10 +76,10 @@ function prefill() {
 }
 
 function load() {
-  google.script.run
-    .withSuccessHandler(setVotes)
-    .withFailureHandler(() => { if (!state.online) notice("투표 현황을 불러오지 못했어요. 페이지를 새로 고쳐 주세요."); })
-    .getVotes();
+  api.list().then(setVotes).catch(e => {
+    if (String(e && e.message).includes("no-api")) notice("투표 서버가 아직 연결되지 않았어요. 잠시 후 다시 열어 주세요.");
+    else if (!state.online) notice("투표 현황을 불러오지 못했어요. 페이지를 새로 고쳐 주세요.");
+  });
 }
 
 $("note").addEventListener("input", updateStatus);
@@ -89,20 +89,19 @@ $("submit").addEventListener("click", () => {
   const name = myName();
   if (isClosed() || !name || !QS.every(q => state.draft[q])) return;
   state.saving = true; updateStatus();
-  google.script.run
-    .withSuccessHandler(list => {
+  api.submit({ name, q1: state.draft.q1, q2: state.draft.q2, note: $("note").value.trim().slice(0, 300) })
+    .then(list => {
       state.saving = false;
       store.set("dinner-vote-name", name);
       state.prefilledFor = name;
       setVotes(list);
       $("status").textContent = "투표가 저장됐어요. 감사합니다!";
     })
-    .withFailureHandler(err => {
+    .catch(err => {
       state.saving = false; updateStatus();
       const m = String(err && err.message || "");
       $("status").textContent = m.includes("closed") ? "투표가 마감되어 저장하지 못했어요." : "저장하지 못했어요. 잠시 후 다시 눌러 주세요.";
-    })
-    .submitVote({ name, q1: state.draft.q1, q2: state.draft.q2, note: $("note").value.trim().slice(0, 300) });
+    });
 });
 
 function checkDeadline() {
@@ -124,14 +123,51 @@ setInterval(load, 15000);
 </script>
 '''
 
-title = re.search(r"<title>(.*?)</title>", s).group(1)
-s = s.replace(f"<title>{title}</title>\n", "", 1)
-s = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
-     '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-     f'<title>{title}</title>\n<base target="_blank">\n'
-     '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">\n'
-     '<style>[hidden]{display:none!important} body{margin:0} img{max-width:100%}</style>\n'
-     '</head>\n<body>\n' + s + '</body>\n</html>\n')
+APIS = {
+    "apps-script": r'''const api = {
+  list: () => new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).getVotes()),
+  submit: v => new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).submitVote(v)),
+};
+''',
+    # GitHub Pages: the same Apps Script web app answers as a JSON API.
+    # Body is sent as text/plain so the browser makes a simple (no-preflight) request.
+    "pages": r'''const API_URL = "__API_URL__";
+async function call(init, query) {
+  if (!API_URL) throw new Error("no-api");
+  const r = await fetch(API_URL + (query || ""), init);
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "error");
+  return j.votes;
+}
+const api = {
+  list: () => call(undefined, "?action=list"),
+  submit: v => call({ method: "POST", body: JSON.stringify(v) }),
+};
+''',
+}
 
-(HERE / "Index.html").write_text(s)
-print("wrote", HERE / "Index.html", len(s) // 1024, "KB")
+API_URL = (ROOT.parent / "docs" / "api-url.txt")
+api_url = API_URL.read_text().strip() if API_URL.exists() else ""
+
+title = re.search(r"<title>(.*?)</title>", body).group(1)
+body = body.replace(f"<title>{title}</title>\n", "", 1)
+
+
+def page(api_js):
+    inner = body.replace("<script>\n", "<script>\n" + api_js, 1)
+    return ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+            f'<title>{title}</title>\n<base target="_blank">\n'
+            '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">\n'
+            '<style>[hidden]{display:none!important} body{margin:0} img{max-width:100%}</style>\n'
+            '</head>\n<body>\n' + inner + '</body>\n</html>\n')
+
+
+out = {
+    HERE / "Index.html": page(APIS["apps-script"]),
+    ROOT.parent / "docs" / "index.html": page(APIS["pages"].replace("__API_URL__", api_url)),
+}
+for path, html in out.items():
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(html)
+    print("wrote", path, len(html) // 1024, "KB")

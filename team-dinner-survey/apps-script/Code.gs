@@ -8,7 +8,9 @@ const PLACES = {
 };
 const HEADER = ['이름', '1차', '2차', '남길 말', '저장 시각'];
 
-function doGet() {
+// ?action=list → JSON (GitHub Pages 버전이 호출). 그 외 → 투표 페이지 자체.
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'list') return json_({ ok: true, votes: getVotes() });
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('회식 장소, 당신의 선택은?')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
@@ -72,4 +74,18 @@ function submitVote(v) {
     lock.releaseLock();
   }
   return getVotes();
+}
+
+// GitHub Pages 버전의 투표 제출 (본문: JSON 문자열)
+function doPost(e) {
+  try {
+    const v = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    return json_({ ok: true, votes: submitVote(v) });
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }

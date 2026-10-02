@@ -25,3 +25,14 @@ claude.ai 계정 없이 링크만 눌러 투표할 수 있는 버전입니다. �
 
 `../index.html`(claude.ai 아티팩트 버전)을 고친 뒤 `python3 apps-script/build.py`를 실행하면
 `Index.html`이 다시 만들어집니다. Apps Script에 붙여 넣고 **배포 → 배포 관리 → 수정 → 새 버전**으로 갱신하세요.
+
+## GitHub Pages로 열기 (https://shcho-el.github.io/Marketing/)
+
+`docs/index.html`이 같은 투표 페이지의 GitHub Pages 버전입니다. 투표는 위 Apps Script 웹 앱에 저장됩니다.
+
+1. 위 "배포" 1~7단계로 Apps Script 웹 앱 URL을 만듭니다.
+2. 그 URL을 `docs/api-url.txt`에 한 줄로 넣고 `python3 team-dinner-survey/apps-script/build.py`를 실행해 커밋합니다.
+3. GitHub 저장소 **Settings → Pages → Build and deployment**
+   - Source: **Deploy from a branch**
+   - Branch: 이 페이지가 있는 브랜치, 폴더 **/docs** → Save
+4. 1~2분 뒤 `https://shcho-el.github.io/Marketing/`에서 열립니다.
