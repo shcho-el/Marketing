@@ -94,6 +94,8 @@ p { margin: 0; }
 .q { display: grid; gap: 14px; }
 .q-head { display: grid; gap: 4px; }
 .q-head .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: var(--c); }
+.req { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: 0; padding: 1px 6px; border-radius: 999px; color: var(--c); border: 1px solid var(--c); }
+.q.missing .req { background: var(--c); color: var(--surface); }
 .q-head .tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
 .q-head p { color: var(--muted); font-size: 14px; }
 .group-label { font-size: 13px; font-weight: 700; color: var(--c); margin-top: 4px; }
@@ -224,7 +226,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
   <section class="q" id="q1" style="--c:var(--beer)">
     <div class="q-head has-art">
       <div class="q-art q-art-2" aria-hidden="true"><img src="img/beer.png" alt=""><img src="img/chicken.png" alt=""></div>
-      <span class="tag">질문 1</span>
+      <span class="tag">질문 1 <em class="req">필수</em></span>
       <h2>1차는 어디서 시작할까요?</h2>
       <p>오피스 근처, 걸어서 가는 호프·주점입니다.</p>
     </div>
@@ -234,7 +236,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
   <section class="q" id="q2" style="--c:var(--ember)">
     <div class="q-head has-art">
       <div class="q-art q-art-2" aria-hidden="true"><img src="img/galbi.png" alt=""><img src="img/sashimi.png" alt=""></div>
-      <span class="tag">질문 2</span>
+      <span class="tag">질문 2 <em class="req">필수</em></span>
       <h2>2차는 어디로 갈까요?</h2>
       <p>고기 2곳, 회 3곳 중 하나를 골라 주세요. 모두 1차에서 도보 1~3분입니다.</p>
     </div>
@@ -256,7 +258,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
 
 <div class="dock">
   <div class="dock-in">
-    <p class="status" id="status" aria-live="polite">질문 2개를 모두 고르면 제출할 수 있어요.</p>
+    <p class="status" id="status" aria-live="polite">1차와 2차를 모두 골라야 제출할 수 있어요.</p>
     <button class="submit" id="submit" type="button" disabled>투표 제출</button>
   </div>
 </div>
@@ -374,6 +376,7 @@ function draftDiffers() {
 
 function updateStatus() {
   const ready = QS.every(q => state.draft[q]);
+  QS.forEach(q => $(q).classList.toggle("missing", !state.draft[q] && state.canWrite && !isClosed()));
   const btn = $("submit"), st = $("status");
   if (isClosed()) { btn.disabled = true; btn.textContent = "투표 마감"; st.textContent = "투표가 마감됐어요. 위 집계가 최종 결과입니다."; return; }
   if (!state.db) { btn.disabled = true; st.textContent = "투표는 claude.ai에서 열었을 때 저장됩니다."; return; }
@@ -382,7 +385,7 @@ function updateStatus() {
   const m = mineSaved();
   btn.textContent = m ? "투표 수정" : "투표 제출";
   btn.disabled = !ready || !draftDiffers();
-  if (!ready) st.textContent = `질문 ${QS.filter(q => !state.draft[q]).map(q => q.slice(1)).join(", ")}번을 골라 주세요.`;
+  if (!ready) st.textContent = `필수: ${QS.filter(q => !state.draft[q]).map(q => LABEL[q]).join("·")} 장소를 골라야 제출할 수 있어요.`;
   else if (m && !draftDiffers()) st.textContent = "투표가 저장되어 있어요. 바꾸고 싶으면 다시 고른 뒤 수정하세요.";
   else st.textContent = m ? "바뀐 내용을 저장하려면 투표 수정을 누르세요." : "준비 완료. 제출하면 모두에게 집계가 보입니다.";
 }
