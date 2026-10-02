@@ -1,0 +1,438 @@
+<title>종각 회식 장소 투표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 좁은 단일 컬럼 투표지 — 상단 집계 요약, 질문 3개 카드 목록, 하단 고정 제출 바 */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #18212b;
+  --muted: #5b6774;
+  --line: #dde3e9;
+  --beer: #c98a12;      /* 1차 호프·주점 */
+  --ember: #c4452c;     /* 2차 고기 */
+  --sea: #13808a;       /* 2차 회 */
+  --course: #4a54b5;    /* 코스 조합 */
+  --accent: #18212b;
+  --on-accent: #ffffff;
+  --sel-bg: #eef3f8;
+  --display: "Black Han Sans", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --ink: #e8edf2; --muted: #9aa7b4; --line: #2b3641;
+    --beer: #e6aa3a; --ember: #ec7259; --sea: #3cb9c2; --course: #8d95ee;
+    --accent: #e8edf2; --on-accent: #11161c; --sel-bg: #212c37; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --ink: #e8edf2; --muted: #9aa7b4; --line: #2b3641;
+  --beer: #e6aa3a; --ember: #ec7259; --sea: #3cb9c2; --course: #8d95ee;
+  --accent: #e8edf2; --on-accent: #11161c; --sel-bg: #212c37; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body);
+  font-size: 15px; line-height: 1.55; padding: 0 16px; word-break: keep-all;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 28px 120px; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: 0.01em; }
+h1 { font-size: clamp(30px, 7vw, 44px); line-height: 1.1; }
+h2 { font-size: 22px; line-height: 1.2; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: 14px; margin-top: 10px; }
+.meta b { color: var(--ink); font-weight: 600; }
+.notice { font-size: 13.5px; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); }
+
+/* 집계 요약 */
+.board { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+.board-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); }
+.count b { font-family: var(--display); font-weight: 400; font-size: 26px; color: var(--ink); margin-right: 2px; }
+.leaders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.leader { display: grid; gap: 2px; min-width: 0; padding-left: 10px; border-left: 3px solid var(--c); }
+.leader .k { font-size: 12px; color: var(--muted); }
+.leader .v { font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
+.leader .n { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.split { display: grid; gap: 6px; }
+.split-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); }
+.split-bar span { display: block; height: 100%; transition: width .4s ease; }
+.split-legend { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.voters { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* 질문 */
+.q { display: grid; gap: 14px; }
+.q-head { display: grid; gap: 4px; }
+.q-head .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--c); }
+.q-head .tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.q-head p { color: var(--muted); font-size: 14px; }
+.group-label { font-size: 13px; font-weight: 700; color: var(--c); margin-top: 4px; }
+.opts { display: grid; gap: 10px; }
+
+.opt {
+  --c: var(--ink);
+  display: grid; gap: 8px; width: 100%; text-align: left; font: inherit; color: inherit;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.opt:hover { border-color: color-mix(in srgb, var(--c) 50%, var(--line)); }
+.opt:focus-visible { outline: 3px solid color-mix(in srgb, var(--c) 45%, transparent); outline-offset: 2px; }
+.opt[aria-pressed="true"] { border-color: var(--c); background: var(--sel-bg); }
+.opt[disabled] { cursor: default; }
+.opt-top { display: flex; align-items: flex-start; gap: 10px; }
+.radio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); margin-top: 2px; display: grid; place-items: center; }
+.opt[aria-pressed="true"] .radio { border-color: var(--c); }
+.opt[aria-pressed="true"] .radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.opt-title { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.opt-name { font-weight: 700; font-size: 16px; }
+.walk { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.opt-votes { flex: none; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.opt-votes b { font-size: 16px; color: var(--ink); }
+.rows { display: grid; gap: 3px; padding-left: 30px; font-size: 14px; }
+.row { display: grid; grid-template-columns: 4.6em minmax(0, 1fr); gap: 8px; }
+.row .k { color: var(--muted); font-size: 12.5px; padding-top: 1px; }
+.route { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-left: 30px; font-size: 14px; font-weight: 600; }
+.route .stop { padding: 2px 8px; border-radius: 4px; background: color-mix(in srgb, var(--sc) 14%, transparent); color: var(--ink); }
+.route .arrow { color: var(--muted); }
+.bar-line { display: flex; align-items: center; gap: 10px; padding-left: 30px; }
+.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--c); transition: width .4s ease; }
+.faces { display: flex; }
+.faces img { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); margin-left: -6px; background: var(--line); }
+.faces img:first-child { margin-left: 0; }
+.faces .more { font-size: 11.5px; color: var(--muted); margin-left: 4px; align-self: center; }
+.voters img { width: 26px; height: 26px; border-radius: 50%; background: var(--line); }
+
+textarea {
+  width: 100%; min-height: 84px; resize: vertical; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px;
+}
+textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, transparent); outline-offset: 2px; }
+.notes { display: grid; gap: 8px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.note img { width: 24px; height: 24px; border-radius: 50%; flex: none; }
+.note .who { font-size: 12.5px; color: var(--muted); }
+.note p { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* 제출 바 */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+}
+.dock-in { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.status { flex: 1; min-width: 0; font-size: 13.5px; color: var(--muted); }
+.submit {
+  flex: none; font: inherit; font-weight: 700; font-size: 15px; padding: 11px 22px; border-radius: 8px; border: 0;
+  background: var(--accent); color: var(--on-accent); cursor: pointer;
+}
+.submit:disabled { opacity: .4; cursor: not-allowed; }
+.submit:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 35%, transparent); outline-offset: 2px; }
+
+@media (max-width: 560px) {
+  .leaders { grid-template-columns: 1fr; }
+  .rows, .route, .bar-line { padding-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">종각 · 파고다타워 집결 · 16인 회식</p>
+    <h1>회식 장소 투표</h1>
+    <div class="meta">
+      <span><b>1차</b> 호프·주점</span>
+      <span><b>2차</b> 고기 또는 회</span>
+      <span>모든 후보는 관철동·청계천 도보 3분 이내</span>
+    </div>
+  </header>
+
+  <p class="notice" id="notice" hidden></p>
+
+  <section class="board" aria-label="실시간 집계">
+    <div class="board-head">
+      <h2>지금 1위</h2>
+      <span class="count"><b id="total">0</b>명 참여</span>
+    </div>
+    <div class="leaders" id="leaders"></div>
+    <div class="split">
+      <div class="split-bar" aria-hidden="true"><span id="split-meat" style="background:var(--ember);width:0"></span><span id="split-fish" style="background:var(--sea);width:0"></span></div>
+      <div class="split-legend"><span id="split-meat-l">2차 고기 0표</span><span id="split-fish-l">2차 회 0표</span></div>
+    </div>
+    <div class="voters" id="voters"></div>
+  </section>
+
+  <section class="q" id="q1" style="--c:var(--beer)">
+    <div class="q-head">
+      <span class="tag">질문 1</span>
+      <h2>1차는 어디서 시작할까요?</h2>
+      <p>파고다타워에서 걸어서 가는 호프·주점입니다.</p>
+    </div>
+    <div class="opts" data-q="q1"></div>
+  </section>
+
+  <section class="q" id="q2" style="--c:var(--ember)">
+    <div class="q-head">
+      <span class="tag">질문 2</span>
+      <h2>2차는 어디로 갈까요?</h2>
+      <p>고기 3곳, 회 3곳 중 하나를 골라 주세요. 모두 1차에서 도보 1~3분입니다.</p>
+    </div>
+    <div class="opts" data-q="q2"></div>
+  </section>
+
+  <section class="q" id="q3" style="--c:var(--course)">
+    <div class="q-head">
+      <span class="tag">질문 3</span>
+      <h2>추천 코스 중에선 무엇이 좋나요?</h2>
+      <p>1차와 2차(회)를 묶은 코스입니다. 위 개별 선택과 달라도 괜찮아요.</p>
+    </div>
+    <div class="opts" data-q="q3"></div>
+  </section>
+
+  <section class="q" style="--c:var(--muted)">
+    <div class="q-head">
+      <span class="tag">선택</span>
+      <h2>남길 말</h2>
+      <p>못 먹는 음식, 늦게 합류, 다른 추천 장소 등을 적어 주세요. 참여자 모두에게 보입니다.</p>
+    </div>
+    <label for="note" class="eyebrow" hidden>남길 말</label>
+    <textarea id="note" maxlength="300" placeholder="예: 회를 못 먹어요 / 8시 이후 합류"></textarea>
+    <div class="notes" id="notes"></div>
+  </section>
+</div>
+
+<div class="dock">
+  <div class="dock-in">
+    <p class="status" id="status" aria-live="polite">질문 3개를 모두 고르면 제출할 수 있어요.</p>
+    <button class="submit" id="submit" type="button" disabled>투표 제출</button>
+  </div>
+</div>
+
+<script>
+const PLACES = {
+  q1: [
+    { id: "gudoro", name: "구도로통닭 종각점", walk: "파고다타워 도보 2~3분",
+      rows: [["메뉴", "전기구이 통닭, 먹태, 떡볶이, 생맥주/하이볼"], ["단체석", "1~4층 대형 매장, 16인 통석 및 예약 수용률 최상"]] },
+    { id: "hoo", name: "청계천 휴 (HOO)", walk: "파고다타워 도보 1분",
+      rows: [["메뉴", "대형 맥주 호프, 청계천 뷰, 먹태, 닭똥집, 생맥주"], ["단체석", "대형 홀 보유, 청계천변 위치라 예열 분위기 우수"]] },
+    { id: "baekse", name: "백세주마을 종각점", walk: "파고다타워 도보 3분",
+      rows: [["메뉴", "국순당 직영 모던 한식 주점, 도토리묵, 전, 하이볼"], ["단체석", "정갈한 분위기, 직장인 회식 특화로 단체석 배치 용이"]] },
+  ],
+  q2: [
+    { id: "cheonggiwa", group: "meat", name: "청기와타운 종로점", walk: "1차에서 도보 1~2분",
+      rows: [["메뉴", "수원왕갈비, 빗살로스, 전담 그릴링 서비스"], ["단체석", "대형 프라이빗 룸 및 단체석 구비 (사전 예약 필수)"]] },
+    { id: "mido", group: "meat", name: "미도갈비", walk: "1차에서 도보 1~2분",
+      rows: [["메뉴", "와규 모둠, 수제 돼지갈비, 찌개/식사 서비스"], ["단체석", "관철동 대형 연회석 구획 완비, 단체 예약 수월"]] },
+    { id: "gogikkun", group: "meat", name: "고기꾼 김춘배 종로점", walk: "1차에서 도보 1~2분",
+      rows: [["메뉴", "소+돼지 세트, 참숯 화로구이, 그릴링 서비스"], ["단체석", "파티션 단체 구획 보유, 전화 사전 구획 예약 권장"]] },
+    { id: "daechan", group: "fish", name: "대찬횟집 종각점", walk: "도보 2~3분 (관철동 블록 내)",
+      rows: [["회", "신선한 활어회 (광어·우럭·참돔·제철회)"], ["탕·새우", "서더리 매운탕 + 바삭 새우튀김"], ["단체석", "지하 대형 홀 보유, 관철동 회식 1순위로 16인 길게 붙은 통석 배치가 가장 용이"]] },
+    { id: "daenamu", group: "fish", name: "대나무숙성회관 종각점", walk: "도보 2~3분 (관철동 블록 내)",
+      rows: [["회", "감칠맛 모둠 숙성회 (광어·참돔·연어 등)"], ["탕·새우", "얼큰 해물알탕/매운탕 + 단새우 회/새우튀김"], ["단체석", "대나무 컨셉 인테리어, 고급스러운 프라이빗 룸 및 단체 연장석 구비"]] },
+    { id: "insaeng", group: "fish", name: "인생횟집 종각본점", walk: "도보 2분 (관철동 블록 내)",
+      rows: [["회", "캐주얼 모둠 숙성회 / 막회"], ["탕·새우", "서더리 매운탕/해물탕 + 단새우 회/새우튀김"], ["단체석", "모던한 매장, 테이블 연장을 통한 16인 단체석 세팅, 키오스크 주문 편의"]] },
+  ],
+  q3: [
+    { id: "classic", name: "대형 회식 정석 코스", route: ["구도로통닭 종각점", "대찬횟집 종각점"],
+      rows: [["구성", "전기구이·사이드·생맥주 → 활어회 + 매운탕 + 새우튀김"], ["분위기", "16인 공간 쾌적도 최상, 호불호 없는 신선한 활어회 정석 회식"]] },
+    { id: "mood", name: "분위기 우수 코스", route: ["백세주마을 종각점", "대나무숙성회관"],
+      rows: [["구성", "정갈한 한식·전통주·하이볼 → 숙성회 + 해물알탕 + 단새우"], ["분위기", "깔끔하고 대접받는 분위기, 프라이빗 단체 룸 활용에 최적"]] },
+    { id: "casual", name: "캐주얼 예열 코스", route: ["청계천 휴 (HOO)", "인생횟집 종각본점"],
+      rows: [["구성", "청계천 뷰 호프 생맥주 → 숙성회 + 해물탕 + 새우"], ["분위기", "청계천 뷰 생맥주로 예열한 뒤 모던한 분위기에서 편하게 즐기는 회식"]] },
+  ],
+};
+const COLOR = { q1: "var(--beer)", meat: "var(--ember)", fish: "var(--sea)", q3: "var(--course)" };
+const LABEL = { q1: "1차", q2: "2차", q3: "코스" };
+const QS = ["q1", "q2", "q3"];
+const byId = {};
+QS.forEach(q => PLACES[q].forEach(p => { byId[p.id] = p; }));
+
+const state = { draft: { q1: null, q2: null, q3: null }, votes: new Map(), uid: null, db: null, user: null, canWrite: true, loadedMine: false, saving: false };
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+function buildOptions() {
+  QS.forEach(q => {
+    const box = document.querySelector(`.opts[data-q="${q}"]`);
+    let lastGroup = null;
+    PLACES[q].forEach(p => {
+      if (p.group && p.group !== lastGroup) {
+        lastGroup = p.group;
+        const g = el("div", "group-label", p.group === "meat" ? "고기 · 갈비" : "회 · 해산물");
+        g.style.setProperty("--c", COLOR[p.group]);
+        box.append(g);
+      }
+      const b = el("button", "opt");
+      b.type = "button";
+      b.dataset.q = q; b.dataset.id = p.id;
+      b.setAttribute("aria-pressed", "false");
+      b.style.setProperty("--c", COLOR[p.group || q]);
+      const top = el("div", "opt-top");
+      top.append(el("span", "radio"));
+      const t = el("div", "opt-title");
+      t.append(el("span", "opt-name", p.name));
+      if (p.walk) t.append(el("span", "walk", p.walk));
+      top.append(t);
+      const v = el("span", "opt-votes"); v.innerHTML = "<b>0</b>표";
+      top.append(v);
+      b.append(top);
+      if (p.route) {
+        const r = el("div", "route");
+        p.route.forEach((s, i) => {
+          if (i) r.append(el("span", "arrow", "→"));
+          const st = el("span", "stop", (i ? "2차 " : "1차 ") + s);
+          st.style.setProperty("--sc", i ? "var(--sea)" : "var(--beer)");
+          r.append(st);
+        });
+        b.append(r);
+      }
+      const rows = el("div", "rows");
+      p.rows.forEach(([k, val]) => { const row = el("div", "row"); row.append(el("span", "k", k), el("span", "", val)); rows.append(row); });
+      b.append(rows);
+      const bl = el("div", "bar-line");
+      const bar = el("div", "bar"); bar.append(el("span"));
+      bl.append(bar, el("div", "faces"));
+      b.append(bl);
+      b.addEventListener("click", () => {
+        if (!state.canWrite) return;
+        state.draft[q] = state.draft[q] === p.id ? null : p.id;
+        updateSelection(); updateStatus();
+      });
+      box.append(b);
+    });
+  });
+}
+
+function updateSelection() {
+  document.querySelectorAll(".opt").forEach(b => {
+    b.setAttribute("aria-pressed", String(state.draft[b.dataset.q] === b.dataset.id));
+    b.disabled = !state.canWrite;
+  });
+}
+
+function mineSaved() { return state.uid ? state.votes.get(state.uid) : null; }
+function draftDiffers() {
+  const m = mineSaved();
+  if (!m) return true;
+  return QS.some(q => m[q] !== state.draft[q]) || (m.note || "") !== $("note").value.trim();
+}
+
+function updateStatus() {
+  const ready = QS.every(q => state.draft[q]);
+  const btn = $("submit"), st = $("status");
+  if (!state.db) { btn.disabled = true; st.textContent = "투표는 claude.ai에서 열었을 때 저장됩니다."; return; }
+  if (!state.canWrite) { btn.disabled = true; st.textContent = "보기 전용 권한이라 투표할 수 없어요. 결과만 볼 수 있습니다."; return; }
+  if (state.saving) { btn.disabled = true; st.textContent = "저장하는 중…"; return; }
+  const m = mineSaved();
+  btn.textContent = m ? "투표 수정" : "투표 제출";
+  btn.disabled = !ready || !draftDiffers();
+  if (!ready) st.textContent = `질문 ${QS.filter(q => !state.draft[q]).map(q => q.slice(1)).join(", ")}번을 골라 주세요.`;
+  else if (m && !draftDiffers()) st.textContent = "투표가 저장되어 있어요. 바꾸고 싶으면 다시 고른 뒤 수정하세요.";
+  else st.textContent = m ? "바뀐 내용을 저장하려면 투표 수정을 누르세요." : "준비 완료. 제출하면 모두에게 집계가 보입니다.";
+}
+
+async function renderResults() {
+  const votes = [...state.votes.entries()];
+  const total = votes.length;
+  $("total").textContent = total;
+  const tally = {}, who = {};
+  votes.forEach(([uid, v]) => QS.forEach(q => { if (v[q] && byId[v[q]]) { tally[v[q]] = (tally[v[q]] || 0) + 1; (who[v[q]] ||= []).push(uid); } }));
+
+  const ids = votes.map(([u]) => u);
+  const profiles = state.user && ids.length ? await state.user.profiles(ids) : {};
+  const face = uid => { const p = profiles[uid]; const img = el("img"); img.alt = (p && p.name) || "참여자"; img.title = img.alt; if (p) img.src = p.avatarUrl; return img; };
+
+  document.querySelectorAll(".opt").forEach(b => {
+    const n = tally[b.dataset.id] || 0;
+    b.querySelector(".opt-votes b").textContent = n;
+    b.querySelector(".bar span").style.width = total ? (n / total * 100) + "%" : "0";
+    const f = b.querySelector(".faces"); f.replaceChildren();
+    const list = who[b.dataset.id] || [];
+    list.slice(0, 6).forEach(u => f.append(face(u)));
+    if (list.length > 6) f.append(el("span", "more", "+" + (list.length - 6)));
+  });
+
+  const L = $("leaders"); L.replaceChildren();
+  QS.forEach(q => {
+    const ranked = PLACES[q].map(p => [p, tally[p.id] || 0]).sort((a, b) => b[1] - a[1]);
+    const top = ranked[0][1];
+    const winners = top ? ranked.filter(r => r[1] === top) : [];
+    const d = el("div", "leader");
+    d.style.setProperty("--c", q === "q2" && winners.length === 1 ? COLOR[winners[0][0].group] : COLOR[q] || "var(--ember)");
+    d.append(el("span", "k", LABEL[q]),
+      el("span", "v", winners.length ? winners.map(w => w[0].name).join(" · ") : "아직 표 없음"),
+      el("span", "n", winners.length ? `${top}표${winners.length > 1 ? " 동률" : ""}` : "—"));
+    L.append(d);
+  });
+
+  const meat = votes.filter(([, v]) => byId[v.q2]?.group === "meat").length;
+  const fish = votes.filter(([, v]) => byId[v.q2]?.group === "fish").length;
+  const sum = meat + fish;
+  $("split-meat").style.width = sum ? (meat / sum * 100) + "%" : "0";
+  $("split-fish").style.width = sum ? (fish / sum * 100) + "%" : "0";
+  $("split-meat-l").textContent = `2차 고기 ${meat}표`;
+  $("split-fish-l").textContent = `2차 회 ${fish}표`;
+
+  const V = $("voters"); V.replaceChildren();
+  ids.forEach(u => V.append(face(u)));
+
+  const N = $("notes"); N.replaceChildren();
+  votes.filter(([, v]) => v.note).sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0)).forEach(([u, v]) => {
+    const n = el("div", "note");
+    const body = el("div");
+    body.append(el("div", "who", (profiles[u] && profiles[u].name) || "참여자"), el("p", "", String(v.note).slice(0, 300)));
+    n.append(face(u), body);
+    N.append(n);
+  });
+}
+
+function notice(msg) { const n = $("notice"); n.textContent = msg; n.hidden = !msg; }
+
+$("note").addEventListener("input", updateStatus);
+$("submit").addEventListener("click", async () => {
+  if (!state.db || !state.uid || !QS.every(q => state.draft[q])) return;
+  state.saving = true; updateStatus();
+  try {
+    await state.db.doc("votes/" + state.uid).set({ ...state.draft, note: $("note").value.trim().slice(0, 300), updatedAt: Date.now() });
+    state.saving = false; updateStatus();
+    $("status").textContent = "투표가 저장됐어요. 감사합니다!";
+  } catch (e) {
+    state.saving = false;
+    if (e && e.code === "invalid_argument") { state.canWrite = false; updateSelection(); }
+    updateStatus();
+    $("status").textContent = e && e.code === "invalid_argument" ? "이 페이지에 투표할 권한이 없어요. 공유한 분께 참여자(Contributor) 권한을 요청하세요." : "저장하지 못했어요. 잠시 후 다시 눌러 주세요.";
+  }
+});
+
+buildOptions();
+updateSelection();
+updateStatus();
+renderResults();
+
+(async () => {
+  if (!window.claude || !window.claude.use) { notice("이 파일은 claude.ai 아티팩트로 열어야 투표가 공유·저장됩니다."); return; }
+  const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+  state.db = db; state.user = user;
+  if (!db) { notice("로그인한 상태에서 열어야 투표하고 결과를 볼 수 있어요."); updateStatus(); return; }
+  state.uid = user ? await user.id() : null;
+  if (!state.uid) { state.canWrite = false; notice("계정 정보를 확인할 수 없어 결과만 볼 수 있어요."); }
+  else if (user && (await user.can("data.write")) === false) { state.canWrite = false; }
+  updateSelection(); updateStatus();
+  db.collection("votes").onSnapshot(snap => {
+    state.votes = new Map(snap.docs.filter(d => d.exists).map(d => [d.id, d.data()]));
+    const mine = mineSaved();
+    if (mine && !state.loadedMine) {
+      state.loadedMine = true;
+      QS.forEach(q => { state.draft[q] = byId[mine[q]] ? mine[q] : null; });
+      $("note").value = mine.note || "";
+      updateSelection();
+    }
+    updateStatus();
+    renderResults();
+  }, () => notice("집계를 불러오지 못했어요. 페이지를 새로 고쳐 주세요."));
+})();
+</script>
