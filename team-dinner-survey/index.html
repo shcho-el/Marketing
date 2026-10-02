@@ -192,6 +192,13 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
   display: block; width: 104px; max-width: 100%; aspect-ratio: 388 / 144; background: var(--ink); opacity: .85;
   -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
 }
+#name { width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+#name:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, transparent); outline-offset: 2px; }
+.q.missing #name { border-color: var(--ember); }
+.chip { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 11.5px; font-weight: 700; color: #fff; border: 2px solid var(--surface); }
+.faces .chip { width: 22px; height: 22px; font-size: 10px; margin-left: -6px; }
+.faces .chip:first-child { margin-left: 0; }
+.note .chip { flex: none; }
 </style>
 
 <div class="wrap">
@@ -233,6 +240,15 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
       <div class="split-legend"><span><img src="img/galbi.png" alt=""><span id="split-meat-l">2차 고기 0표</span></span><span><img src="img/sashimi.png" alt=""><span id="split-fish-l">2차 회 0표</span></span></div>
     </div>
     <div class="voters" id="voters"></div>
+  </section>
+
+  <section class="q" id="who" style="--c:var(--ink)">
+    <div class="q-head">
+      <span class="tag">투표자 이름 <em class="req">필수</em></span>
+      <label for="name"><h2>누구신가요?</h2></label>
+      <p>이름을 적어야 투표할 수 있어요. 집계에 이름이 함께 표시됩니다.</p>
+    </div>
+    <input id="name" type="text" maxlength="20" autocomplete="name" placeholder="예: 홍길동">
   </section>
 
   <section class="q" id="q1" style="--c:var(--beer)">
@@ -318,6 +334,8 @@ QS.forEach(q => PLACES[q].forEach(p => { byId[p.id] = p; }));
 
 const state = { draft: { q1: null, q2: null }, votes: new Map(), uid: null, db: null, user: null, canWrite: true, loadedMine: false, saving: false };
 const $ = id => document.getElementById(id);
+const myName = () => $("name").value.trim().slice(0, 20);
+function hue(name) { let h = 0; for (const ch of name) h = (h * 31 + ch.codePointAt(0)) % 360; return `hsl(${h} 45% 45%)`; }
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 function buildOptions() {
@@ -386,12 +404,13 @@ function mineSaved() { return state.uid ? state.votes.get(state.uid) : null; }
 function draftDiffers() {
   const m = mineSaved();
   if (!m) return true;
-  return QS.some(q => m[q] !== state.draft[q]) || (m.note || "") !== $("note").value.trim();
+  return QS.some(q => m[q] !== state.draft[q]) || (m.note || "") !== $("note").value.trim() || (m.name || "") !== myName();
 }
 
 function updateStatus() {
   const ready = QS.every(q => state.draft[q]);
   QS.forEach(q => $(q).classList.toggle("missing", !state.draft[q] && state.canWrite && !isClosed()));
+  $("who").classList.toggle("missing", !myName() && state.canWrite && !isClosed());
   const btn = $("submit"), st = $("status");
   if (isClosed()) { btn.disabled = true; btn.textContent = "투표 마감"; st.textContent = "투표가 마감됐어요. 위 집계가 최종 결과입니다."; return; }
   if (!state.db) { btn.disabled = true; st.textContent = "투표는 claude.ai에서 열었을 때 저장됩니다."; return; }
@@ -399,8 +418,9 @@ function updateStatus() {
   if (state.saving) { btn.disabled = true; st.textContent = "저장하는 중…"; return; }
   const m = mineSaved();
   btn.textContent = m ? "투표 수정" : "투표 제출";
-  btn.disabled = !ready || !draftDiffers();
-  if (!ready) st.textContent = `필수: ${QS.filter(q => !state.draft[q]).map(q => LABEL[q]).join("·")} 장소를 골라야 제출할 수 있어요.`;
+  btn.disabled = !ready || !myName() || !draftDiffers();
+  if (!myName()) st.textContent = "필수: 투표자 이름을 적어야 제출할 수 있어요.";
+  else if (!ready) st.textContent = `필수: ${QS.filter(q => !state.draft[q]).map(q => LABEL[q]).join("·")} 장소를 골라야 제출할 수 있어요.`;
   else if (m && !draftDiffers()) st.textContent = "투표가 저장되어 있어요. 바꾸고 싶으면 다시 고른 뒤 수정하세요.";
   else st.textContent = m ? "바뀐 내용을 저장하려면 투표 수정을 누르세요." : "준비 완료. 제출하면 모두에게 집계가 보입니다.";
 }
@@ -418,8 +438,8 @@ async function renderResults() {
   votes.forEach(([uid, v]) => QS.forEach(q => { if (v[q] && byId[v[q]]) { tally[v[q]] = (tally[v[q]] || 0) + 1; (who[v[q]] ||= []).push(uid); } }));
 
   const ids = votes.map(([u]) => u);
-  const profiles = state.user && ids.length ? await state.user.profiles(ids) : {};
-  const face = uid => { const p = profiles[uid]; const img = el("img"); img.alt = (p && p.name) || "참여자"; img.title = img.alt; if (p) img.src = p.avatarUrl; return img; };
+  const nameOf = uid => String((state.votes.get(uid) || {}).name || "").trim() || "참여자";
+  const face = uid => { const n = nameOf(uid); const c = el("span", "chip", [...n][0]); c.title = n; c.style.background = hue(n); return c; };
 
   document.querySelectorAll(".opt").forEach(b => {
     const n = tally[b.dataset.id] || 0;
@@ -459,7 +479,7 @@ async function renderResults() {
   votes.filter(([, v]) => v.note).sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0)).forEach(([u, v]) => {
     const n = el("div", "note");
     const body = el("div");
-    body.append(el("div", "who", (profiles[u] && profiles[u].name) || "참여자"), el("p", "", String(v.note).slice(0, 300)));
+    body.append(el("div", "who", nameOf(u)), el("p", "", String(v.note).slice(0, 300)));
     n.append(face(u), body);
     N.append(n);
   });
@@ -468,11 +488,12 @@ async function renderResults() {
 function notice(msg) { const n = $("notice"); n.textContent = msg; n.hidden = !msg; }
 
 $("note").addEventListener("input", updateStatus);
+$("name").addEventListener("input", updateStatus);
 $("submit").addEventListener("click", async () => {
-  if (isClosed() || !state.db || !state.uid || !QS.every(q => state.draft[q])) return;
+  if (isClosed() || !state.db || !state.uid || !myName() || !QS.every(q => state.draft[q])) return;
   state.saving = true; updateStatus();
   try {
-    await state.db.doc("votes/" + state.uid).set({ ...state.draft, note: $("note").value.trim().slice(0, 300), updatedAt: Date.now() });
+    await state.db.doc("votes/" + state.uid).set({ ...state.draft, name: myName(), note: $("note").value.trim().slice(0, 300), updatedAt: Date.now() });
     state.saving = false; updateStatus();
     $("status").textContent = "투표가 저장됐어요. 감사합니다!";
   } catch (e) {
@@ -514,6 +535,7 @@ renderResults();
       state.loadedMine = true;
       QS.forEach(q => { state.draft[q] = byId[mine[q]] ? mine[q] : null; });
       $("note").value = mine.note || "";
+      if (mine.name) $("name").value = mine.name;
       updateSelection();
     }
     updateStatus();
