@@ -106,10 +106,10 @@ $("submit").addEventListener("click", () => {
 
 function checkDeadline() {
   const d = $("deadline");
-  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 19:00"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
+  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 21:00"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
   const left = DEADLINE - Date.now();
   const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
-  d.textContent = `10월 2일(금) 19:00 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
+  d.textContent = `10월 2일(금) 21:00 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
   setTimeout(checkDeadline, Math.min(left + 1000, 60000));
 }
 
