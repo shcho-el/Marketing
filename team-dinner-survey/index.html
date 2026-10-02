@@ -180,6 +180,12 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
   .rows, .bar-line { padding-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.q-head h2.q-title { font-size: clamp(25px, 6vw, 31px); font-weight: 800; letter-spacing: -0.025em; line-height: 1.35; margin-block: 2px 4px; }
+.q-title .hl {
+  padding: 0 6px; margin-left: -6px;
+  background: linear-gradient(transparent 50%, color-mix(in srgb, var(--c) 34%, transparent) 50%, color-mix(in srgb, var(--c) 34%, transparent) 94%, transparent 94%);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
 </style>
 
 <div class="wrap">
@@ -227,7 +233,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
     <div class="q-head has-art">
       <div class="q-art q-art-2" aria-hidden="true"><img src="img/beer.png" alt=""><img src="img/chicken.png" alt=""></div>
       <span class="tag">질문 1 <em class="req">필수</em></span>
-      <h2>1차는 어디서 시작할까요?</h2>
+      <h2 class="q-title"><span class="hl">1차는 어디서 시작할까요?</span></h2>
       <p>오피스 근처, 걸어서 가는 호프·주점입니다.</p>
     </div>
     <div class="opts" data-q="q1"></div>
@@ -237,7 +243,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
     <div class="q-head has-art">
       <div class="q-art q-art-2" aria-hidden="true"><img src="img/galbi.png" alt=""><img src="img/sashimi.png" alt=""></div>
       <span class="tag">질문 2 <em class="req">필수</em></span>
-      <h2>2차는 어디로 갈까요?</h2>
+      <h2 class="q-title"><span class="hl">2차는 어디로 갈까요?</span></h2>
       <p>고기 2곳, 회 3곳 중 하나를 골라 주세요. 모두 1차에서 도보 1~3분입니다.</p>
     </div>
     <div class="opts" data-q="q2"></div>
