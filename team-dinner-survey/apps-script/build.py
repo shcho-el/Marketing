@@ -51,7 +51,7 @@ rep('const state = { draft: { q1: null, q2: null }, votes: new Map(), uid: null,
 rep('function mineSaved() { return state.uid ? state.votes.get(state.uid) : null; }',
     'function mineSaved() { const n = myName(); return n ? state.votes.get(n) : null; }')
 rep('''  if (!state.db) { btn.disabled = true; st.textContent = "투표는 claude.ai에서 열었을 때 저장됩니다."; return; }
-  if (!state.canWrite) { btn.disabled = true; st.textContent = "보기 전용 권한이라 투표할 수 없어요. 결과만 볼 수 있습니다."; return; }''',
+  if (!state.canWrite) { btn.disabled = true; st.textContent = "투표 권한이 없어요. 링크를 보낸 분께 이메일로 '편집자' 초대를 요청하세요."; return; }''',
     '''  if (!state.online) { btn.disabled = true; st.textContent = "투표 현황을 불러오는 중…"; return; }''')
 rep('async function renderResults() {', 'function renderResults() {')
 # Replace the claude.ai save/load code with Google Apps Script calls

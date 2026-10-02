@@ -414,7 +414,7 @@ function updateStatus() {
   const btn = $("submit"), st = $("status");
   if (isClosed()) { btn.disabled = true; btn.textContent = "투표 마감"; st.textContent = "투표가 마감됐어요. 위 집계가 최종 결과입니다."; return; }
   if (!state.db) { btn.disabled = true; st.textContent = "투표는 claude.ai에서 열었을 때 저장됩니다."; return; }
-  if (!state.canWrite) { btn.disabled = true; st.textContent = "보기 전용 권한이라 투표할 수 없어요. 결과만 볼 수 있습니다."; return; }
+  if (!state.canWrite) { btn.disabled = true; st.textContent = "투표 권한이 없어요. 링크를 보낸 분께 이메일로 '편집자' 초대를 요청하세요."; return; }
   if (state.saving) { btn.disabled = true; st.textContent = "저장하는 중…"; return; }
   const m = mineSaved();
   btn.textContent = m ? "투표 수정" : "투표 제출";
@@ -500,7 +500,7 @@ $("submit").addEventListener("click", async () => {
     state.saving = false;
     if (e && e.code === "invalid_argument") { state.canWrite = false; updateSelection(); }
     updateStatus();
-    $("status").textContent = e && e.code === "invalid_argument" ? "이 페이지에 투표할 권한이 없어요. 공유한 분께 참여자(Contributor) 권한을 요청하세요." : "저장하지 못했어요. 잠시 후 다시 눌러 주세요.";
+    $("status").textContent = e && e.code === "invalid_argument" ? "투표 권한이 없어요. 링크를 보낸 분께 이메일로 '편집자' 초대를 요청하세요." : "저장하지 못했어요(" + ((e && e.code) || "unknown") + "). 잠시 후 다시 눌러 주세요.";
   }
 });
 
@@ -523,10 +523,10 @@ renderResults();
   if (!window.claude || !window.claude.use) { notice("이 파일은 claude.ai 아티팩트로 열어야 투표가 공유·저장됩니다."); return; }
   const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
   state.db = db; state.user = user;
-  if (!db) { notice("로그인한 상태에서 열어야 투표하고 결과를 볼 수 있어요."); updateStatus(); return; }
+  if (!db) { notice("claude.ai에 로그인해야 투표하고 결과를 볼 수 있어요. 오른쪽 위에서 로그인한 뒤 다시 열어 주세요."); updateStatus(); return; }
   state.uid = user ? await user.id() : null;
-  if (!state.uid) { state.canWrite = false; notice("계정 정보를 확인할 수 없어 결과만 볼 수 있어요."); }
-  else if (user && (await user.can("data.write")) === false) { state.canWrite = false; }
+  if (!state.uid) { state.canWrite = false; notice("계정 정보를 확인할 수 없어 결과만 볼 수 있어요. claude.ai에 로그인했는지 확인해 주세요."); }
+  else if (user && (await user.can("data.write")) === false) { state.canWrite = false; notice("지금 계정은 보기 전용이라 투표할 수 없어요. 링크를 보낸 분께 이메일로 '편집자' 초대를 요청한 뒤, 초대받은 계정으로 로그인해서 다시 열어 주세요."); }
   updateSelection(); updateStatus();
   db.collection("votes").onSnapshot(snap => {
     state.votes = new Map(snap.docs.filter(d => d.exists).map(d => [d.id, d.data()]));
