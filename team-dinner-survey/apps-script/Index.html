@@ -220,7 +220,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
     <div class="meta">
       <span><b>1차</b> 호프·주점</span>
       <span><b>2차</b> 고기 또는 회</span>
-      <span class="deadline" id="deadline">10월 2일(금) 17:00 마감</span>
+      <span class="deadline" id="deadline">10월 2일(금) 19:00 마감</span>
     </div>
   </header>
 
@@ -338,7 +338,7 @@ const COLOR = { q1: "var(--beer)", meat: "var(--ember)", fish: "var(--sea)" };
 const LABEL = { q1: "1차", q2: "2차" };
 const QS = ["q1", "q2"];
 const HEADCOUNT = 15;
-const DEADLINE = new Date("2026-10-02T17:00:00+09:00").getTime();
+const DEADLINE = new Date("2026-10-02T19:00:00+09:00").getTime();
 const isClosed = () => Date.now() > DEADLINE;
 const byId = {};
 QS.forEach(q => PLACES[q].forEach(p => { byId[p.id] = p; }));
@@ -549,10 +549,10 @@ $("submit").addEventListener("click", () => {
 
 function checkDeadline() {
   const d = $("deadline");
-  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 17:00"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
+  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 19:00"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
   const left = DEADLINE - Date.now();
   const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
-  d.textContent = `10월 2일(금) 17:00 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
+  d.textContent = `10월 2일(금) 19:00 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
   setTimeout(checkDeadline, Math.min(left + 1000, 60000));
 }
 
