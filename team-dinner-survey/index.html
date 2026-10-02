@@ -71,6 +71,12 @@ p { margin: 0; }
 .q-head p { color: var(--muted); font-size: 14px; }
 .group-label { font-size: 13px; font-weight: 700; color: var(--c); margin-top: 4px; }
 .opts { display: grid; gap: 10px; }
+.opt-item { display: grid; gap: 4px; }
+.map-link { justify-self: end; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 2px 4px; border-radius: 4px; }
+.map-link:hover { color: var(--ink); text-decoration: underline; }
+.map-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.deadline { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink); }
+.deadline.closed { color: var(--ember); }
 
 .opt {
   --c: var(--ink);
@@ -147,7 +153,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
     <div class="meta">
       <span><b>1차</b> 호프·주점</span>
       <span><b>2차</b> 고기 또는 회</span>
-      <span>모든 후보는 관철동·청계천 도보 3분 이내</span>
+      <span class="deadline" id="deadline">10월 2일(금) 23:59 마감</span>
     </div>
   </header>
 
@@ -179,7 +185,7 @@ textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 25%, t
     <div class="q-head">
       <span class="tag">질문 2</span>
       <h2>2차는 어디로 갈까요?</h2>
-      <p>고기 3곳, 회 3곳 중 하나를 골라 주세요. 모두 1차에서 도보 1~3분입니다.</p>
+      <p>고기 2곳, 회 3곳 중 하나를 골라 주세요. 모두 1차에서 도보 1~3분입니다.</p>
     </div>
     <div class="opts" data-q="q2"></div>
   </section>
@@ -219,12 +225,10 @@ const PLACES = {
       rows: [["메뉴", "전기구이 통닭, 먹태, 떡볶이, 생맥주/하이볼"], ["단체석", "1~4층 대형 매장, 16인 통석 및 예약 수용률 최상"]] },
     { id: "hoo", name: "청계천 휴 (HOO)", walk: "파고다타워 도보 1분",
       rows: [["메뉴", "대형 맥주 호프, 청계천 뷰, 먹태, 닭똥집, 생맥주"], ["단체석", "대형 홀 보유, 청계천변 위치라 예열 분위기 우수"]] },
-    { id: "baekse", name: "백세주마을 종각점", walk: "파고다타워 도보 3분",
-      rows: [["메뉴", "국순당 직영 모던 한식 주점, 도토리묵, 전, 하이볼"], ["단체석", "정갈한 분위기, 직장인 회식 특화로 단체석 배치 용이"]] },
+    { id: "hansabal", name: "한사발포차", link: "https://naver.me/IDFU2tcG",
+      rows: [["안내", "메뉴·위치는 네이버 지도 링크에서 확인하세요."]] },
   ],
   q2: [
-    { id: "cheonggiwa", group: "meat", name: "청기와타운 종로점", walk: "1차에서 도보 1~2분",
-      rows: [["메뉴", "수원왕갈비, 빗살로스, 전담 그릴링 서비스"], ["단체석", "대형 프라이빗 룸 및 단체석 구비 (사전 예약 필수)"]] },
     { id: "mido", group: "meat", name: "미도갈비", walk: "1차에서 도보 1~2분",
       rows: [["메뉴", "와규 모둠, 수제 돼지갈비, 찌개/식사 서비스"], ["단체석", "관철동 대형 연회석 구획 완비, 단체 예약 수월"]] },
     { id: "gogikkun", group: "meat", name: "고기꾼 김춘배 종로점", walk: "1차에서 도보 1~2분",
@@ -239,8 +243,6 @@ const PLACES = {
   q3: [
     { id: "classic", name: "대형 회식 정석 코스", route: ["구도로통닭 종각점", "대찬횟집 종각점"],
       rows: [["구성", "전기구이·사이드·생맥주 → 활어회 + 매운탕 + 새우튀김"], ["분위기", "16인 공간 쾌적도 최상, 호불호 없는 신선한 활어회 정석 회식"]] },
-    { id: "mood", name: "분위기 우수 코스", route: ["백세주마을 종각점", "대나무숙성회관"],
-      rows: [["구성", "정갈한 한식·전통주·하이볼 → 숙성회 + 해물알탕 + 단새우"], ["분위기", "깔끔하고 대접받는 분위기, 프라이빗 단체 룸 활용에 최적"]] },
     { id: "casual", name: "캐주얼 예열 코스", route: ["청계천 휴 (HOO)", "인생횟집 종각본점"],
       rows: [["구성", "청계천 뷰 호프 생맥주 → 숙성회 + 해물탕 + 새우"], ["분위기", "청계천 뷰 생맥주로 예열한 뒤 모던한 분위기에서 편하게 즐기는 회식"]] },
   ],
@@ -248,6 +250,8 @@ const PLACES = {
 const COLOR = { q1: "var(--beer)", meat: "var(--ember)", fish: "var(--sea)", q3: "var(--course)" };
 const LABEL = { q1: "1차", q2: "2차", q3: "코스" };
 const QS = ["q1", "q2", "q3"];
+const DEADLINE = new Date("2026-10-02T23:59:59+09:00").getTime();
+const isClosed = () => Date.now() > DEADLINE;
 const byId = {};
 QS.forEach(q => PLACES[q].forEach(p => { byId[p.id] = p; }));
 
@@ -266,6 +270,7 @@ function buildOptions() {
         g.style.setProperty("--c", COLOR[p.group]);
         box.append(g);
       }
+      const item = el("div", "opt-item");
       const b = el("button", "opt");
       b.type = "button";
       b.dataset.q = q; b.dataset.id = p.id;
@@ -298,11 +303,17 @@ function buildOptions() {
       bl.append(bar, el("div", "faces"));
       b.append(bl);
       b.addEventListener("click", () => {
-        if (!state.canWrite) return;
+        if (!state.canWrite || isClosed()) return;
         state.draft[q] = state.draft[q] === p.id ? null : p.id;
         updateSelection(); updateStatus();
       });
-      box.append(b);
+      item.append(b);
+      if (p.link) {
+        const a = el("a", "map-link", "네이버 지도에서 보기 ↗");
+        a.href = p.link; a.target = "_blank"; a.rel = "noopener";
+        item.append(a);
+      }
+      box.append(item);
     });
   });
 }
@@ -310,7 +321,7 @@ function buildOptions() {
 function updateSelection() {
   document.querySelectorAll(".opt").forEach(b => {
     b.setAttribute("aria-pressed", String(state.draft[b.dataset.q] === b.dataset.id));
-    b.disabled = !state.canWrite;
+    b.disabled = !state.canWrite || isClosed();
   });
 }
 
@@ -324,6 +335,7 @@ function draftDiffers() {
 function updateStatus() {
   const ready = QS.every(q => state.draft[q]);
   const btn = $("submit"), st = $("status");
+  if (isClosed()) { btn.disabled = true; btn.textContent = "투표 마감"; st.textContent = "투표가 마감됐어요. 위 집계가 최종 결과입니다."; return; }
   if (!state.db) { btn.disabled = true; st.textContent = "투표는 claude.ai에서 열었을 때 저장됩니다."; return; }
   if (!state.canWrite) { btn.disabled = true; st.textContent = "보기 전용 권한이라 투표할 수 없어요. 결과만 볼 수 있습니다."; return; }
   if (state.saving) { btn.disabled = true; st.textContent = "저장하는 중…"; return; }
@@ -394,7 +406,7 @@ function notice(msg) { const n = $("notice"); n.textContent = msg; n.hidden = !m
 
 $("note").addEventListener("input", updateStatus);
 $("submit").addEventListener("click", async () => {
-  if (!state.db || !state.uid || !QS.every(q => state.draft[q])) return;
+  if (isClosed() || !state.db || !state.uid || !QS.every(q => state.draft[q])) return;
   state.saving = true; updateStatus();
   try {
     await state.db.doc("votes/" + state.uid).set({ ...state.draft, note: $("note").value.trim().slice(0, 300), updatedAt: Date.now() });
@@ -408,7 +420,17 @@ $("submit").addEventListener("click", async () => {
   }
 });
 
+function checkDeadline() {
+  const d = $("deadline");
+  if (isClosed()) { d.textContent = "투표 마감됨 · 10월 2일(금) 23:59"; d.classList.add("closed"); updateSelection(); updateStatus(); return; }
+  const left = DEADLINE - Date.now();
+  const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
+  d.textContent = `10월 2일(금) 23:59 마감 · ${h ? h + "시간 " : ""}${m}분 남음`;
+  setTimeout(checkDeadline, Math.min(left + 1000, 60000));
+}
+
 buildOptions();
+checkDeadline();
 updateSelection();
 updateStatus();
 renderResults();
