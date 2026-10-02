@@ -123,6 +123,7 @@ TARGET_URLS = [
     "https://blog.naver.com/alswl8242/224354043913",
     "https://blog.naver.com/babsooi00/224406447603",
     "https://blog.naver.com/sim900321/224393115834",
+    "https://blog.naver.com/x0412o/224419321379",
 ]
 
 # 포스트 제목/내용에 이 단어가 포함되면 경쟁사 콘텐츠로 간주하여 제외
