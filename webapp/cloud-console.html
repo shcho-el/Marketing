@@ -737,7 +737,8 @@ const CLINIC = {
   strengths: [
     "문제성발톱치료", "내성발톱 비수술 교정치료", "발톱무좀 레이저치료",
   ],
-  devices: "오니코·AF·아톰(비가열성), 클라레 다이오드(가열성)",
+  // 가열성 장비는 힐러 하나뿐입니다. 클라레 다이오드도 비가열성입니다.
+  devices: "오니코·AF·아톰·클라레 다이오드(비가열성), 힐러(가열성)",
   steps: [
     "정밀 진단 — 발톱 두께·변색 범위와 기저질환을 확인해 조갑하 혈종·건선 등과 감별",
     "프리컨디셔닝 — 두꺼워진 발톱 층을 정리해 레이저와 도포제가 병변까지 닿을 통로 확보",
@@ -908,6 +909,18 @@ const AVOID_TERMS = [
     fix: "레이저·비수술 교정치료를 중심에 두고 약물은 병행 수단으로 쓰세요." },
 ];
 
+// 장비 분류를 거꾸로 쓰면 사실과 다른 광고가 된다. 가열성은 힐러 하나뿐이다.
+// 장비명에 분류가 바로 붙은 자리만 본다. "클라레 다이오드와 가열성 힐러"처럼
+// 나열 중에 옆 장비의 분류가 붙는 문장은 잡지 않는다. 표의 칸 경계(\n)도 넘어 본다.
+const DEVICE_FACTS = [
+  { re: /클라레\s*다이오드\s*(?:\(|는|은|:|—|-|도)?\s*(?<!비)가열성|(?<!비)가열성\s*(?:레이저|장비)?\s*(?:인|:|—|\(|은|는|\n)?\s*클라레\s*다이오드/g,
+    why: "클라레 다이오드는 비가열성 장비입니다. 가열성 장비는 힐러뿐입니다.",
+    fix: "클라레 다이오드를 비가열성으로 고치세요." },
+  { re: /힐러\s*(?:\(|는|은|:|—|-|도)?\s*비가열성|비가열성\s*(?:레이저|장비)?\s*(?:인|:|—|\(|은|는|\n)?\s*힐러/g,
+    why: "힐러는 가열성 장비입니다.",
+    fix: "힐러를 가열성으로 고치세요." },
+];
+
 // 본원이 하지 않는다고 밝히거나 타과를 안내하는 문맥이면 위반으로 보지 않는다.
 // 판단은 같은 문장 안에서만 한다. 앞뒤 몇십 자를 통째로 보면
 // "발톱 제거술을 진행합니다. 다른 병원은 하지 않습니다." 처럼 뒷문장의
@@ -1025,14 +1038,30 @@ function reviewPositioning(text) {
     return hits;
   };
 
+  const deviceHits = [];
+  for (const rule of DEVICE_FACTS) {
+    rule.re.lastIndex = 0;
+    let m;
+    while ((m = rule.re.exec(text)) !== null) {
+      deviceHits.push({
+        start: m.index, end: m.index + m[0].length, sev: BLOCK, tag: "장비 분류 오류",
+        term: m[0].replace(/\s+/g, " "), ctx: context(text, m.index, m.index + m[0].length),
+        why: rule.why, fix: rule.fix,
+      });
+    }
+  }
+
   const findings = dedupe([
     ...scan(NOT_PERFORMED, BLOCK, "미시행 시술"),
+    ...deviceHits,
     ...scan(AVOID_TERMS, WARN, "지양 표현"),
   ]);
   const blocks = findings.filter(f => f.sev === BLOCK).length;
   const warns = findings.filter(f => f.sev === WARN).length;
+  const deviceErrs = findings.filter(f => f.tag === "장비 분류 오류").length;
   const parts = [];
-  if (blocks) parts.push(`미시행 시술 언급 ${blocks}건`);
+  if (blocks - deviceErrs) parts.push(`미시행 시술 언급 ${blocks - deviceErrs}건`);
+  if (deviceErrs) parts.push(`장비 분류 오류 ${deviceErrs}건`);
   if (warns) parts.push(`지양 표현 ${warns}건`);
 
   return {
@@ -1648,6 +1677,8 @@ function buildPrompt(parsed) {
 소재지: ${CLINIC.region} / 진료지역: ${CLINIC.areas.join(", ")}
 강점 진료: ${CLINIC.strengths.join(", ")}
 보유 장비: ${CLINIC.devices}
+  장비 분류는 위 표기 그대로 쓰십시오. 가열성 장비는 힐러 하나뿐이며,
+  클라레 다이오드는 비가열성입니다. 클라레 다이오드를 가열성으로 쓰지 마십시오.
 치료 절차:
 ${CLINIC.steps.map(s => "  - " + s).join("\n")}
 인용 가능한 근거 기관:
@@ -1813,7 +1844,7 @@ function renderAll(doc, reports) {
   setGate($("gateLaw"), law.passed ? "ok" : "bad",
     law.passed ? "의료법 통과" : `의료법 ${law.blocks + law.missing.length}건`);
   setGate($("gatePos"), pos.passed ? (pos.warns ? "warn" : "ok") : "bad",
-    pos.passed ? (pos.warns ? `포지셔닝 ${pos.warns}건` : "포지셔닝 통과") : `미시행 시술 ${pos.blocks}건`);
+    pos.passed ? (pos.warns ? `포지셔닝 ${pos.warns}건` : "포지셔닝 통과") : `포지셔닝 ${pos.blocks}건`);
   const sg = seo.scores.total >= 85 ? "ok" : seo.scores.total >= 70 ? "warn" : "bad";
   setGate($("gateSeo"), sg, `검색 최적화 ${seo.scores.total}`);
 

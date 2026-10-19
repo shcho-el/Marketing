@@ -144,6 +144,11 @@ def nap_completeness() -> dict:
 def facts_block() -> str:
     """프롬프트에 주입할 '허용된 사실' 텍스트 블록."""
     devices = ", ".join(f"{d['name']}({d['type']})" for d in DEVICES)
+    heated = [d["name"] for d in DEVICES if d["type"] == "가열성"]
+    device_rule = (
+        f"장비 분류는 위 표기 그대로 쓰십시오. 가열성 장비는 {', '.join(heated) or '없음'}"
+        "뿐이며, 나머지는 모두 비가열성입니다."
+    )
     steps = "\n".join(f"  - {s['name']}: {s['detail']}" for s in TREATMENT_STEPS)
     diffs = "\n".join(f"  - {d}" for d in DIFFERENTIATORS)
     sources = "\n".join(
@@ -176,6 +181,7 @@ def facts_block() -> str:
 
 [보유 장비]
   {devices}
+  {device_rule}
 
 [치료 프로세스]
 {steps}

@@ -265,6 +265,23 @@ def main() -> int:
         not positioning.review("본원에서 내성발톱 절개를 시행합니다.")["passed"],
     )
 
+    # 장비 분류 - 가열성은 힐러뿐. 나열 문장에서 옆 장비의 분류는 잡지 않는다.
+    for ok_text in (
+        "오니코·AF·아톰·클라레 다이오드(비가열성), 힐러(가열성)",
+        "비가열성 장비인 오니코·AF·아톰·클라레 다이오드와 가열성 장비인 힐러를 보유합니다.",
+        "클라레 다이오드와 가열성 힐러를 상태에 따라 씁니다.",
+    ):
+        failures += not check(f"장비 분류 바른 표기 통과: {ok_text[:20]}…",
+                              positioning.review(ok_text)["passed"])
+    for bad_text in (
+        "클라레 다이오드(가열성)를 사용합니다.",
+        "가열성 장비인 클라레 다이오드는 열을 씁니다.",
+        "가열성 레이저\n클라레 다이오드\n열 에너지를 이용합니다",
+        "힐러는 비가열성 레이저입니다.",
+    ):
+        failures += not check(f"장비 분류 오류 차단: {bad_text[:20]}…",
+                              not positioning.review(bad_text)["passed"])
+
     print("\n[3] SEO / AEO / GEO 채점")
     audit = seo.audit(doc, doc["primary_keyword"])
     s = audit["scores"]

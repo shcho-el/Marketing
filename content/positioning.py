@@ -106,21 +106,71 @@ def _scan_group(text: str, group: list, severity: str, kind: str) -> list:
     ]
 
 
+# 장비 분류를 거꾸로 쓰면 사실과 다른 광고가 된다.
+# 장비명에 분류가 바로 붙은 자리만 본다. "클라레 다이오드와 가열성 힐러"처럼
+# 나열 중에 옆 장비의 분류가 붙는 문장은 잡지 않는다. 표의 칸 경계(\n)는 넘어 본다.
+_LABEL_AFTER = r"\s*(?:\(|는|은|:|—|-|도)?\s*"
+_LABEL_BEFORE = r"\s*(?:레이저|장비)?\s*(?:인|:|—|\(|은|는|\n)?\s*"
+_WRONG_LABEL = {"가열성": "비가열성", "비가열성": "(?<!비)가열성"}
+
+
+def _device_rules() -> list:
+    rules = []
+    heated = [d["name"] for d in clinic.DEVICES if d["type"] == "가열성"]
+    for d in clinic.DEVICES:
+        wrong = _WRONG_LABEL.get(d["type"])
+        if not wrong:
+            continue
+        name = r"\s*".join(map(re.escape, d["name"].split()))
+        rules.append({
+            "pattern": re.compile(
+                f"{name}{_LABEL_AFTER}{wrong}|{wrong}{_LABEL_BEFORE}{name}"
+            ),
+            "reason": f"{d['name']}은(는) {d['type']} 장비입니다. "
+                      f"가열성 장비는 {', '.join(heated) or '없음'}뿐입니다.",
+            "instead": f"{d['name']}을(를) {d['type']}으로 고치십시오.",
+        })
+    return rules
+
+
+_DEVICE_RULES = _device_rules()
+
+
+def _scan_devices(text: str) -> list:
+    findings = []
+    for rule in _DEVICE_RULES:
+        for m in rule["pattern"].finditer(text):
+            findings.append({
+                "kind": "장비 분류 오류",
+                "severity": BLOCK,
+                "matched": re.sub(r"\s+", " ", m.group(0)),
+                "context": _context(text, m.start(), m.end()),
+                "sentence": sentences.around(text, m.start(), m.end()),
+                "reason": rule["reason"],
+                "suggestion": rule["instead"],
+            })
+    return findings
+
+
 def review(text: str) -> dict:
     """포지셔닝 관점에서 원고를 점검한다."""
     text = text or ""
     findings = _scan_group(text, clinic.NOT_PERFORMED, BLOCK, "미시행 시술")
+    findings += _scan_devices(text)
     findings += _scan_group(text, clinic.AVOID_TERMS, WARN, "지양 표현")
 
     blocks = [f for f in findings if f["severity"] == BLOCK]
     warns = [f for f in findings if f["severity"] == WARN]
+    device_errs = [f for f in blocks if f["kind"] == "장비 분류 오류"]
 
     if not findings:
         summary = "포지셔닝 문제 없음"
     else:
         parts = []
-        if blocks:
-            parts.append(f"미시행 시술 언급 {len(blocks)}건")
+        if len(blocks) > len(device_errs):
+            parts.append(f"미시행 시술 언급 {len(blocks) - len(device_errs)}건")
+        if device_errs:
+            parts.append(f"장비 분류 오류 {len(device_errs)}건")
         if warns:
             parts.append(f"지양 표현 {len(warns)}건")
         summary = " · ".join(parts)
