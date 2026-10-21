@@ -2,7 +2,8 @@
 네이버 키워드 순위 모니터링 - 진입점
 
 사용법:
-  python main.py collect      # 지금 즉시 1회 수집
+  python main.py collect      # 지금 즉시 1회 수집 + 슬랙 전송
+  python main.py check        # 순위 수집만 (슬랙 전송 없음)
   python main.py scheduler    # 매일 자동 수집 (백그라운드 실행 권장)
   python main.py dashboard    # 웹 대시보드 실행 (http://localhost:5000)
   python main.py all          # 스케줄러 + 대시보드 동시 실행
@@ -44,6 +45,28 @@ def cmd_collect():
     print("====================\n")
 
 
+def cmd_check():
+    from database import init_db, save_results
+    from scraper import run_all_keywords
+    from config import KEYWORDS
+
+    init_db()
+    results = run_all_keywords(KEYWORDS)
+    save_results(results)
+
+    print("\n===== 수집 결과 (슬랙 전송 없음) =====")
+    for r in results:
+        ranks = r.get("ranks", [])
+        rank_str = ", ".join(f"{rk}위" for rk in ranks) if ranks else "미노출"
+        url_str = r.get("url", "")
+        title_str = r.get("title", "")
+        print(f"  {r['keyword']:<20} → {rank_str}")
+        if url_str:
+            print(f"    URL  : {url_str}")
+            print(f"    제목 : {title_str}")
+    print("========================================\n")
+
+
 def cmd_scheduler():
     from scheduler import run_scheduler
     run_scheduler()
@@ -63,6 +86,7 @@ def cmd_all():
 
 COMMANDS = {
     "collect": cmd_collect,
+    "check": cmd_check,
     "scheduler": cmd_scheduler,
     "dashboard": cmd_dashboard,
     "all": cmd_all,
