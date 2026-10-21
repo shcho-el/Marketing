@@ -145,10 +145,26 @@
       margin-bottom: 14px;
     }
 
+    .chart-card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+    .chart-card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+    .chart-wrap { position: relative; height: 320px; }
+
     @media (max-width: 640px) {
       main { padding: 16px; }
       header { padding: 14px 16px; }
       header h1 { font-size: 1.1rem; }
+      .chart-wrap { height: 240px; }
     }
   </style>
 </head>
@@ -164,6 +180,13 @@
   <main>
     <div class="last-updated" id="lastUpdated">데이터 로딩 중...</div>
     <button class="refresh-btn" onclick="location.reload()">새로고침</button>
+
+    <div class="chart-card">
+      <h2>📊 키워드별 20위권 장악률 (오늘)</h2>
+      <div class="chart-wrap">
+        <canvas id="dominanceChart"></canvas>
+      </div>
+    </div>
 
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#d4edda;"></div> 1~3위</div>
@@ -218,10 +241,61 @@
     </div>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script>
     const now = new Date();
     document.getElementById('lastUpdated').textContent =
       '페이지 기준: ' + now.toLocaleString('ko-KR');
+
+    fetch('/api/dominance')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) return;
+        const labels = data.map(d => d.keyword);
+        const counts = data.map(d => d.count);
+        const pcts = data.map(d => d.pct);
+
+        const colors = counts.map(c =>
+          c >= 7 ? '#03c75a' : c >= 4 ? '#3b82f6' : c >= 1 ? '#f59e0b' : '#e5e7eb'
+        );
+
+        new Chart(document.getElementById('dominanceChart'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: '20위권 글 수',
+              data: counts,
+              backgroundColor: colors,
+              borderRadius: 6,
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const d = data[ctx.dataIndex];
+                    return ` ${d.count}개 / ${d.depth}위권  (${d.pct}%)`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                max: 20,
+                ticks: { stepSize: 2 },
+                title: { display: true, text: '20위권 내 글 수' }
+              },
+              y: { ticks: { font: { size: 12 } } }
+            }
+          }
+        });
+      });
   </script>
 </body>
 </html>

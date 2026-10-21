@@ -37,21 +37,39 @@ def _rank_emoji(rank) -> str:
     return "🔴"
 
 
+def _bar(count: int, depth: int = 20, width: int = 10) -> str:
+    filled = round(count / depth * width) if depth > 0 else 0
+    return "█" * filled + "░" * (width - filled)
+
+
 def _build_message(results: list[dict], check_date: date) -> dict:
     """슬랙 Block Kit 메시지 생성."""
-    lines = []
+    rank_lines = []
+    dom_lines = []
+
     for r in results:
         kw = r["keyword"]
         blog_ranks = r.get("ranks") or ([r["rank"]] if r.get("rank") else [])
+        depth = r.get("checked_count") or 20
+        count = len(blog_ranks)
+        pct = round(count / depth * 100) if depth > 0 else 0
+
         if blog_ranks:
             emoji = _rank_emoji(blog_ranks[0])
             rank_str = ", ".join(f"{rk}위" for rk in blog_ranks)
         else:
             emoji = "⬜"
             rank_str = "미노출"
-        lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
+
+        rank_lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
+        dom_lines.append(
+            f"`{kw}`\n{_bar(count, depth)}  *{count}개/{depth}위권*  ({pct}%)"
+        )
 
     date_str = check_date.strftime("%Y년 %m월 %d일")
+    total_count = sum(len(r.get("ranks") or ([r["rank"]] if r.get("rank") else [])) for r in results)
+    total_depth = sum((r.get("checked_count") or 20) for r in results)
+    total_pct = round(total_count / total_depth * 100) if total_depth > 0 else 0
 
     return {
         "blocks": [
@@ -65,7 +83,15 @@ def _build_message(results: list[dict], check_date: date) -> dict:
             },
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": "\n".join(lines)},
+                "text": {"type": "mrkdwn", "text": "\n".join(rank_lines)},
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*키워드별 20위권 장악률*  (전체 {total_count}개 · *{total_pct}%*)\n\n" + "\n\n".join(dom_lines),
+                },
             },
             {"type": "divider"},
             {

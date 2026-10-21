@@ -151,6 +151,35 @@ def get_dates() -> list[str]:
     return [row["date"] for row in rows]
 
 
+def get_dominance(check_date: date | None = None) -> list[dict]:
+    """당일 키워드별 장악률 데이터 반환."""
+    if check_date is None:
+        check_date = date.today()
+    sql = """
+        SELECT keyword, ranks_all, checked_count
+        FROM rankings
+        WHERE date = ?
+        ORDER BY keyword
+    """
+    with _conn() as con:
+        rows = con.execute(sql, (check_date.isoformat(),)).fetchall()
+
+    result = []
+    for row in rows:
+        ranks = json.loads(row["ranks_all"] or "[]")
+        count = len(ranks)
+        depth = row["checked_count"] or 20
+        pct = round(count / depth * 100) if depth > 0 else 0
+        result.append({
+            "keyword": row["keyword"],
+            "count": count,
+            "depth": depth,
+            "pct": pct,
+            "ranks": ranks,
+        })
+    return result
+
+
 def get_pivot(days: int = 14) -> dict:
     data = get_recent_rankings(days)
     dates = sorted({r["date"] for r in data}, reverse=True)
