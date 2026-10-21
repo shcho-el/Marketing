@@ -108,9 +108,11 @@ def _scan_group(text: str, group: list, severity: str, kind: str) -> list:
 
 # 장비 분류를 거꾸로 쓰면 사실과 다른 광고가 된다.
 # 장비명에 분류가 바로 붙은 자리만 본다. "클라레 다이오드와 가열성 힐러"처럼
-# 나열 중에 옆 장비의 분류가 붙는 문장은 잡지 않는다. 표의 칸 경계(\n)는 넘어 본다.
-_LABEL_AFTER = r"\s*(?:\(|는|은|:|—|-|도)?\s*"
-_LABEL_BEFORE = r"\s*(?:레이저|장비)?\s*(?:인|:|—|\(|은|는|\n)?\s*"
+# 나열 중에 옆 장비의 분류가 붙는 문장은 잡지 않는다.
+# 표는 같은 행의 칸 경계(" | ")만 넘어 본다. 줄(\n)을 넘으면 윗행 힐러의
+# '가열성'과 아랫행 '오니코'가 붙어 "가열성 오니코"로 잘못 읽힌다.
+_LABEL_AFTER = r"[ \t]*(?:\(|는|은|:|—|-|도|\|)?[ \t]*"
+_LABEL_BEFORE = r"[ \t]*(?:레이저|장비)?[ \t]*(?:인|:|—|\(|은|는|\|)?[ \t]*"
 _WRONG_LABEL = {"가열성": "비가열성", "비가열성": "(?<!비)가열성"}
 
 
@@ -121,7 +123,7 @@ def _device_rules() -> list:
         wrong = _WRONG_LABEL.get(d["type"])
         if not wrong:
             continue
-        name = r"\s*".join(map(re.escape, d["name"].split()))
+        name = r"[ \t]*".join(map(re.escape, d["name"].split()))
         rules.append({
             "pattern": re.compile(
                 f"{name}{_LABEL_AFTER}{wrong}|{wrong}{_LABEL_BEFORE}{name}"

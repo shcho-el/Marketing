@@ -268,7 +268,7 @@ def cmd_publish():
       python main.py publish 3 --save    # 실제 저장, 미노출
       python main.py publish 3 --save --expose  # 실제 저장, 노출
     """
-    from content import renderer, store
+    from content import generator, renderer, store
     from publisher import publish as cms
 
     args = [a for a in sys.argv[2:] if not a.startswith("--")]
@@ -313,7 +313,7 @@ def cmd_publish():
         result = cms.publish(
             doc=doc,
             body_html=renderer.render_body(doc, include_schema=True),
-            reports=record["reports"],
+            reports=generator.evaluate(doc),  # 저장 당시가 아니라 지금 규칙으로
             expose=expose,
             dry_run=dry_run,
             headless=headless,

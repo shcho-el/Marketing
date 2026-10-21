@@ -213,6 +213,10 @@ def _normalize(doc: dict, category: str, primary: str) -> dict:
     return doc
 
 
+# 표의 칸 구분. edit.py 가 이 표시로 지적 문장이 표의 한 행임을 알아본다.
+CELL_SEP = " | "
+
+
 def _full_text(doc: dict) -> str:
     """의료법 검사 대상 텍스트(메타·해시태그·썸네일 문구 포함)."""
     parts = [
@@ -231,9 +235,12 @@ def _full_text(doc: dict) -> str:
         for b in s.get("blocks", []) or []:
             parts.append(b.get("text", ""))
             parts += b.get("items", []) or []
-            parts += b.get("headers", []) or []
+            # 표는 한 행을 한 줄로 잇는다. 칸마다 줄을 바꾸면 윗행의 마지막 칸과
+            # 아랫행의 첫 칸이 붙어, 서로 다른 행의 값을 한 문장처럼 읽게 된다.
+            if b.get("headers"):
+                parts.append(CELL_SEP.join(str(c) for c in b["headers"]))
             for row in b.get("rows", []) or []:
-                parts += [str(c) for c in row]
+                parts.append(CELL_SEP.join(str(c) for c in row))
     for f in doc.get("faq", []) or []:
         parts += [f.get("q", ""), f.get("a", "")]
     return "\n".join(p for p in parts if p)

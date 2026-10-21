@@ -270,17 +270,47 @@ def main() -> int:
         "오니코·AF·아톰·클라레 다이오드(비가열성), 힐러(가열성)",
         "비가열성 장비인 오니코·AF·아톰·클라레 다이오드와 가열성 장비인 힐러를 보유합니다.",
         "클라레 다이오드와 가열성 힐러를 상태에 따라 씁니다.",
+        # 표의 윗행 '힐러 | 가열성' 뒤에 아랫행 '오니코'가 와도 서로 다른 행이다.
+        "장비명 | 분류\n힐러 | 가열성\n오니코 | 비가열성\nAF | 비가열성",
     ):
         failures += not check(f"장비 분류 바른 표기 통과: {ok_text[:20]}…",
                               positioning.review(ok_text)["passed"])
     for bad_text in (
         "클라레 다이오드(가열성)를 사용합니다.",
         "가열성 장비인 클라레 다이오드는 열을 씁니다.",
-        "가열성 레이저\n클라레 다이오드\n열 에너지를 이용합니다",
+        "가열성 레이저 | 클라레 다이오드 | 열 에너지를 이용합니다",
         "힐러는 비가열성 레이저입니다.",
     ):
         failures += not check(f"장비 분류 오류 차단: {bad_text[:20]}…",
                               not positioning.review(bad_text)["passed"])
+
+    # 표 안의 장비 분류 - 행 단위로 읽고, 지적된 행은 그 자리에서 고칠 수 있어야 한다
+    from content import edit
+
+    def _table_doc(rows):
+        return {"sections": [{"h2": "장비", "answer": "", "blocks": [{
+            "type": "table", "text": "", "items": [],
+            "headers": ["장비명", "분류"], "rows": rows,
+        }]}]}
+
+    good = _table_doc([["힐러", "가열성"], ["오니코", "비가열성"], ["AF", "비가열성"],
+                       ["아톰", "비가열성"], ["클라레 다이오드", "비가열성"]])
+    failures += not check(
+        "장비 표(힐러 다음 행 오니코) 통과",
+        positioning.review(generator._full_text(good))["passed"],
+    )
+    bad = _table_doc([["힐러", "가열성"], ["클라레 다이오드", "가열성"]])
+    found = positioning.review(generator._full_text(bad))["findings"]
+    failures += not check("표에서 잘못 적은 분류 차단", len(found) == 1,
+                          f"{len(found)}건")
+    if found:
+        sent = found[0]["sentence"]
+        fixed = edit.replace_sentence(bad, sent, sent.replace("| 가열성", "| 비가열성"))
+        failures += not check(
+            "표의 행을 그 자리에서 고치면 통과",
+            positioning.review(generator._full_text(fixed))["passed"],
+            sent,
+        )
 
     print("\n[3] SEO / AEO / GEO 채점")
     audit = seo.audit(doc, doc["primary_keyword"])

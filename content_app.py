@@ -152,7 +152,7 @@ def sample_view() -> dict:
     if rows:
         rec = store.get(rows[0]["id"])
         if rec:
-            return view_model(rec["doc"], rec["reports"], rec["id"])
+            return view_model(rec["doc"], generator.evaluate(rec["doc"]), rec["id"])
 
     from test_content import FIXTURE
 
@@ -320,7 +320,8 @@ def api_post(post_id: int):
     record = store.get(post_id)
     if not record:
         return jsonify({"error": "글을 찾을 수 없습니다."}), 404
-    return jsonify(view_model(record["doc"], record["reports"], post_id))
+    # 화면도 업로드와 같은 기준(지금 규칙)으로 보여 준다.
+    return jsonify(view_model(record["doc"], generator.evaluate(record["doc"]), post_id))
 
 
 @app.route("/api/posts")
@@ -374,7 +375,11 @@ def api_publish():
     if not record:
         return jsonify({"error": "글을 찾을 수 없습니다."}), 404
 
-    doc, reports = record["doc"], record["reports"]
+    # 저장해 둔 검사 결과가 아니라 지금 규칙으로 다시 검사한다. 검사 규칙의
+    # 오탐을 고친 뒤에도 저장 당시의 결과로 업로드를 막으면, 고쳐도 계속
+    # "수정 필요"로 남는다.
+    doc = record["doc"]
+    reports = generator.evaluate(doc)
     expose = bool(payload.get("expose"))
     dry_run = bool(payload.get("dry_run"))
 
