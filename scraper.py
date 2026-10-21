@@ -4,11 +4,15 @@ Selenium으로 네이버 블로그 탭을 실제 브라우저와 동일하게 �
 """
 
 import re
+import json
 import time
 import logging
 from contextlib import contextmanager
+from pathlib import Path
 
 from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
+
+COOKIE_FILE = Path(__file__).parent / "naver_cookies.json"
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +103,19 @@ def _browser():
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
+
+        if COOKIE_FILE.exists():
+            driver.get("https://naver.com")
+            time.sleep(1)
+            cookies = json.loads(COOKIE_FILE.read_text(encoding="utf-8"))
+            for cookie in cookies:
+                cookie.pop("sameSite", None)
+                try:
+                    driver.add_cookie(cookie)
+                except Exception:
+                    pass
+            logger.info("네이버 쿠키 로드 완료 (%d개)", len(cookies))
+
         yield driver
     finally:
         if driver:
