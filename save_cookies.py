@@ -22,7 +22,11 @@ COOKIE_FILE = Path("naver_cookies.json")
 
 
 def save_naver_cookies():
+    import os
+    profile_dir = os.path.join(os.path.expanduser("~"), "naver_chrome_profile")
+
     options = Options()
+    options.add_argument(f"--user-data-dir={profile_dir}")
     options.add_argument("--lang=ko-KR")
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

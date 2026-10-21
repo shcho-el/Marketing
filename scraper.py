@@ -74,14 +74,18 @@ def _browser():
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
 
+    import os
+    profile_dir = os.path.join(os.path.expanduser("~"), "naver_chrome_profile")
+
     options = Options()
-    options.add_argument("--headless=new")
+    options.add_argument(f"--user-data-dir={profile_dir}")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--lang=ko-KR")
+    options.add_argument("--start-minimized")
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
