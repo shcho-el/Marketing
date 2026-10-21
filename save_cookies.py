@@ -9,7 +9,8 @@
 """
 import json
 from pathlib import Path
-import undetected_chromedriver as uc
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 try:
     from dotenv import load_dotenv
@@ -24,13 +25,24 @@ def save_naver_cookies():
     import os
     profile_dir = os.path.join(os.path.expanduser("~"), "naver_chrome_profile")
 
-    options = uc.ChromeOptions()
+    options = Options()
     options.add_argument(f"--user-data-dir={profile_dir}")
     options.add_argument("--lang=ko-KR")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
 
     driver = None
     try:
-        driver = uc.Chrome(options=options, headless=False)
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+            from selenium.webdriver.chrome.service import Service
+            driver = webdriver.Chrome(
+                service=Service(ChromeDriverManager().install()),
+                options=options,
+            )
+        except Exception:
+            driver = webdriver.Chrome(options=options)
 
         driver.get("https://naver.com")
         print("\n브라우저가 열렸습니다.")
