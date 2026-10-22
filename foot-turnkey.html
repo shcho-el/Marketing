@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>문제성발톱 턴키 업체 분석</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Nanum+Myeongjo:wght@700;800&display=swap">
+<style>
+:root{
+  --bg:#f6f8f8; --surface:#ffffff; --fg:#17201f; --muted:#5b6866; --line:#d9e1df;
+  --accent:#0f6b63; --accent-soft:#e2f0ee; --warn:#9a5b00; --warn-soft:#fbf0dc;
+  --f-display:"Nanum Myeongjo",Georgia,serif; --f-body:"IBM Plex Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111716; --surface:#18201f; --fg:#e4ecea; --muted:#9aa8a5; --line:#2c3836;
+  --accent:#5cc2b6; --accent-soft:#1d3532; --warn:#e5b25a; --warn-soft:#3a2e17; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:860px;margin:0 auto;padding-block:40px 64px;display:grid;gap:40px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:1.9rem} h2{font-size:1.3rem;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{margin:0;font-size:1.05rem}
+p{margin:0} .muted{color:var(--muted)} .meta{font-size:.85rem;color:var(--muted)}
+section{display:grid;gap:16px}
+.lead{display:grid;gap:10px}
+.summary{background:var(--accent-soft);border-radius:6px;padding:16px 18px;display:grid;gap:6px}
+.summary li{margin-left:-6px}
+ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.88rem}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--muted);font-size:.78rem;letter-spacing:.04em;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700;white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:10px;align-content:start;min-width:0}
+.card dl{margin:0;display:grid;grid-template-columns:5.5em 1fr;gap:6px 12px;font-size:.9rem}
+.card dt{color:var(--muted)} .card dd{margin:0;min-width:0}
+.tag{display:inline-block;justify-self:start;font-size:.72rem;font-weight:500;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);letter-spacing:.03em}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.note{border-left:3px solid var(--warn);padding:4px 0 4px 12px;font-size:.88rem;color:var(--muted)}
+.src a{color:var(--accent)} .src{font-size:.82rem}
+</style>
+</head>
+<body>
+<main>
+<header class="lead">
+  <p class="meta">오블리브 문제성발톱클리닉 · 경쟁 분석 · 2026.10.22 기준</p>
+  <h1>문제성발톱 턴키 솔루션 업체 분석</h1>
+  <p class="muted">병·의원에 장비·인력 교육·운영 세팅을 일괄 제공하는 업체만 정리하였다. 장비 단독 공급사와 관리샵은 제외하였다.</p>
+</header>
+
+<section>
+  <h2>요약</h2>
+  <div class="summary"><ul>
+    <li>공개 정보로 확인되는 턴키형 업체는 <b>키위메디랩·바디코스·포디풋케어</b> 3곳이며, 세컨하트는 제휴처만 확인된다.</li>
+    <li>모델은 <b>간호인력 교육형</b>(키위메디랩)과 <b>관리사 파견형</b>(바디코스·포디풋케어)으로 나뉜다.</li>
+    <li>바디코스가 2026년 9~10월 보도자료를 집중 배포하며 가장 공격적으로 확장 중이다.</li>
+    <li>인천·부천 권역에는 송내(바디코스)·구월(세컨하트) 제휴 의료기관이 이미 존재한다.</li>
+  </ul></div>
+</section>
+
+<section>
+  <h2>업체 비교</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>업체</th><th>핵심 장비</th><th>인력 모델</th><th>지원 범위</th><th>제휴처 공개</th></tr></thead>
+    <tbody>
+      <tr><td>키위메디랩</td><td>오니콕스, SM Wire (1등급 의료기기)</td><td>병원 간호인력 교육·연계</td><td>공간 설계, 장비 세팅, 교육, 응대 매뉴얼, 마케팅</td><td>개수만 공개 (수도권 29·지방 11)</td></tr>
+      <tr><td>바디코스</td><td>아톰레이저, 아톰밴드, 아톰와이어</td><td>자체 아카데미 수료 족부관리사 배치</td><td>장비 공급, 인력 교육·배치, 운영관리</td><td>병원명 공개 (보도자료)</td></tr>
+      <tr><td>포디풋케어</td><td>오니코와이어 등</td><td>테크니션 선발·교육·배치 본사 전담</td><td>공간·동선, 매뉴얼, 실비 상담·수가 세팅, 지표 관리</td><td>비공개 (익명 후기)</td></tr>
+      <tr><td>세컨하트</td><td>미확인 (3TO 계열 추정)</td><td>미확인</td><td>미확인</td><td>지역별 목록 공개</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>업체별 프로필</h2>
+  <div class="cards">
+    <article class="card">
+      <span class="tag">간호인력 교육형</span>
+      <h3>키위메디랩 (KIWI MEDI-LAB)</h3>
+      <dl>
+        <dt>업력</dt><dd>2005년부터 발질환 임상 노하우 축적 주장</dd>
+        <dt>차별점</dt><dd>1등급 의료기기·특허 교정기, '교육 후 빠지지 않는 컨설팅' 표방</dd>
+        <dt>교육</dt><dd>병원 실무 5일 과정, 수료 인증서</dd>
+        <dt>동향</dt><dd>KIMES·KHF 2026 참가, 전국 병·의원 컨설팅 확대 발표</dd>
+      </dl>
+      <p class="note">별도 블로그(forhiddener.net)는 키워드 노출용 SEO 콘텐츠 위주이다.</p>
+    </article>
+    <article class="card">
+      <span class="tag">관리사 파견형</span>
+      <h3>㈜바디코스 / ㈜바디코스플러스</h3>
+      <dl>
+        <dt>대표</dt><dd>김민수</dd>
+        <dt>차별점</dt><dd>무좀 레이저(405·635nm, 양발 동시)를 포함한 장비 일체 공급</dd>
+        <dt>인력</dt><dd>바디코스 아카데미 수료 문제성 족부관리사 현장 배치</dd>
+        <dt>동향</dt><dd>KIMES 2026 참가, 도입 병원마다 보도자료 배포</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <span class="tag">관리사 파견형</span>
+      <h3>포디풋케어 (4DFootCare)</h3>
+      <dl>
+        <dt>운영</dt><dd>포디풋케어(서울 강동구), 소개 페이지는 ㈜피오레 포디랩 사이트 게재</dd>
+        <dt>차별점</dt><dd>병원 내 입점형 센터 브랜드, 실손보험 연계 강조</dd>
+        <dt>인력</dt><dd>네일리스트·간호조무사 등을 문제성 발 전문인력으로 전환 육성</dd>
+        <dt>배경</dt><dd>모회사가 관리샵·네일샵 창업 컨설팅 병행</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <span class="tag warn">정보 제한</span>
+      <h3>세컨하트</h3>
+      <dl>
+        <dt>확인 범위</dt><dd>지역별 제휴처 목록만 확인</dd>
+        <dt>대상</dt><dd>의료기관과 관리샵(케이톡스)을 함께 제휴</dd>
+        <dt>추정</dt><dd>제휴처 국제바로병원이 독일 3TO 교정기술 도입을 공개하여 3TO 계열 공급 가능성</dd>
+      </dl>
+      <p class="note">웹상 사업 정보가 없어 턴키 여부와 지원 범위는 확인되지 않았다.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>공개 제휴 의료기관</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>업체</th><th>의료기관</th><th>지역</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>바디코스</td><td>예스성형외과의원</td><td>부천 송내</td><td>운영 3개월 만에 센터 2배 확장</td></tr>
+      <tr><td>바디코스</td><td>서울스카이정형외과의원</td><td>서울 노원</td><td>2026.10.06 풋클리닉 오픈</td></tr>
+      <tr><td>바디코스</td><td>왜관일층정형외과의원</td><td>경북 칠곡</td><td>2026.10.14 오픈, 신규 개원 시 도입</td></tr>
+      <tr><td>세컨하트</td><td>주손척척의원</td><td>인천 남동구</td><td>제휴처 목록 게재</td></tr>
+      <tr><td>세컨하트</td><td>국제바로병원</td><td>인천 남동구</td><td>3TO 교정기술 도입 공개</td></tr>
+    </tbody>
+  </table></div>
+  <p class="meta">키위메디랩·포디풋케어는 병원명을 공개하지 않는다. 세컨하트 목록 중 관리샵(케이톡스 구월·부평)은 제외하였다.</p>
+</section>
+
+<section>
+  <h2>송도 문제성발톱클리닉 시사점</h2>
+  <ul>
+    <li><b>인근 권역 선점:</b> 구월(세컨하트 2곳)과 송내(바디코스 1곳)는 인천 외곽 환자 유입 시 직접 겹치는 상권이다.</li>
+    <li><b>포지셔닝 축:</b> 턴키형 제휴처는 외부 교육 인력에 의존한다. 자체 개발 교정장치, 의료진 진단 기반 프로토콜을 차별점으로 강조할 여지가 있다.</li>
+    <li><b>확산 속도:</b> 바디코스는 보도자료 기반으로 레퍼런스를 빠르게 늘리고 있어, 인천권 추가 도입 여부를 분기별로 점검할 필요가 있다.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>추가 확인 필요</h2>
+  <ul>
+    <li>세컨하트의 사업 형태(턴키·장비 공급·교육)와 서울·경기 제휴처 전체 목록</li>
+    <li>키위메디랩 40곳 중 인천·부천 소재 병원 (네이버 플레이스·블로그의 '오니콕스' 키워드로 역추적)</li>
+    <li>각 업체의 도입 비용 구조(장비 구매·수익 배분·월 운영비)</li>
+  </ul>
+</section>
+
+<footer class="src">
+  <p class="meta">출처</p>
+  <ul>
+    <li><a href="https://kiwimedilab.com/">KIWI MEDI-LAB 홈페이지</a></li>
+    <li><a href="https://www.rapportian.com/news/articleView.html?idxno=237836">라포르시안 · KHF 2026 키위메디랩</a></li>
+    <li><a href="https://www.vegannews.co.kr/news/article.html?no=382911">비건뉴스 · 키위메디랩 컨설팅 강화</a></li>
+    <li><a href="https://www.biotimes.co.kr/news/articleView.html?idxno=35047">바이오타임즈 · 예스성형외과 풋클리닉 확장</a></li>
+    <li><a href="https://www.sisunnews.co.kr/news/articleView.html?idxno=247890">시선뉴스 · 서울스카이정형외과 풋클리닉</a></li>
+    <li><a href="https://www.rapportian.com/news/articleView.html?idxno=241329">라포르시안 · 왜관일층정형외과 풋클리닉</a></li>
+    <li><a href="https://www.biotimes.co.kr/news/articleView.html?idxno=30418">바이오타임즈 · 바디코스플러스 KIMES 2026</a></li>
+    <li><a href="https://4dfootcare.com/">포디풋케어 홈페이지</a></li>
+    <li><a href="https://fiorenail.com/%ED%8F%AC%EB%94%94%ED%92%8B%EC%BC%80%EC%96%B4/">포디랩 · 포디풋케어 소개</a></li>
+    <li><a href="https://www.smartbaro.com/handfoot/10">국제바로병원 · 내성발톱</a></li>
+  </ul>
+</footer>
+</main>
+</body>
+</html>
