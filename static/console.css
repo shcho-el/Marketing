@@ -484,7 +484,11 @@ pre.code {
   z-index: 100; padding: 11px 20px; border-radius: 100px;
   background: var(--ink); color: var(--ground);
   font-size: .83rem; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,.16);
+  /* 안내가 여러 줄일 때도 읽히게 */
+  white-space: pre-line; text-align: center; line-height: 1.6;
+  max-width: min(600px, calc(100vw - 32px));
 }
+.toast.long { border-radius: 14px; }
 .toast[data-kind="bad"] { background: var(--bad); color: #fff; }
 .toast[data-kind="ok"]  { background: var(--ok);  color: #fff; }
 

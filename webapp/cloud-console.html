@@ -521,6 +521,8 @@ pre.code {
   .spin { animation: none; }
 }
 .load-foot { margin-top: 18px; font-size: .78rem; color: var(--ink-3); }
+.load-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.load-actions .btn { flex: 1 1 140px; }
 .load-error {
   margin-top: 16px; padding: 13px 15px; border-radius: var(--r);
   background: var(--bad-bg); color: var(--bad); font-size: .83rem; line-height: 1.65;
@@ -555,6 +557,10 @@ pre.code {
     <p class="load-foot" id="loadFoot">
       의료법 검사에 걸리면 자동으로 다시 씁니다. 그만큼 시간이 더 걸립니다.
     </p>
+    <div class="load-actions" id="loadActions">
+      <button class="btn quiet" type="button" id="cancelGen">취소</button>
+      <button class="btn quiet" type="button" id="cancelIdeas">취소하고 새 제목 추천</button>
+    </div>
     <div id="loadError"></div>
   </div>
 </div>
@@ -2188,6 +2194,7 @@ function loadOpen(title) {
   $("loadError").innerHTML = "";
   $("loadBar").style.width = "0%";
   $("loadFoot").hidden = false;
+  $("loadActions").hidden = false;
   $("loadModal").hidden = false;
   loadStart = Date.now();
   clearInterval(loadTick);
@@ -2218,6 +2225,7 @@ function loadFail(message) {
   const running = $("loadSteps").querySelector('.step[data-state="run"]');
   if (running) running.dataset.state = "fail";
   $("loadFoot").hidden = true;
+  $("loadActions").hidden = true;
   $("loadError").innerHTML =
     `<div class="load-error">${esc(message)}</div>
      <button class="btn quiet" style="margin-top:12px;width:100%" id="loadCloseBtn">닫기</button>`;
@@ -2227,6 +2235,32 @@ function loadFail(message) {
 
 /* 화면이 다시 그려질 틈을 준다. 아니면 단계 표시가 한꺼번에 몰려 보인다. */
 const paint = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+/* ── 취소 ──
+   생성은 1~3분 걸린다. 제목을 잘못 넣었거나 관점을 바꾸고 싶을 때 끝까지
+   기다리게 하면 안 된다. 요청을 끊고, 결과는 이력에 남기지 않는다. */
+let genAbort = null;
+
+function cancelled() {
+  const e = new Error("취소했습니다.");
+  e.code = "cancelled";
+  return e;
+}
+
+/** 요청 사이사이(검사·화면 갱신)에 취소가 눌렸는지 본다. */
+function stopIfCancelled(signal) {
+  if (signal.aborted) throw cancelled();
+}
+
+function cancelGeneration(thenSuggest) {
+  if (genAbort) genAbort.abort();
+  loadClose();
+  $("genHint").textContent = thenSuggest
+    ? "취소했습니다. 아래 추천 제목 중에서 고르거나 제목을 바꿔 다시 생성하세요."
+    : "취소했습니다. 제목이나 관점을 바꿔 다시 생성하세요.";
+  $("titleInput").focus();
+  if (thenSuggest) suggestTitles();
+}
 
 /* ── 생성 ── */
 async function generate() {
@@ -2244,6 +2278,10 @@ async function generate() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>작성 중';
   $("genHint").textContent = "";
+  if (genAbort) genAbort.abort();
+  const ctrl = new AbortController();
+  genAbort = ctrl;
+  const signal = ctrl.signal;
   loadOpen(raw);
 
   const summary = r => {
@@ -2261,7 +2299,8 @@ async function generate() {
 
     loadStep("draft", "start", "Claude가 초안을 쓰는 중입니다. 1~3분 걸립니다.");
     const prompt = buildPrompt(parsed, angle);
-    let doc = normalize(await sampleNs.json(prompt, { modelTier: "complex" }), parsed);
+    let doc = normalize(await sampleNs.json(prompt, { modelTier: "complex", signal }), parsed);
+    stopIfCancelled(signal);
     doc._angle = angle.id;
     loadStep("draft", "done", `소제목 ${(doc.sections || []).length}개 · FAQ ${(doc.faq || []).length}개`);
 
@@ -2283,7 +2322,8 @@ async function generate() {
         { role: "user", content: prompt },
         { role: "assistant", content: JSON.stringify(doc) },
         { role: "user", content: repairPrompt(doc, reports.law, reports.pos, reports.seo) },
-      ], { modelTier: "complex" }), parsed);
+      ], { modelTier: "complex", signal }), parsed);
+      stopIfCancelled(signal);
       fixed._angle = angle.id;
       const nr = evaluate(fixed);
       const nHard = nr.law.blocks + nr.law.missing.length + nr.pos.blocks;
@@ -2296,6 +2336,7 @@ async function generate() {
 
     loadStep("save", "start");
     await paint();
+    stopIfCancelled(signal);
     renderAll(doc, reports);
     $("genHint").textContent = reports.law.passed && reports.pos.passed
       ? "검사를 통과했습니다. CMS 필드와 본문을 복사해 쓰세요."
@@ -2306,6 +2347,8 @@ async function generate() {
     loadClose();
   } catch (e) {
     const code = e && e.code;
+    // 취소는 오류가 아니다. 창은 cancelGeneration 이 이미 닫았다.
+    if (code === "cancelled" || signal.aborted) return;
     const message =
       code === "rate_limited" ? "요청이 몰렸습니다. 잠시 후 다시 시도하세요."
       : code === "invalid_json" ? "응답을 읽지 못했습니다. 제목을 조금 더 구체적으로 써 보세요."
@@ -2314,6 +2357,7 @@ async function generate() {
     $("genHint").textContent = message;
     loadFail(message);
   } finally {
+    if (genAbort === ctrl) genAbort = null;
     btn.disabled = false;
     btn.textContent = "원고 생성";
   }
@@ -2362,6 +2406,8 @@ $("titleInput").addEventListener("input", () => {
 });
 $("runBtn").addEventListener("click", generate);
 $("ideaBtn").addEventListener("click", suggestTitles);
+$("cancelGen").addEventListener("click", () => cancelGeneration(false));
+$("cancelIdeas").addEventListener("click", () => cancelGeneration(true));
 $("angleSelect").addEventListener("change", updateAngleNote);
 
 $("lintBtn").addEventListener("click", () => {
