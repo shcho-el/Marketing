@@ -434,6 +434,19 @@ pre.code {
 }
 .empty { color: var(--ink-3); font-size: .83rem; padding: 8px 0; }
 
+/* ─── 제목 추천 ───────────────────────────────────────
+   관점이 다른 제목을 나란히 보여 줍니다. 누르면 제목과 관점이 함께 들어갑니다. */
+.ideas { display: flex; flex-direction: column; margin-top: 10px; }
+.ideas button {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px;
+  width: 100%; text-align: left; padding: 9px 0; border: 0;
+  border-bottom: 1px solid var(--line-soft); background: transparent; cursor: pointer;
+}
+.ideas button:hover .it { color: var(--accent-deep); }
+.ideas .it { font-size: .84rem; color: var(--ink); line-height: 1.5; transition: color .15s ease; }
+.ideas .ia { font-size: .72rem; color: var(--ink-3); }
+.angle-note { font-size: .74rem; color: var(--ink-3); margin-top: 6px; }
+
 .spin {
   width: 13px; height: 13px; border-radius: 50%; flex: none;
   border: 2px solid currentColor; border-right-color: transparent;
@@ -574,6 +587,15 @@ pre.code {
         <textarea id="titleInput" rows="2"
           placeholder="송도 발톱무좀 병원 선택 기준"></textarea>
         <p class="hint" id="parseHint">카테고리와 주키워드는 제목에서 자동으로 잡습니다.</p>
+        <button class="btn quiet tiny" id="ideaBtn" type="button" style="align-self:flex-start">
+          제목 추천 받기</button>
+        <div class="ideas" id="ideas"></div>
+      </div>
+
+      <div class="field">
+        <label for="angleSelect">글의 관점</label>
+        <select id="angleSelect"></select>
+        <p class="angle-note" id="angleNote"></p>
       </div>
 
       <button class="btn" id="runBtn" style="width:100%">원고 생성</button>
@@ -1666,9 +1688,216 @@ const SAMPLE_DOC = {
 };
 
 /* ══════════════════════════════════════════════════════════════
+   글의 관점 — 같은 뼈대가 반복되지 않게
+
+   관점을 정하지 않으면 모델은 늘 "증상 → 치료 순서 → 장비 → 기간"으로
+   씁니다. 지역명만 다른 비슷한 글이 쌓이면 독자에게도 지루하고, 검색엔진은
+   서로 같은 글로 보아 순위를 나눠 먹습니다. 글마다 관점을 하나 정해 주고,
+   기본값은 최근에 가장 덜 쓴 관점을 고릅니다.
+   ══════════════════════════════════════════════════════════════ */
+const ALL_CATS = ["발톱무좀치료", "내성발톱치료", "문제성발톱"];
+const ANGLES = [
+  { id: "spread", label: "생활 속 감염 경로", cats: ["발톱무좀치료", "문제성발톱"],
+    brief: "발톱무좀이 어디서 어떻게 옮고 머무는지(수영장·사우나·헬스장·공용 슬리퍼·발톱깎이·신발 속 습기)를 생활 장면 중심으로 풀어 줍니다.",
+    shape: "○○에서 옮는다? 발톱무좀이 생활 속에서 퍼지는 경로" },
+  { id: "myth", label: "오해와 사실", cats: ALL_CATS,
+    brief: "많이 퍼진 오해(아프지 않으면 괜찮다, 민간요법, 한 번 나으면 끝, 발톱을 뽑아야 한다 등)를 하나씩 짚고 사실을 설명합니다. 오해·사실 표를 씁니다.",
+    shape: "발톱무좀에 대한 흔한 오해 5가지" },
+  { id: "season", label: "계절·상황별 주의", cats: ALL_CATS,
+    brief: "지금 계절이나 특정 상황(장마, 여름 샌들, 겨울 부츠와 난방, 러닝·등산, 수영 강습)에서 발이 겪는 변화와 생활 수칙을 다룹니다.",
+    shape: "겨울 부츠 신는 계절, 발톱 상태가 나빠지는 이유" },
+  { id: "lifestyle", label: "직업·생활 패턴별", cats: ALL_CATS,
+    brief: "안전화를 오래 신는 직장인, 오래 서 있는 직업, 축구·러닝 등 운동을 즐기는 사람, 앞코가 좁은 구두를 신는 사람처럼 생활 패턴별로 발톱이 받는 부담과 대처를 다룹니다.",
+    shape: "하루 종일 안전화 신는 분들이 발톱을 살펴야 하는 이유" },
+  { id: "selfcheck", label: "셀프 체크", cats: ALL_CATS,
+    brief: "독자가 거울이나 맨눈으로 확인할 수 있는 신호를 체크리스트로 정리하고, 어떤 신호면 진료로 확인하는 것이 좋은지 기준을 줍니다. 자가 진단을 단정하지 않습니다.",
+    shape: "내 발톱, 진료가 필요한 상태일까? 체크리스트 7가지" },
+  { id: "compare", label: "비슷한 질환 비교", cats: ALL_CATS,
+    brief: "겉모습이 비슷한 상태(조갑하 혈종, 조갑 건선, 외상성 변형, 단순 발가락 통증 등)와 어떻게 다른지 비교표 중심으로 설명합니다.",
+    shape: "발톱이 까맣게 변했다면, 무좀일까 멍일까" },
+  { id: "habit", label: "발톱 깎기·신발 습관", cats: ["내성발톱치료", "문제성발톱"],
+    brief: "발톱을 깎는 모양과 길이, 신발 앞코와 사이즈, 양말 고르는 법 등 일상 습관이 발톱에 미치는 영향을 구체적인 방법 중심으로 다룹니다.",
+    shape: "일자로 깎으라는데, 내성발톱 예방하는 발톱 깎는 법" },
+  { id: "during", label: "치료 중 생활 가이드", cats: ALL_CATS,
+    brief: "치료를 받는 기간에 운동·목욕·수영·네일아트·신발을 어떻게 해야 하는지, 생활에서 자주 묻는 질문을 다룹니다. 치료 방법 자체는 짧게만 언급합니다.",
+    shape: "발톱무좀 치료 중 수영·운동 해도 될까?" },
+  { id: "relapse", label: "재발·재감염 줄이기", cats: ["발톱무좀치료", "문제성발톱"],
+    brief: "좋아진 뒤 다시 생기는 이유(신발 속 진균, 가족 간 전파, 발가락 사이 무좀)와 이를 줄이는 생활 환경 정리법을 다룹니다.",
+    shape: "발톱무좀이 자꾸 다시 생기는 이유, 신발장부터 보세요" },
+  { id: "family", label: "가족 함께 살피기", cats: ALL_CATS,
+    brief: "부모님·배우자·아이 등 가족의 발톱을 함께 살펴야 하는 이유와 살펴볼 점, 집 안 물건 관리법을 다룹니다. 특정 대상의 안전성을 단정하지 않습니다.",
+    shape: "부모님 발톱이 두꺼워졌다면 살펴볼 것들" },
+  { id: "neglect", label: "방치하면 생기는 일", cats: ALL_CATS,
+    brief: "그냥 두었을 때 발톱 상태가 어떻게 진행될 수 있는지(두께 증가, 변형, 걸음걸이 변화, 주변 발톱·피부로의 확산)를 불안을 과장하지 않고 사실대로 설명합니다.",
+    shape: "아프지 않아서 두었던 발톱, 시간이 지나면 어떻게 될까" },
+  { id: "prepare", label: "진료 전 준비·병원 고르기", cats: ALL_CATS,
+    brief: "진료를 받기 전 정리해 두면 좋은 정보(증상 시작 시기, 복용 약, 기저질환, 이전 치료)와 진료 기관을 고를 때 확인할 질문을 체크리스트로 다룹니다.",
+    shape: "발톱 진료 받기 전에 메모해 가면 좋은 5가지" },
+  { id: "process", label: "치료 과정 Q&A", cats: ALL_CATS,
+    brief: "진단부터 치료, 경과 추적까지 본원의 치료 과정을 설명합니다. 이미 여러 번 쓴 관점이니 다른 관점을 먼저 고려하십시오.",
+    shape: "(가장 많이 쓴 관점)" },
+];
+const ANGLE_BY_ID = Object.fromEntries(ANGLES.map(a => [a.id, a]));
+
+let historyRows = [];   // db 이력. 관점 선택과 중복 회피에 쓴다.
+
+/** 예전 이력에는 관점이 없다. 그 글들은 모두 치료 과정 위주였다. */
+const rowAngle = r => r.angle || "process";
+
+/** 최근 이력에서 가장 덜 쓴 관점. 같으면 오래전에 쓴 쪽. */
+function pickAngle(category) {
+  const fits = ANGLES.filter(a => a.cats.includes(category) && a.id !== "process");
+  const recent = historyRows.slice(0, 30);
+  const count = id => recent.filter(r => rowAngle(r) === id).length;
+  const lastUsed = id => {
+    const i = recent.findIndex(r => rowAngle(r) === id);
+    return i === -1 ? Infinity : i;
+  };
+  // 정렬은 안정적이라 동률이면 목록 순서를 따른다. 무작위로 고르면
+  // 제목을 한 글자 칠 때마다 '자동' 관점이 바뀌어 보인다.
+  fits.sort((a, b) => (count(a.id) - count(b.id)) || (lastUsed(b.id) - lastUsed(a.id)));
+  return fits[0] || ANGLE_BY_ID.process;
+}
+
+/** 최근에 쓴 제목과 자주 반복된 소제목. 지시문에 넣어 피하게 한다. */
+function recentContext(limit = 15) {
+  const titles = historyRows.slice(0, limit).map(r => r.h1).filter(Boolean);
+  const h2count = {};
+  for (const r of historyRows.slice(0, 30)) {
+    try {
+      for (const s of (JSON.parse(r.doc).sections || [])) {
+        const k = (s.h2 || "").trim();
+        if (k) h2count[k] = (h2count[k] || 0) + 1;
+      }
+    } catch (e) { /* 손상된 이력은 건너뛴다 */ }
+  }
+  const h2s = Object.entries(h2count).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k]) => k);
+  return { titles, h2s };
+}
+
+function angleBlock(angle) {
+  const { titles, h2s } = recentContext();
+  const treatCap = angle.id === "process"
+    ? "이 글은 치료 과정을 다루지만, 아래 최근 글의 소제목 구성을 그대로 따르지 마십시오."
+    : `본원의 진단·치료 절차, 장비, 치료 기간은 이 글의 주제가 아닙니다.
+  - 이 내용은 마지막 h2 하나 안에서 2~4문장으로만 다룹니다. 별도 h2로 나누지 마십시오.
+  - 장비 목록 표, 치료 순서 단계 목록은 쓰지 마십시오.
+  - 나머지 h2는 모두 위 관점의 내용으로 채웁니다.`;
+  return `
+[이번 글의 관점 — 가장 중요]
+관점: ${angle.label}
+${angle.brief}
+${treatCap}
+
+[제목(h1) 쓰는 법]
+- 관점이 제목에서 드러나야 합니다. 예시 형태: "${angle.shape}"
+- 질문형, 숫자형(○가지), 상황형, 오해·반전형, 체크리스트형 중 관점에 맞는 것을 고르십시오.
+- "진단부터 레이저 치료까지", "어떻게 치료하나요", "치료 절차 안내", "치료 과정" 같은
+  표현은 최근 글에 너무 많이 쓰였습니다. 치료 과정 관점이 아니면 쓰지 마십시오.
+- 원래 제목의 표현에 얽매이지 말고, 주키워드와 지역명만 지키면서 새로 쓰십시오.
+${titles.length ? `
+[최근에 쓴 제목 — 비슷하게 쓰지 마십시오]
+${titles.map(t => "  - " + t).join("\n")}` : ""}${h2s.length ? `
+
+[최근 글에 반복된 소제목 — 같거나 비슷한 h2를 쓰지 마십시오]
+${h2s.map(t => "  - " + t).join("\n")}` : ""}
+`;
+}
+
+function renderAngleSelect() {
+  const sel = $("angleSelect");
+  const keep = sel.value;
+  const parsed = parseTitle($("titleInput").value);
+  const cat = parsed ? parsed.category : "문제성발톱";
+  const auto = pickAngle(cat);
+  const recent = historyRows.slice(0, 30);
+  const used = id => recent.filter(r => rowAngle(r) === id).length;
+  sel.innerHTML =
+    `<option value="auto">자동 — 최근에 덜 쓴 관점 (지금: ${esc(auto.label)})</option>` +
+    ANGLES.filter(a => a.cats.includes(cat)).map(a =>
+      `<option value="${a.id}">${esc(a.label)}${used(a.id) ? ` · 최근 ${used(a.id)}편` : ""}</option>`
+    ).join("");
+  sel.value = [...sel.options].some(o => o.value === keep) ? keep : "auto";
+  sel.dataset.auto = auto.id;
+  updateAngleNote();
+}
+
+function updateAngleNote() {
+  const sel = $("angleSelect");
+  const a = ANGLE_BY_ID[sel.value === "auto" ? sel.dataset.auto : sel.value];
+  $("angleNote").textContent = a ? a.brief : "";
+}
+
+function chosenAngle() {
+  const sel = $("angleSelect");
+  return ANGLE_BY_ID[sel.value === "auto" ? sel.dataset.auto : sel.value] || ANGLE_BY_ID.process;
+}
+
+/* ── 제목 추천 ── */
+function ideaPrompt(parsed) {
+  const { titles } = recentContext(30);
+  const fits = ANGLES.filter(a => a.cats.includes(parsed.category) && a.id !== "process");
+  return `${CLINIC.official} ${CLINIC.unit} 블로그 글의 제목 후보를 만듭니다.
+
+주키워드: ${parsed.primary_keyword}
+카테고리: ${parsed.category}
+
+조건
+- 제목 8개. 각 제목은 아래 관점 중 서로 다른 관점을 하나씩 씁니다.
+- 모든 제목에 주키워드("${parsed.primary_keyword}")를 그대로 넣고, 지역명(송도·인천·연수구 중 하나)이 들어가게 합니다.
+- 25~45자. 질문형·숫자형·상황형·오해형·체크리스트형을 섞습니다.
+- "진단부터 레이저 치료까지", "어떻게 치료하나요", "치료 절차 안내" 같은 치료 과정형 제목은 쓰지 않습니다.
+- 의료법상 금지 표현(최고, 유일, 완치, 100%, 후기, 무료, 할인, 전문병원, 부작용 없음 등)은 쓰지 않습니다.
+
+관점 목록 (id: 설명)
+${fits.map(a => `  - ${a.id}: ${a.label} — 예) ${a.shape}`).join("\n")}
+${titles.length ? `
+최근에 쓴 제목 — 이와 비슷하지 않게
+${titles.map(t => "  - " + t).join("\n")}` : ""}
+
+JSON 하나만 출력하십시오: {"titles": [{"title": string, "angle": string}]}`;
+}
+
+async function suggestTitles() {
+  const btn = $("ideaBtn"), box = $("ideas");
+  const raw = $("titleInput").value.trim();
+  const parsed = parseTitle(raw || "송도 발톱무좀");
+  if (!raw) $("parseHint").textContent = "제목 칸이 비어 있어 '송도 발톱무좀' 기준으로 추천합니다. 키워드만 넣어도 됩니다.";
+  if (!sampleNs) { box.innerHTML = '<p class="empty">이 화면에서는 추천을 쓸 수 없습니다.</p>'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>추천 받는 중';
+  box.innerHTML = "";
+  try {
+    const out = await sampleNs.json(ideaPrompt(parsed), { modelTier: "complex" });
+    const ideas = (out && out.titles || [])
+      .filter(t => t && t.title)
+      // 제목만으로도 의료법 금지 표현이 걸리면 보여 주지 않는다.
+      .filter(t => !reviewLaw(t.title).findings.some(f => f.sev === BLOCK))
+      .filter(t => reviewPositioning(t.title).passed);
+    box.innerHTML = ideas.length ? ideas.map((t, i) => {
+      const a = ANGLE_BY_ID[t.angle];
+      return `<button type="button" data-i="${i}"><span class="it">${esc(t.title)}</span>
+        <span class="ia">${esc(a ? a.label : "관점 미지정")}</span></button>`;
+    }).join("") : '<p class="empty">추천을 만들지 못했습니다. 다시 눌러 보세요.</p>';
+    box.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      const t = ideas[+b.dataset.i];
+      $("titleInput").value = t.title;
+      $("titleInput").dispatchEvent(new Event("input"));
+      if (ANGLE_BY_ID[t.angle]) { $("angleSelect").value = t.angle; updateAngleNote(); }
+      box.innerHTML = "";
+    }));
+  } catch (e) {
+    box.innerHTML = `<p class="empty">추천을 받지 못했습니다: ${esc((e && e.message) || e)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "제목 추천 받기";
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    Claude 호출
    ══════════════════════════════════════════════════════════════ */
-function buildPrompt(parsed) {
+function buildPrompt(parsed, angle) {
   const tags = suggestHashtags(parsed.category, parsed.primary_keyword);
   const regionNote = parsed.hasRegion ? ""
     : "\n제목에 지역 신호가 없습니다. h1과 본문에 '송도' 또는 '인천'을 자연스럽게 넣으십시오.";
@@ -1726,7 +1955,7 @@ ${REQUIRED_TOPICS.map(t => `  - ${t.label}: ${t.hint}`).join("\n")}
 원래 제목: ${parsed.title}${regionNote}
 해시태그 후보: ${tags.join(" ")}
 후보 중 주제에 맞는 것을 고르고 본문 핵심어 기반 태그를 2~3개 더해 총 10~14개로 구성하십시오.
-
+${angle ? angleBlock(angle) : ""}
 아래 JSON 객체 하나만 출력하십시오. 다른 말을 덧붙이지 마십시오.
 {
   "h1": string,
@@ -2004,6 +2233,7 @@ async function generate() {
   const raw = $("titleInput").value.trim();
   const parsed = parseTitle(raw);
   if (!parsed) { $("genHint").textContent = "제목을 입력하세요."; return; }
+  const angle = chosenAngle();
   if (!sampleNs) {
     $("genHint").innerHTML =
       '이 화면에서는 생성 기능을 쓸 수 없습니다. 저장소의 파이썬 앱에서 <code>python main.py auto "제목"</code>을 쓰세요.';
@@ -2027,10 +2257,12 @@ async function generate() {
     loadStep("parse", "start");
     await paint();
     loadStep("parse", "done",
-      `카테고리 ${parsed.category} · 주키워드 ${parsed.primary_keyword}`);
+      `카테고리 ${parsed.category} · 주키워드 ${parsed.primary_keyword} · 관점 ${angle.label}`);
 
     loadStep("draft", "start", "Claude가 초안을 쓰는 중입니다. 1~3분 걸립니다.");
-    let doc = normalize(await sampleNs.json(buildPrompt(parsed), { modelTier: "complex" }), parsed);
+    const prompt = buildPrompt(parsed, angle);
+    let doc = normalize(await sampleNs.json(prompt, { modelTier: "complex" }), parsed);
+    doc._angle = angle.id;
     loadStep("draft", "done", `소제목 ${(doc.sections || []).length}개 · FAQ ${(doc.faq || []).length}개`);
 
     loadStep("check", "start");
@@ -2048,10 +2280,11 @@ async function generate() {
       loadStep("repair", "start",
         hard ? `걸린 표현을 고쳐 다시 쓰는 중 (${i + 1}차)` : `점수를 보완해 다시 쓰는 중 (${i + 1}차)`);
       const fixed = normalize(await sampleNs.json([
-        { role: "user", content: buildPrompt(parsed) },
+        { role: "user", content: prompt },
         { role: "assistant", content: JSON.stringify(doc) },
         { role: "user", content: repairPrompt(doc, reports.law, reports.pos, reports.seo) },
       ], { modelTier: "complex" }), parsed);
+      fixed._angle = angle.id;
       const nr = evaluate(fixed);
       const nHard = nr.law.blocks + nr.law.missing.length + nr.pos.blocks;
       if (nHard < hard || (nHard === 0 && nr.seo.scores.total >= reports.seo.scores.total - 5)) {
@@ -2092,6 +2325,7 @@ async function saveHistory(doc, reports) {
   try {
     await dbNs.doc(`posts/${Date.now()}`).set({
       h1: doc.h1, category: doc.category, keyword: doc.primary_keyword,
+      angle: doc._angle || "process",
       total: reports.seo.scores.total,
       lawPassed: reports.law.passed, posPassed: reports.pos.passed,
       doc: JSON.stringify(doc), at: Date.now(),
@@ -2100,10 +2334,12 @@ async function saveHistory(doc, reports) {
 }
 
 function renderHistory(rows) {
+  historyRows = rows;
+  renderAngleSelect();
   const el = $("hist");
   if (!rows.length) { el.innerHTML = '<p class="empty">아직 없습니다.</p>'; return; }
   el.innerHTML = rows.map(r =>
-    `<button data-doc="${esc(r.id)}"><span class="t">${esc(r.h1 || "제목 없음")}</span>
+    `<button data-doc="${esc(r.id)}" title="${esc((ANGLE_BY_ID[rowAngle(r)] || {}).label || "")}"><span class="t">${esc(r.h1 || "제목 없음")}</span>
       <span class="s">${r.total ?? "-"}</span></button>`).join("");
   el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
     const row = rows.find(r => r.id === b.dataset.doc);
@@ -2122,8 +2358,11 @@ $("titleInput").addEventListener("input", () => {
   $("parseHint").textContent = p
     ? `카테고리 ${p.category} · 주키워드 ${p.primary_keyword}${p.monitored ? " (순위 모니터링 중)" : ""}`
     : "카테고리와 주키워드는 제목에서 자동으로 잡습니다.";
+  renderAngleSelect();
 });
 $("runBtn").addEventListener("click", generate);
+$("ideaBtn").addEventListener("click", suggestTitles);
+$("angleSelect").addEventListener("change", updateAngleNote);
 
 $("lintBtn").addEventListener("click", () => {
   const text = $("lintInput").value;
@@ -2342,6 +2581,7 @@ $("exportSave").addEventListener("click", async () => {
 
 /* ── 기동 ── */
 renderAll(SAMPLE_DOC, evaluate(SAMPLE_DOC));
+renderAngleSelect();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawThumbnail);
 
 // 플랫폼 밖(저장된 파일 등)에서는 window.claude가 아예 없다.
