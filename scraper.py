@@ -158,11 +158,24 @@ def _go_to_blog_tab(driver, keyword: str, start: int = 1):
         except Exception:
             pass
 
-        # 블로그 탭 클릭 성공 여부와 무관하게 관련도순 URL로 강제 이동
+        # 블로그 탭 URL로 이동
         driver.get(
             f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
             f"&sm=tab_jum&nso=so:r,p:all,a:all&start=1"
         )
+        time.sleep(2)
+
+        # 관련도순 버튼 클릭 (최신순으로 되어 있을 경우 강제 전환)
+        try:
+            rel_btn = driver.execute_script("""
+                const links = Array.from(document.querySelectorAll('a, button'));
+                return links.find(el => el.textContent.trim() === '관련도순') || null;
+            """)
+            if rel_btn:
+                rel_btn.click()
+                time.sleep(1.5)
+        except Exception:
+            pass
     else:
         driver.get(
             f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
