@@ -186,7 +186,7 @@ def get_dominance(check_date: date | None = None) -> list[dict]:
     if check_date is None:
         check_date = date.today()
     sql = """
-        SELECT keyword, ranks_all, checked_count
+        SELECT keyword, ranks_all, info_ranks_all, checked_count
         FROM rankings
         WHERE date = ?
         ORDER BY keyword
@@ -197,7 +197,8 @@ def get_dominance(check_date: date | None = None) -> list[dict]:
     result = []
     for row in rows:
         ranks = json.loads(row["ranks_all"] or "[]")
-        count = len(ranks)
+        info_ranks = json.loads(row["info_ranks_all"] or "[]")
+        count = len(ranks) + len(info_ranks)
         depth = row["checked_count"] or 20
         pct = round(count / depth * 100) if depth > 0 else 0
         result.append({

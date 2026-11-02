@@ -72,15 +72,19 @@ def _build_message(results: list[dict], check_date: date) -> dict:
             i_rank_str = "미노출"
         info_lines.append(f"{i_emoji}  `{kw}`  →  *{i_rank_str}*")
 
-        # 장악률 (체험단 기준)
-        count = len(blog_ranks)
+        # 장악률 (체험단 + 정보성 합산)
+        count = len(blog_ranks) + len(info_ranks)
         pct = round(count / depth * 100) if depth > 0 else 0
         dom_lines.append(
             f"`{kw}`\n{_bar(count, depth)}  *{count}개/{depth}위권*  ({pct}%)"
         )
 
     date_str = check_date.strftime("%Y년 %m월 %d일")
-    total_count = sum(len(r.get("ranks") or ([r["rank"]] if r.get("rank") else [])) for r in results)
+    total_count = sum(
+        len(r.get("ranks") or ([r["rank"]] if r.get("rank") else [])) +
+        len(r.get("info_ranks") or ([r["info_rank"]] if r.get("info_rank") else []))
+        for r in results
+    )
     total_depth = sum((r.get("checked_count") or 20) for r in results)
     total_pct = round(total_count / total_depth * 100) if total_depth > 0 else 0
 
@@ -108,7 +112,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*키워드별 20위권 장악률 (체험단 기준)*  (전체 {total_count}개 · *{total_pct}%*)\n\n" + "\n\n".join(dom_lines),
+                    "text": f"*키워드별 20위권 장악률 (체험단+정보성)*  (전체 {total_count}개 · *{total_pct}%*)\n\n" + "\n\n".join(dom_lines),
                 },
             },
             {"type": "divider"},
