@@ -136,46 +136,31 @@ def _go_to_blog_tab(driver, keyword: str, start: int = 1):
     from selenium.webdriver.common.by import By
 
     if start == 1:
-        # 통합검색 먼저 접속 후 블로그 탭 클릭
+        # 통합검색 → 블로그 탭 href 추출 → 관련도순 href 추출 → 이동
         driver.get(f"https://search.naver.com/search.naver?query={keyword}")
         time.sleep(2)
-        try:
-            # JS로 '블로그' 텍스트를 가진 탭 링크 찾기
-            blog_tab = driver.execute_script("""
-                const anchors = document.querySelectorAll('a');
-                for (const a of anchors) {
-                    if (a.textContent.trim() === '블로그' && a.href && a.href.includes('where=blog')) {
-                        return a;
-                    }
-                }
-                return null;
-            """)
-            if blog_tab:
-                blog_tab.click()
-                time.sleep(1.5)
-            else:
-                raise Exception("블로그 탭 없음")
-        except Exception:
-            pass
 
-        # 블로그 탭 URL로 이동
-        driver.get(
-            f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
-            f"&sm=tab_jum&nso=so:r,p:all,a:all&start=1"
-        )
+        # 블로그 탭 href 추출 후 이동
+        blog_href = driver.execute_script("""
+            const anchors = Array.from(document.querySelectorAll('a'));
+            const tab = anchors.find(a => a.textContent.trim() === '블로그' && (a.href || '').includes('where=blog'));
+            return tab ? tab.href : null;
+        """)
+        if blog_href:
+            driver.get(blog_href)
+        else:
+            driver.get(f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}&sm=tab_jum&nso=so:r,p:all,a:all&start=1")
         time.sleep(2)
 
-        # 관련도순 버튼 클릭 (최신순으로 되어 있을 경우 강제 전환)
-        try:
-            rel_btn = driver.execute_script("""
-                const links = Array.from(document.querySelectorAll('a, button'));
-                return links.find(el => el.textContent.trim() === '관련도순') || null;
-            """)
-            if rel_btn:
-                rel_btn.click()
-                time.sleep(1.5)
-        except Exception:
-            pass
+        # 관련도순 href 추출 후 이동
+        rel_href = driver.execute_script("""
+            const links = Array.from(document.querySelectorAll('a'));
+            const btn = links.find(el => el.textContent.trim() === '관련도순');
+            return btn ? btn.href : null;
+        """)
+        if rel_href:
+            driver.get(rel_href)
+            time.sleep(1.5)
     else:
         driver.get(
             f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
