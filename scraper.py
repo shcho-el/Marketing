@@ -138,14 +138,23 @@ def _go_to_blog_tab(driver, keyword: str, start: int = 1):
     if start == 1:
         # 통합검색 먼저 접속 후 블로그 탭 클릭
         driver.get(f"https://search.naver.com/search.naver?query={keyword}")
+        time.sleep(2)
         try:
-            blog_tab = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "a.api_tab_link[data-tab='blog'], a[href*='where=blog']")
-                )
-            )
-            blog_tab.click()
-            time.sleep(1)
+            # JS로 '블로그' 텍스트를 가진 탭 링크 찾기
+            blog_tab = driver.execute_script("""
+                const anchors = document.querySelectorAll('a');
+                for (const a of anchors) {
+                    if (a.textContent.trim() === '블로그' && a.href && a.href.includes('where=blog')) {
+                        return a;
+                    }
+                }
+                return null;
+            """)
+            if blog_tab:
+                blog_tab.click()
+                time.sleep(1.5)
+            else:
+                raise Exception("블로그 탭 없음")
         except Exception:
             # 클릭 실패 시 직접 URL 이동
             driver.get(
