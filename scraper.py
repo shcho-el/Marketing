@@ -130,42 +130,15 @@ def _browser():
 
 
 def _go_to_blog_tab(driver, keyword: str, start: int = 1):
-    """네이버 검색 → 블로그 탭 클릭 방식으로 이동 (1페이지) 또는 직접 URL (이후 페이지)."""
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.common.by import By
-
-    if start == 1:
-        # 통합검색 → 블로그 탭 href 추출 → 관련도순 href 추출 → 이동
-        driver.get(f"https://search.naver.com/search.naver?query={keyword}")
-        time.sleep(2)
-
-        # 블로그 탭 href 추출 후 이동
-        blog_href = driver.execute_script("""
-            const anchors = Array.from(document.querySelectorAll('a'));
-            const tab = anchors.find(a => a.textContent.trim() === '블로그' && (a.href || '').includes('where=blog'));
-            return tab ? tab.href : null;
-        """)
-        if blog_href:
-            driver.get(blog_href)
-        else:
-            driver.get(f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}&sm=tab_jum&nso=so:r,p:all,a:all&start=1")
-        time.sleep(2)
-
-        # 관련도순 href 추출 후 이동
-        rel_href = driver.execute_script("""
-            const links = Array.from(document.querySelectorAll('a'));
-            const btn = links.find(el => el.textContent.trim() === '관련도순');
-            return btn ? btn.href : null;
-        """)
-        if rel_href:
-            driver.get(rel_href)
-            time.sleep(1.5)
-    else:
-        driver.get(
-            f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
-            f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
-        )
+    """네이버 블로그 탭 관련도순 URL로 직접 이동."""
+    import urllib.parse
+    encoded = urllib.parse.quote(keyword)
+    url = (
+        f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={encoded}"
+        f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
+    )
+    driver.get(url)
+    time.sleep(3)
 
 
 def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
