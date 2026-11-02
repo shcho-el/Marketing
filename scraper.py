@@ -156,11 +156,13 @@ def _go_to_blog_tab(driver, keyword: str, start: int = 1):
             else:
                 raise Exception("블로그 탭 없음")
         except Exception:
-            # 클릭 실패 시 직접 URL 이동
-            driver.get(
-                f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
-                f"&sm=tab_jum&nso=so:r,p:all,a:all&start=1"
-            )
+            pass
+
+        # 블로그 탭 클릭 성공 여부와 무관하게 관련도순 URL로 강제 이동
+        driver.get(
+            f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
+            f"&sm=tab_jum&nso=so:r,p:all,a:all&start=1"
+        )
     else:
         driver.get(
             f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
