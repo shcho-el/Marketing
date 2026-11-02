@@ -129,22 +129,44 @@ def _browser():
             driver.quit()
 
 
-def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
-    """네이버 블로그 탭 한 페이지를 Selenium 라이브 DOM으로 파싱.
-    page_source 스냅샷은 JS 렌더링 결과를 누락하므로 find_elements를 사용."""
+def _go_to_blog_tab(driver, keyword: str, start: int = 1):
+    """네이버 검색 → 블로그 탭 클릭 방식으로 이동 (1페이지) 또는 직접 URL (이후 페이지)."""
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.common.by import By
 
-    url = (
-        f"{NAVER_BLOG_SEARCH_URL}"
-        f"?where=blog&query={keyword}"
-        f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
-    )
-    driver.get(url)
+    if start == 1:
+        # 통합검색 먼저 접속 후 블로그 탭 클릭
+        driver.get(f"https://search.naver.com/search.naver?query={keyword}")
+        try:
+            blog_tab = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "a.api_tab_link[data-tab='blog'], a[href*='where=blog']")
+                )
+            )
+            blog_tab.click()
+            time.sleep(1)
+        except Exception:
+            # 클릭 실패 시 직접 URL 이동
+            driver.get(
+                f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
+                f"&sm=tab_jum&nso=so:r,p:all,a:all&start=1"
+            )
+    else:
+        driver.get(
+            f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={keyword}"
+            f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
+        )
+
+
+def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
+    """네이버 블로그 탭 한 페이지를 Selenium 라이브 DOM으로 파싱."""
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.common.by import By
+
+    _go_to_blog_tab(driver, keyword, start)
 
     # 실제 블로그 포스트 링크가 DOM에 나타날 때까지 대기
-    # (내비게이션의 blog.naver.com 링크와 구별: 포스트 URL에만 숫자 logNo 포함)
     def _post_links_loaded(d):
         elems = d.find_elements(By.CSS_SELECTOR, "a[href*='blog.naver.com/']")
         for e in elems[:30]:
