@@ -44,24 +44,37 @@ def _bar(count: int, depth: int = 20, width: int = 10) -> str:
 
 def _build_message(results: list[dict], check_date: date) -> dict:
     """슬랙 Block Kit 메시지 생성."""
-    rank_lines = []
+    review_lines = []
+    info_lines = []
     dom_lines = []
 
     for r in results:
         kw = r["keyword"]
-        blog_ranks = r.get("ranks") or ([r["rank"]] if r.get("rank") else [])
         depth = r.get("checked_count") or 20
-        count = len(blog_ranks)
-        pct = round(count / depth * 100) if depth > 0 else 0
 
+        # 체험단 콘텐츠
+        blog_ranks = r.get("ranks") or ([r["rank"]] if r.get("rank") else [])
         if blog_ranks:
             emoji = _rank_emoji(blog_ranks[0])
             rank_str = ", ".join(f"{rk}위" for rk in blog_ranks)
         else:
             emoji = "⬜"
             rank_str = "미노출"
+        review_lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
 
-        rank_lines.append(f"{emoji}  `{kw}`  →  *{rank_str}*")
+        # 정보성 콘텐츠
+        info_ranks = r.get("info_ranks") or ([r["info_rank"]] if r.get("info_rank") else [])
+        if info_ranks:
+            i_emoji = _rank_emoji(info_ranks[0])
+            i_rank_str = ", ".join(f"{rk}위" for rk in info_ranks)
+        else:
+            i_emoji = "⬜"
+            i_rank_str = "미노출"
+        info_lines.append(f"{i_emoji}  `{kw}`  →  *{i_rank_str}*")
+
+        # 장악률 (체험단 기준)
+        count = len(blog_ranks)
+        pct = round(count / depth * 100) if depth > 0 else 0
         dom_lines.append(
             f"`{kw}`\n{_bar(count, depth)}  *{count}개/{depth}위권*  ({pct}%)"
         )
@@ -83,14 +96,19 @@ def _build_message(results: list[dict], check_date: date) -> dict:
             },
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": "\n".join(rank_lines)},
+                "text": {"type": "mrkdwn", "text": "*📝 체험단 콘텐츠*\n" + "\n".join(review_lines)},
+            },
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "*📖 정보성 콘텐츠*\n" + "\n".join(info_lines)},
             },
             {"type": "divider"},
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*키워드별 20위권 장악률*  (전체 {total_count}개 · *{total_pct}%*)\n\n" + "\n\n".join(dom_lines),
+                    "text": f"*키워드별 20위권 장악률 (체험단 기준)*  (전체 {total_count}개 · *{total_pct}%*)\n\n" + "\n\n".join(dom_lines),
                 },
             },
             {"type": "divider"},
@@ -99,7 +117,7 @@ def _build_message(results: list[dict], check_date: date) -> dict:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "네이버 블로그 탭 기준 상위 20위 · 오블리브",
+                        "text": "네이버 블로그 탭 관련도순 기준 상위 20위 · 오블리브",
                     }
                 ],
             },

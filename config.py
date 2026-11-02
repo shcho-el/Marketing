@@ -137,6 +137,13 @@ TARGET_URLS = [
 ]
 
 # 포스트 제목/내용에 이 단어가 포함되면 경쟁사 콘텐츠로 간주하여 제외
+INFO_URLS = [
+    "https://blog.naver.com/rbhfdwlt310/224459831681",
+    "https://blog.naver.com/rbhfdwlt310/224449930942",
+    "https://blog.naver.com/rbhfdwlt310/224455300476",
+]
+
+# 포스트 제목/내용에 이 단어가 포함되면 경쟁사 콘텐츠로 간주하여 제외
 EXCLUDE_KEYWORDS = [
     "오벨리뷰티",
     "레푸스",

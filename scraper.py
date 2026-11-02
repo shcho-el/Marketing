@@ -10,7 +10,7 @@ import logging
 from contextlib import contextmanager
 from pathlib import Path
 
-from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
+from config import TARGET_BRAND, TARGET_URLS, INFO_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
 
 COOKIE_FILE = Path(__file__).parent / "naver_cookies.json"
 
@@ -48,6 +48,7 @@ def _normalize_url(url: str) -> str:
 
 
 _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
+_INFO_URLS_NORMALIZED = {_normalize_url(u) for u in INFO_URLS}
 
 
 def _is_post_url(url: str) -> bool:
@@ -61,6 +62,10 @@ def _is_post_url(url: str) -> bool:
 
 def _contains_brand(result: dict) -> bool:
     return result.get("url", "") in _TARGET_URLS_NORMALIZED
+
+
+def _contains_info(result: dict) -> bool:
+    return result.get("url", "") in _INFO_URLS_NORMALIZED
 
 
 def _is_excluded(result: dict) -> bool:
@@ -203,6 +208,9 @@ def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: 
     matched_ranks = []
     matched_title = ""
     matched_url = ""
+    info_matched_ranks = []
+    info_matched_title = ""
+    info_matched_url = ""
     global_rank = 0
     page_start = 1
     seen_urls: set[str] = set()
@@ -221,11 +229,18 @@ def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: 
                 break
             seen_urls.add(item["url"])
             global_rank += 1
+
             if _contains_brand(item) and not _is_excluded(item):
                 if not matched_ranks:
                     matched_title = item["title"]
                     matched_url = item["url"]
                 matched_ranks.append(global_rank)
+
+            if _contains_info(item):
+                if not info_matched_ranks:
+                    info_matched_title = item["title"]
+                    info_matched_url = item["url"]
+                info_matched_ranks.append(global_rank)
 
         page_start += RESULTS_PER_PAGE
         if global_rank < depth and new_items:
@@ -240,6 +255,10 @@ def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: 
         "popular_ranks": [],
         "title": matched_title,
         "url": matched_url,
+        "info_rank": info_matched_ranks[0] if info_matched_ranks else None,
+        "info_ranks": info_matched_ranks,
+        "info_title": info_matched_title,
+        "info_url": info_matched_url,
         "checked_count": global_rank,
     }
 
