@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS rankings (
     popular_ranks_all TEXT    DEFAULT '',
     title             TEXT    DEFAULT '',
     url               TEXT    DEFAULT '',
+    info_rank         INTEGER,
+    info_ranks_all    TEXT    DEFAULT '',
+    info_title        TEXT    DEFAULT '',
+    info_url          TEXT    DEFAULT '',
     checked_count     INTEGER DEFAULT 0,
     created_at        TEXT    NOT NULL
 );
@@ -61,6 +65,14 @@ def init_db() -> None:
             con.execute("ALTER TABLE rankings ADD COLUMN popular_rank INTEGER")
         if "popular_ranks_all" not in cols:
             con.execute("ALTER TABLE rankings ADD COLUMN popular_ranks_all TEXT DEFAULT ''")
+        if "info_rank" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN info_rank INTEGER")
+        if "info_ranks_all" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN info_ranks_all TEXT DEFAULT ''")
+        if "info_title" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN info_title TEXT DEFAULT ''")
+        if "info_url" not in cols:
+            con.execute("ALTER TABLE rankings ADD COLUMN info_url TEXT DEFAULT ''")
     logger.info("DB 초기화 완료: %s", DB_PATH)
 
 
@@ -75,16 +87,21 @@ def upsert_ranking(
     popular_ranks_all: list = None,
     title: str = "",
     url: str = "",
+    info_rank: int | None = None,
+    info_ranks_all: list = None,
+    info_title: str = "",
+    info_url: str = "",
     checked_count: int = 0,
 ) -> None:
     """당일 순위를 저장 (이미 있으면 덮어쓰기)."""
     ranks_json = json.dumps(ranks_all or [], ensure_ascii=False)
     popular_ranks_json = json.dumps(popular_ranks_all or [], ensure_ascii=False)
+    info_ranks_json = json.dumps(info_ranks_all or [], ensure_ascii=False)
     sql = """
         INSERT INTO rankings
             (date, keyword, brand, rank, ranks_all, popular_rank, popular_ranks_all,
-             title, url, checked_count, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             title, url, info_rank, info_ranks_all, info_title, info_url, checked_count, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(date, keyword, brand) DO UPDATE SET
             rank              = excluded.rank,
             ranks_all         = excluded.ranks_all,
@@ -92,6 +109,10 @@ def upsert_ranking(
             popular_ranks_all = excluded.popular_ranks_all,
             title             = excluded.title,
             url               = excluded.url,
+            info_rank         = excluded.info_rank,
+            info_ranks_all    = excluded.info_ranks_all,
+            info_title        = excluded.info_title,
+            info_url          = excluded.info_url,
             checked_count     = excluded.checked_count,
             created_at        = excluded.created_at
     """
@@ -106,6 +127,10 @@ def upsert_ranking(
             popular_ranks_json,
             title,
             url,
+            info_rank,
+            info_ranks_json,
+            info_title,
+            info_url,
             checked_count,
             datetime.now().isoformat(timespec="seconds"),
         ))
@@ -126,6 +151,10 @@ def save_results(results: list[dict], check_date: date | None = None) -> None:
             popular_ranks_all=r.get("popular_ranks", []),
             title=r.get("title", ""),
             url=r.get("url", ""),
+            info_rank=r.get("info_rank"),
+            info_ranks_all=r.get("info_ranks", []),
+            info_title=r.get("info_title", ""),
+            info_url=r.get("info_url", ""),
             checked_count=r.get("checked_count", 0),
         )
     logger.info("%d건 저장 완료 (날짜: %s)", len(results), check_date)
@@ -133,7 +162,8 @@ def save_results(results: list[dict], check_date: date | None = None) -> None:
 
 def get_recent_rankings(days: int = 7) -> list[dict]:
     sql = """
-        SELECT date, keyword, brand, rank, ranks_all, title, url
+        SELECT date, keyword, brand, rank, ranks_all, title, url,
+               info_rank, info_ranks_all, info_title, info_url
         FROM rankings
         WHERE date >= date('now', ?)
         ORDER BY date DESC, keyword ASC
@@ -151,6 +181,36 @@ def get_dates() -> list[str]:
     return [row["date"] for row in rows]
 
 
+def get_dominance(check_date: date | None = None) -> list[dict]:
+    """당일 키워드별 장악률 데이터 반환."""
+    if check_date is None:
+        check_date = date.today()
+    sql = """
+        SELECT keyword, ranks_all, info_ranks_all, checked_count
+        FROM rankings
+        WHERE date = ?
+        ORDER BY keyword
+    """
+    with _conn() as con:
+        rows = con.execute(sql, (check_date.isoformat(),)).fetchall()
+
+    result = []
+    for row in rows:
+        ranks = json.loads(row["ranks_all"] or "[]")
+        info_ranks = json.loads(row["info_ranks_all"] or "[]")
+        count = len(ranks) + len(info_ranks)
+        depth = row["checked_count"] or 20
+        pct = round(count / depth * 100) if depth > 0 else 0
+        result.append({
+            "keyword": row["keyword"],
+            "count": count,
+            "depth": depth,
+            "pct": pct,
+            "ranks": ranks,
+        })
+    return result
+
+
 def get_pivot(days: int = 14) -> dict:
     data = get_recent_rankings(days)
     dates = sorted({r["date"] for r in data}, reverse=True)
@@ -162,14 +222,17 @@ def get_pivot(days: int = 14) -> dict:
             seen.add(r["keyword"])
 
     lookup: dict[tuple, int | None] = {}
+    info_lookup: dict[tuple, int | None] = {}
     for r in data:
         lookup[(r["keyword"], r["date"])] = r["rank"]
+        info_lookup[(r["keyword"], r["date"])] = r.get("info_rank")
 
     rows = []
     for kw in keywords_order:
         rows.append({
             "keyword": kw,
             "ranks": {d: lookup.get((kw, d)) for d in dates},
+            "info_ranks": {d: info_lookup.get((kw, d)) for d in dates},
         })
 
     return {"dates": dates, "rows": rows}

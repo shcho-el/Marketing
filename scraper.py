@@ -4,11 +4,15 @@ Selenium으로 네이버 블로그 탭을 실제 브라우저와 동일하게 �
 """
 
 import re
+import json
 import time
 import logging
 from contextlib import contextmanager
+from pathlib import Path
 
-from config import TARGET_BRAND, TARGET_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
+from config import TARGET_BRAND, TARGET_URLS, INFO_URLS, SEARCH_DEPTH, REQUEST_DELAY, EXCLUDE_KEYWORDS
+
+COOKIE_FILE = Path(__file__).parent / "naver_cookies.json"
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +48,7 @@ def _normalize_url(url: str) -> str:
 
 
 _TARGET_URLS_NORMALIZED = {_normalize_url(u) for u in TARGET_URLS}
+_INFO_URLS_NORMALIZED = {_normalize_url(u) for u in INFO_URLS}
 
 
 def _is_post_url(url: str) -> bool:
@@ -59,6 +64,10 @@ def _contains_brand(result: dict) -> bool:
     return result.get("url", "") in _TARGET_URLS_NORMALIZED
 
 
+def _contains_info(result: dict) -> bool:
+    return result.get("url", "") in _INFO_URLS_NORMALIZED
+
+
 def _is_excluded(result: dict) -> bool:
     text = result.get("title", "") + " " + result.get("description", "")
     return any(kw in text for kw in EXCLUDE_KEYWORDS)
@@ -70,14 +79,21 @@ def _browser():
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
 
+    import os
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    profile_dir = os.path.join(os.path.expanduser("~"), "naver_chrome_profile")
+
     options = Options()
-    options.add_argument("--headless=new")
+    options.add_argument(f"--user-data-dir={profile_dir}")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--lang=ko-KR")
+    options.add_argument("--start-minimized")
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -99,28 +115,45 @@ def _browser():
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
+
+        if COOKIE_FILE.exists():
+            driver.get("https://naver.com")
+            time.sleep(1)
+            cookies = json.loads(COOKIE_FILE.read_text(encoding="utf-8"))
+            for cookie in cookies:
+                cookie.pop("sameSite", None)
+                try:
+                    driver.add_cookie(cookie)
+                except Exception:
+                    pass
+            logger.info("네이버 쿠키 로드 완료 (%d개)", len(cookies))
+
         yield driver
     finally:
         if driver:
             driver.quit()
 
 
-def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
-    """네이버 블로그 탭 한 페이지를 Selenium 라이브 DOM으로 파싱.
-    page_source 스냅샷은 JS 렌더링 결과를 누락하므로 find_elements를 사용."""
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.common.by import By
-
+def _go_to_blog_tab(driver, keyword: str, start: int = 1):
+    """네이버 블로그 탭 관련도순 URL로 직접 이동."""
+    import urllib.parse
+    encoded = urllib.parse.quote(keyword)
     url = (
-        f"{NAVER_BLOG_SEARCH_URL}"
-        f"?where=blog&query={keyword}"
+        f"{NAVER_BLOG_SEARCH_URL}?where=blog&query={encoded}"
         f"&sm=tab_jum&nso=so:r,p:all,a:all&start={start}"
     )
     driver.get(url)
+    time.sleep(3)
+
+
+def _scrape_blog_page(driver, keyword: str, start: int = 1) -> list[dict]:
+    """네이버 블로그 탭 한 페이지를 Selenium 라이브 DOM으로 파싱."""
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.common.by import By
+
+    _go_to_blog_tab(driver, keyword, start)
 
     # 실제 블로그 포스트 링크가 DOM에 나타날 때까지 대기
-    # (내비게이션의 blog.naver.com 링크와 구별: 포스트 URL에만 숫자 logNo 포함)
     def _post_links_loaded(d):
         elems = d.find_elements(By.CSS_SELECTOR, "a[href*='blog.naver.com/']")
         for e in elems[:30]:
@@ -175,6 +208,9 @@ def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: 
     matched_ranks = []
     matched_title = ""
     matched_url = ""
+    info_matched_ranks = []
+    info_matched_title = ""
+    info_matched_url = ""
     global_rank = 0
     page_start = 1
     seen_urls: set[str] = set()
@@ -193,11 +229,18 @@ def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: 
                 break
             seen_urls.add(item["url"])
             global_rank += 1
+
             if _contains_brand(item) and not _is_excluded(item):
                 if not matched_ranks:
                     matched_title = item["title"]
                     matched_url = item["url"]
                 matched_ranks.append(global_rank)
+
+            if _contains_info(item):
+                if not info_matched_ranks:
+                    info_matched_title = item["title"]
+                    info_matched_url = item["url"]
+                info_matched_ranks.append(global_rank)
 
         page_start += RESULTS_PER_PAGE
         if global_rank < depth and new_items:
@@ -212,6 +255,10 @@ def get_brand_rank(keyword: str, driver=None, brand: str = TARGET_BRAND, depth: 
         "popular_ranks": [],
         "title": matched_title,
         "url": matched_url,
+        "info_rank": info_matched_ranks[0] if info_matched_ranks else None,
+        "info_ranks": info_matched_ranks,
+        "info_title": info_matched_title,
+        "info_url": info_matched_url,
         "checked_count": global_rank,
     }
 

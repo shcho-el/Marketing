@@ -6,7 +6,7 @@ import logging
 from flask import Flask, render_template, jsonify
 
 from config import DASHBOARD_HOST, DASHBOARD_PORT, TARGET_BRAND
-from database import init_db, get_pivot, get_recent_rankings
+from database import init_db, get_pivot, get_recent_rankings, get_dominance
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,12 @@ def api_today():
     """오늘 수집 결과 JSON."""
     rows = get_recent_rankings(days=1)
     return jsonify(rows)
+
+
+@app.route("/api/dominance")
+def api_dominance():
+    """오늘 키워드별 장악률 JSON."""
+    return jsonify(get_dominance())
 
 
 def run_dashboard():

@@ -20,3 +20,4 @@ mock_mapping.json
 .e2e/
 .venv/
 logs/
+naver_cookies.json

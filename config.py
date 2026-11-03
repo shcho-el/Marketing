@@ -121,6 +121,26 @@ TARGET_URLS = [
     "https://blog.naver.com/banggeul07/224384698585",
     "https://blog.naver.com/jayunote/224330891181",
     "https://blog.naver.com/alswl8242/224354043913",
+    "https://blog.naver.com/babsooi00/224406447603",
+    "https://blog.naver.com/sim900321/224393115834",
+    "https://blog.naver.com/x0412o/224419321379",
+    "https://blog.naver.com/mazipp/224284349769",
+    "https://blog.naver.com/niceparo/224276702538",
+    "https://blog.naver.com/dkfmawa/224323143017",
+    "https://blog.naver.com/jd0036/224275753022",
+    "https://blog.naver.com/lee203507/224297282766",
+    "https://blog.naver.com/bbni99/224293451135",
+    "https://blog.naver.com/hilty74/224311085245",
+    "https://blog.naver.com/ahnbyul/224310725100",
+    "https://blog.naver.com/kbkd75/224309656568",
+    "https://blog.naver.com/baeena95/224269897906",
+]
+
+# 포스트 제목/내용에 이 단어가 포함되면 경쟁사 콘텐츠로 간주하여 제외
+INFO_URLS = [
+    "https://blog.naver.com/rbhfdwlt310/224459831681",
+    "https://blog.naver.com/rbhfdwlt310/224449930942",
+    "https://blog.naver.com/rbhfdwlt310/224455300476",
 ]
 
 # 포스트 제목/내용에 이 단어가 포함되면 경쟁사 콘텐츠로 간주하여 제외
@@ -159,4 +179,4 @@ DASHBOARD_HOST = "0.0.0.0"
 DASHBOARD_PORT = 5000
 
 # 매일 실행 시각 (24시간 형식)
-SCHEDULE_TIME = "08:20"
+SCHEDULE_TIME = "09:00"

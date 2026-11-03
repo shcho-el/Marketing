@@ -145,10 +145,26 @@
       margin-bottom: 14px;
     }
 
+    .chart-card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+    .chart-card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+    .chart-wrap { position: relative; height: 320px; }
+
     @media (max-width: 640px) {
       main { padding: 16px; }
       header { padding: 14px 16px; }
       header h1 { font-size: 1.1rem; }
+      .chart-wrap { height: 240px; }
     }
   </style>
 </head>
@@ -165,6 +181,13 @@
     <div class="last-updated" id="lastUpdated">데이터 로딩 중...</div>
     <button class="refresh-btn" onclick="location.reload()">새로고침</button>
 
+    <div class="chart-card">
+      <h2>📊 키워드별 20위권 장악률 (오늘)</h2>
+      <div class="chart-wrap">
+        <canvas id="dominanceChart"></canvas>
+      </div>
+    </div>
+
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:#d4edda;"></div> 1~3위</div>
       <div class="legend-item"><div class="legend-dot" style="background:#d1ecf1;"></div> 4~5위</div>
@@ -173,13 +196,14 @@
       <div class="legend-item"><div class="legend-dot" style="background:#f0f0f0;border:1px solid #ccc;"></div> 미노출</div>
     </div>
 
-    <div class="table-wrap">
+    <h3 style="margin-bottom:10px;font-size:0.95rem;color:var(--text);">📝 체험단 콘텐츠</h3>
+    <div class="table-wrap" style="margin-bottom:28px;">
       <table>
         <thead>
           <tr>
             <th>키워드</th>
             {% for d in pivot.dates %}
-            <th>{{ d[5:] }}</th>  {# MM-DD 형식 #}
+            <th>{{ d[5:] }}</th>
             {% endfor %}
           </tr>
         </thead>
@@ -205,11 +229,54 @@
             {% endfor %}
           </tr>
           {% endfor %}
-
           {% if pivot.rows | length == 0 %}
           <tr>
             <td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">
-              아직 수집된 데이터가 없습니다. 스케줄러를 실행하거나 <code>python main.py collect</code>를 실행해 주세요.
+              아직 수집된 데이터가 없습니다. <code>python main.py collect</code>를 실행해 주세요.
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-bottom:10px;font-size:0.95rem;color:var(--text);">📖 정보성 콘텐츠</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>키워드</th>
+            {% for d in pivot.dates %}
+            <th>{{ d[5:] }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pivot.rows %}
+          <tr>
+            <td>{{ row.keyword }}</td>
+            {% for d in pivot.dates %}
+            {% set r = row.info_ranks.get(d) %}
+            <td>
+              {% if r is none %}
+                <span class="rank-cell rank-none">-</span>
+              {% elif r <= 3 %}
+                <span class="rank-cell rank-1-3">{{ r }}위</span>
+              {% elif r <= 5 %}
+                <span class="rank-cell rank-4-5">{{ r }}위</span>
+              {% elif r <= 10 %}
+                <span class="rank-cell rank-6-10">{{ r }}위</span>
+              {% else %}
+                <span class="rank-cell rank-11">{{ r }}위</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          {% if pivot.rows | length == 0 %}
+          <tr>
+            <td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">
+              아직 수집된 데이터가 없습니다.
             </td>
           </tr>
           {% endif %}
@@ -218,10 +285,61 @@
     </div>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script>
     const now = new Date();
     document.getElementById('lastUpdated').textContent =
       '페이지 기준: ' + now.toLocaleString('ko-KR');
+
+    fetch('/api/dominance')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) return;
+        const labels = data.map(d => d.keyword);
+        const counts = data.map(d => d.count);
+        const pcts = data.map(d => d.pct);
+
+        const colors = counts.map(c =>
+          c >= 7 ? '#03c75a' : c >= 4 ? '#3b82f6' : c >= 1 ? '#f59e0b' : '#e5e7eb'
+        );
+
+        new Chart(document.getElementById('dominanceChart'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: '20위권 글 수',
+              data: counts,
+              backgroundColor: colors,
+              borderRadius: 6,
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const d = data[ctx.dataIndex];
+                    return ` ${d.count}개 / ${d.depth}위권  (${d.pct}%)`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                max: 20,
+                ticks: { stepSize: 2 },
+                title: { display: true, text: '20위권 내 글 수' }
+              },
+              y: { ticks: { font: { size: 12 } } }
+            }
+          }
+        });
+      });
   </script>
 </body>
 </html>
