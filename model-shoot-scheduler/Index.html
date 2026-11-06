@@ -286,13 +286,21 @@ function sortShoots(a, b) { return (a.date + a.time + a.center).localeCompare(b.
 
 /* ── 데이터 ── */
 async function load(silent) {
+  const slow = silent ? null : setTimeout(() => {
+    $('#loading').innerHTML = '<div style="max-width:480px;padding:16px;text-align:center"><div class="spinner"></div><b>시트 응답이 늦어지고 있습니다</b><p class="small">구글 계정이 여러 개 로그인돼 있으면 멈출 수 있어요. 시크릿 창에서 회사 계정 하나로만 로그인해 다시 열어 보세요.</p></div>';
+  }, 20000);
   try {
     const d = await api('getData');
+    if (!d || !d.shoots) throw new Error('시트 데이터를 받지 못했습니다. Apps Script에서 getData 함수를 실행해 실행 로그의 오류를 확인하세요.');
     DATA = d;
+    clearTimeout(slow);
     fillStaticOptions();
     render();
     if (!silent) $('#loading').style.display = 'none';
   } catch (e) {
+    clearTimeout(slow);
+    if (silent) { toast('새로고침 실패: ' + errMsg(e), true); return; }
+    $('#loading').style.display = '';
     $('#loading').innerHTML = `<div style="max-width:480px;padding:16px;text-align:center"><b>시트를 불러오지 못했습니다</b><p class="small">${esc(errMsg(e))}</p><button class="btn" onclick="location.reload()">다시 시도</button></div>`;
   }
 }
