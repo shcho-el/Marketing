@@ -9,6 +9,9 @@
  */
 
 const CONFIG = {
+  // 연동할 스프레드시트 ID (주소의 /d/ 와 /edit 사이). 테스트할 때는 시트 사본의 ID로 바꾸세요.
+  // 비워 두면 이 스크립트가 붙어 있는(바인딩된) 스프레드시트를 사용합니다.
+  SPREADSHEET_ID: '1qFVE2hgnAj6nEE_blqUBr18rqrvQtXX6T_W8nQZq1mM',
   SHEET_NAME: '촬영 슬롯',
   MODEL_SHEET_NAME: '모델 정보',
   HEADER_ROW: 1,
@@ -236,6 +239,7 @@ function deleteModel(name) {
 /* ───────────────────────── 시트 읽기/쓰기 ───────────────────────── */
 
 function getSpreadsheet_() {
+  if (CONFIG.SPREADSHEET_ID) return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   let ss = null;
   try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (err) { /* 웹앱 컨텍스트 */ }
   if (ss) return ss;
