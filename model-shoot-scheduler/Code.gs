@@ -62,7 +62,7 @@ const MODEL_COLS = {
 };
 
 const DEFAULT_OPTIONS = {
-  centers: ['도수', '롱래스팅', '두피', '발톱'],
+  centers: ['재활', '롱래스팅', '두피', '발톱'],
   statuses: ['조율 중', '확정', '취소'],
   contacts: ['문자', '메일', '전화', '카톡'],
   uses: ['Y', 'N'],
