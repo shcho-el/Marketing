@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모델 촬영 스케줄</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#f3f5f3; --surface:#fff; --surface-2:#f7f9f7; --fg:#18211c; --muted:#66736b; --line:#dde3de;
+  --brand:#2f4f3a; --brand-fg:#fff; --accent:#2f7a4f; --accent-soft:#e3f1e8;
+  --sun:#c2410c; --sat:#2563eb; --today:#fff6d6;
+  --ok:#1f7a45; --ok-soft:#dcf2e4; --wait:#9a6100; --wait-soft:#fdf0d5; --cancel:#8a8f8c; --cancel-soft:#eceeed;
+  --c1:#2f7a4f; --c2:#7c3aed; --c3:#b45309; --c4:#0369a1; --c5:#be185d; --c0:#52525b;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111613; --surface:#18201b; --surface-2:#1d2620; --fg:#e4ebe6; --muted:#97a59c; --line:#2b3730;
+  --brand:#203a2a; --accent:#6cc893; --accent-soft:#1d3527; --sun:#fb923c; --sat:#7aa7ff; --today:#2f2a17;
+  --ok:#6cc893; --ok-soft:#1b3526; --wait:#f0b452; --wait-soft:#3a2e15; --cancel:#8b948f; --cancel-soft:#262d29;
+  --c1:#6cc893; --c2:#b69cff; --c3:#f0a35a; --c4:#6fbfff; --c5:#f487b6; --c0:#a1a1aa; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 "Pretendard Variable",Pretendard,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px 48px}
+header.top{background:var(--brand);color:var(--brand-fg)}
+header.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:14px;padding-bottom:14px}
+header.top h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em}
+header.top .sub{font-size:12px;opacity:.75}
+header.top .sp{flex:1}
+header.top a,header.top button.ghost{color:#fff;border-color:rgba(255,255,255,.35)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;text-decoration:none;white-space:nowrap;font-size:13px;font-weight:500}
+.btn:hover{filter:brightness(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.btn.primary{color:#0d1a12}}
+.btn.ghost{background:transparent}
+.btn.danger{color:#b91c1c}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:default}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:18px 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.toolbar h2{font-size:20px;margin:0 6px;min-width:120px;text-align:center;font-variant-numeric:tabular-nums}
+.toolbar .sp{flex:1}
+.toolbar select,.toolbar label.chk{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px;font-size:13px}
+label.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:0 0 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow:hidden}
+.cal .dow{padding:8px;font-size:12px;font-weight:600;color:var(--muted);text-align:center;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.cal .dow.sun{color:var(--sun)} .cal .dow.sat{color:var(--sat)}
+.day{min-height:118px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;position:relative;min-width:0}
+.day:nth-child(7n){border-right:0}
+.day.out{background:var(--surface-2)} .day.out .num{opacity:.4}
+.day.today{background:var(--today)}
+.day .head{display:flex;align-items:center;justify-content:space-between}
+.day .num{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.day.sun .num{color:var(--sun)} .day.sat .num{color:var(--sat)}
+.day .add{opacity:0;border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 4px;border-radius:4px}
+.day:hover .add,.day .add:focus{opacity:1}
+.chip{display:block;text-decoration:none;color:var(--fg);border-left:3px solid var(--cc,var(--c0));background:color-mix(in srgb,var(--cc,var(--c0)) 11%,var(--surface));border-radius:5px;padding:3px 6px;font-size:12px;line-height:1.35;overflow:hidden;min-width:0}
+.chip:hover{background:color-mix(in srgb,var(--cc,var(--c0)) 20%,var(--surface))}
+.chip .l1{display:flex;gap:4px;align-items:center;white-space:nowrap;overflow:hidden}
+.chip .t{font-weight:700;font-variant-numeric:tabular-nums}
+.chip .c{color:var(--cc);font-weight:600}
+.chip .l2{display:flex;gap:4px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.chip .m{color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.chip.cancel{opacity:.55} .chip.cancel .m{text-decoration:line-through}
+.chip.off{border-left-style:dashed;opacity:.7}
+.chip.test{opacity:.45}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok)} .dot.wait{background:var(--wait)} .dot.cancel{background:var(--cancel)} .dot.none{background:transparent;border:1.5px solid var(--muted)}
+.clip{font-size:11px;color:var(--accent);font-weight:600}
+.more{font-size:11px;color:var(--muted);padding-left:4px}
+@media (max-width:760px){
+  .day{min-height:74px;padding:4px 3px}
+  .chip{padding:2px 3px;font-size:10.5px;letter-spacing:-.02em}
+  .chip .l2,.chip .c,.chip .clip,.chip .dot{display:none}
+  .chip.st-ok{background:color-mix(in srgb,var(--ok) 18%,var(--surface))}
+  .chip.st-wait{background:color-mix(in srgb,var(--wait) 18%,var(--surface))}
+  .day .add{display:none}
+}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.wait{background:var(--wait-soft);color:var(--wait)}
+.badge.cancel{background:var(--cancel-soft);color:var(--cancel)} .badge.none{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.ctag{display:inline-block;font-weight:600;color:var(--cc)}
+section.block{margin-top:22px}
+section.block>h3{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--surface-2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums}
+td.wrap-cell{white-space:normal;min-width:140px;max-width:260px}
+tr.dim td{opacity:.5}
+.muted{color:var(--muted)} .small{font-size:12px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+/* 다이얼로그 */
+dialog{border:0;border-radius:14px;padding:0;width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--surface);color:var(--fg);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,20,14,.45)}
+dialog form{display:flex;flex-direction:column;max-height:calc(100vh - 24px)}
+.dlg-h{display:flex;align-items:center;gap:8px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.dlg-h h3{margin:0;font-size:16px;flex:1}
+.dlg-b{padding:16px 18px;overflow:auto;display:grid;gap:16px}
+.dlg-f{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 14px 14px}
+.dlg-f .sp{flex:1}
+fieldset{border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 12px}
+legend{font-size:12px;font-weight:700;color:var(--accent);padding:0;margin-bottom:8px;letter-spacing:.02em}
+.f{display:grid;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.f.full{grid-column:1/-1}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 9px;font-size:14px;color:var(--fg);min-width:0}
+.f textarea{min-height:64px;resize:vertical}
+.f.cb{display:flex;align-items:center;gap:8px;color:var(--fg);font-size:13px;padding-top:18px}
+.f.cb input{width:16px;height:16px}
+.rows{display:grid;gap:6px}
+.lrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto;gap:6px}
+.lrow input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 9px;min-width:0}
+.flist{display:grid;gap:6px}
+.fitem{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px}
+.fitem a{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.hint{font-size:12px;color:var(--muted)}
+/* 상세 페이지 */
+.detail-head{padding:22px 0 6px;display:grid;gap:8px}
+.detail-head .kicker{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.detail-head h1{margin:0;font-size:26px;letter-spacing:-.02em;line-height:1.25}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.card .ch{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px}
+.card .cb{padding:12px 16px}
+dl.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:7px 12px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;word-break:break-word}
+.conti-list{display:grid;gap:12px}
+.conti{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.conti .bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface-2);font-size:13px}
+.conti .bar .nm{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conti iframe{display:block;width:100%;height:560px;border:0;background:#fff}
+@media (max-width:760px){.conti iframe{height:380px}}
+.loading{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:5;color:var(--muted);font-size:14px}
+.spinner{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1b2a20;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1}
+#toast.err{background:#7f1d1d}
+.sync{font-size:12px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="loading" id="loading"><div><div class="spinner"></div>시트에서 불러오는 중…</div></div>
+<div id="app"></div>
+
+<!-- 촬영 일정 편집 -->
+<dialog id="dlgShoot"><form method="dialog" id="fShoot">
+  <div class="dlg-h"><h3 id="dlgShootTitle">촬영 일정</h3><button class="btn ghost sm" value="cancel" formnovalidate>닫기</button></div>
+  <div class="dlg-b">
+    <fieldset><legend>촬영 일정</legend>
+      <label class="f">센터<select name="center" required></select></label>
+      <label class="f">일자<input type="date" name="date" required></label>
+      <label class="f">시간<input type="time" name="time" step="300"></label>
+      <label class="f">정원<input type="number" name="capacity" min="0" step="1"></label>
+      <label class="f">사용<select name="use"></select></label>
+      <label class="f cb"><input type="checkbox" name="dirOk">센터장 확인</label>
+      <label class="f cb"><input type="checkbox" name="test">테스트</label>
+    </fieldset>
+    <fieldset><legend>모델 배정</legend>
+      <label class="f">모델 (수동 배정)<input name="model" list="modelNames" autocomplete="off"></label>
+      <label class="f">상태<select name="status"></select></label>
+      <label class="f">연락 방식<select name="contact"></select></label>
+      <label class="f cb"><input type="checkbox" name="calendar">캘린더 등록</label>
+      <div class="f full hint" id="modelInfoHint"></div>
+    </fieldset>
+    <fieldset><legend>작업</legend>
+      <label class="f">작업 담당자<input name="assignee" list="assigneeNames" autocomplete="off" placeholder="예: 홍길동"></label>
+      <label class="f full">메모<textarea name="memo"></textarea></label>
+      <label class="f full">비고<textarea name="note"></textarea></label>
+    </fieldset>
+    <fieldset style="grid-template-columns:1fr"><legend>콘티 기획안</legend>
+      <div class="f full">링크 (구글 슬라이드·문서·드라이브·노션·피그마 등)
+        <div class="rows" id="linkRows"></div>
+        <div><button type="button" class="btn sm" id="addLink">+ 링크 추가</button></div>
+      </div>
+      <div class="f full">파일
+        <div class="flist" id="fileList"></div>
+        <label class="drop" id="drop"><input type="file" id="fileInput" multiple hidden>
+          클릭하거나 파일을 끌어다 놓으세요 · PDF, 이미지, PPT, 영상 등 (파일당 최대 30MB)<br>
+          <span class="small">저장 시 Google Drive ‘촬영 콘티’ 폴더에 업로드됩니다</span></label>
+      </div>
+    </fieldset>
+  </div>
+  <div class="dlg-f">
+    <button type="button" class="btn danger" id="btnDelete">삭제</button>
+    <span class="sp"></span>
+    <button class="btn" value="cancel" formnovalidate>취소</button>
+    <button class="btn primary" value="save" id="btnSave">시트에 저장</button>
+  </div>
+</form></dialog>
+
+<!-- 모델 정보 -->
+<dialog id="dlgModels"><form method="dialog" id="fModels">
+  <div class="dlg-h"><h3>모델 기본 정보</h3><button class="btn ghost sm" value="cancel" formnovalidate>닫기</button></div>
+  <div class="dlg-b">
+    <div class="tblwrap card" style="box-shadow:none"><table><thead><tr><th>이름</th><th>연락처</th><th>성별</th><th>연령대</th><th>선호 연락</th><th>촬영 부위</th><th>촬영</th><th></th></tr></thead><tbody id="modelRows"></tbody></table></div>
+    <fieldset id="modelForm"><legend id="modelFormTitle">새 모델 등록</legend>
+      <label class="f">이름<input name="name"></label>
+      <label class="f">연락처<input name="phone" inputmode="tel" placeholder="010-0000-0000"></label>
+      <label class="f">성별<select name="gender"><option></option><option>여</option><option>남</option></select></label>
+      <label class="f">연령대<select name="age"><option></option><option>10대</option><option>20대</option><option>30대</option><option>40대</option><option>50대</option><option>60대 이상</option></select></label>
+      <label class="f">선호 연락<select name="contact"></select></label>
+      <label class="f">촬영 부위<input name="part" placeholder="예: 발톱, 두피"></label>
+      <label class="f full">메모<textarea name="memo" placeholder="특이사항, 촬영 동의서 여부 등"></textarea></label>
+    </fieldset>
+  </div>
+  <div class="dlg-f">
+    <button type="button" class="btn" id="btnModelReset">새로 입력</button>
+    <span class="sp"></span>
+    <button type="button" class="btn primary" id="btnModelSave">모델 저장</button>
+  </div>
+</form></dialog>
+
+<datalist id="modelNames"></datalist>
+<datalist id="assigneeNames"></datalist>
+<div id="toast" role="status"></div>
+
+<script>
+const BOOT = <?!= boot ?>;
+const DOW = ['일','월','화','수','목','금','토'];
+const MAX_FILE = 30 * 1024 * 1024;
+let DATA = { shoots: [], models: [], options: { centers: [], statuses: [], contacts: [], uses: [] } };
+let VIEW = { y: 0, m: 0, center: '', status: '', showTest: false, showOff: true };
+let editing = null;      // 편집 중인 shoot (null이면 신규)
+let pendingFiles = [];   // 업로드 대기 파일
+let removedFiles = [];   // 연결 해제할 파일 url
+let busy = false;
+
+/* ── 유틸 ── */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayStr = () => ymd(new Date());
+function parseYmd(s) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+function fmtKDate(s) { const d = parseYmd(s); return d ? `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})` : s; }
+function api(fn, ...args) {
+  return new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args));
+}
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', err ? 5000 : 2400);
+}
+function errMsg(e) { return (e && (e.message || e)) + ''; }
+function shootUrl(id) { return (BOOT.baseUrl || '') + '?shoot=' + encodeURIComponent(id); }
+function normUrl(u) { u = String(u || '').trim(); if (!u) return ''; return /^[a-z][a-z0-9+.-]*:/i.test(u) ? u : 'https://' + u; }
+function safeHref(u) { u = normUrl(u); return /^(https?|mailto|tel):/i.test(u) ? u : '#'; }
+
+const CENTER_VARS = ['--c1', '--c2', '--c3', '--c4', '--c5'];
+function centerColor(c) {
+  const i = DATA.options.centers.indexOf(c);
+  return i >= 0 ? `var(${CENTER_VARS[i % CENTER_VARS.length]})` : 'var(--c0)';
+}
+function statusKind(s) {
+  if (!s.model && !s.status) return 'none';
+  if (s.status === '취소') return 'cancel';
+  if (s.status === '확정' || (s.model && !s.status)) return 'ok';
+  return 'wait';
+}
+function statusLabel(s) {
+  const k = statusKind(s);
+  if (k === 'none') return '미배정';
+  return s.status || '배정';
+}
+function confirmedText(s) {
+  if (s.confirmed) return s.confirmed;
+  const n = s.model && s.status !== '취소' ? 1 : 0;
+  return n + '/' + (s.capacity || '');
+}
+function contiCount(s) { return (s.links || []).length + (s.files || []).length; }
+function sortShoots(a, b) { return (a.date + a.time + a.center).localeCompare(b.date + b.time + b.center); }
+
+/* ── 데이터 ── */
+async function load(silent) {
+  try {
+    const d = await api('getData');
+    DATA = d;
+    fillStaticOptions();
+    render();
+    if (!silent) $('#loading').style.display = 'none';
+  } catch (e) {
+    $('#loading').innerHTML = `<div style="max-width:480px;padding:16px;text-align:center"><b>시트를 불러오지 못했습니다</b><p class="small">${esc(errMsg(e))}</p><button class="btn" onclick="location.reload()">다시 시도</button></div>`;
+  }
+}
+function upsertLocal(s) {
+  const i = DATA.shoots.findIndex(x => x.id === s.id);
+  if (i >= 0) DATA.shoots[i] = s; else DATA.shoots.push(s);
+}
+
+/* ── 렌더 ── */
+function render() {
+  if (BOOT.shootId) renderDetail(); else renderMain();
+}
+
+function header(extra) {
+  return `<header class="top"><div class="wrap">
+    <div><h1>모델 촬영 스케줄</h1><div class="sub">촬영 슬롯 시트 실시간 연동</div></div>
+    <span class="sp"></span>
+    <span class="sync" id="sync">동기화 ${esc((DATA.fetchedAt || '').slice(11, 16))}</span>
+    <button class="btn ghost sm" onclick="refresh()">새로고침</button>
+    ${extra || ''}
+    <a class="btn ghost sm" href="${esc(DATA.sheetUrl)}" target="_blank" rel="noopener">시트 열기</a>
+  </div></header>`;
+}
+
+function filtered() {
+  return DATA.shoots.filter(s =>
+    (VIEW.showTest || !s.test) &&
+    (VIEW.showOff || s.use !== 'N') &&
+    (!VIEW.center || s.center === VIEW.center) &&
+    (!VIEW.status || statusLabel(s) === VIEW.status)
+  ).sort(sortShoots);
+}
+
+function renderMain() {
+  const list = filtered();
+  const ym = VIEW.y + '-' + pad(VIEW.m + 1);
+  const monthList = list.filter(s => s.date.slice(0, 7) === ym);
+  const today = todayStr();
+  const upcoming = list.filter(s => s.date >= today && s.status !== '취소');
+  const st = {
+    month: monthList.length,
+    ok: monthList.filter(s => statusKind(s) === 'ok').length,
+    wait: monthList.filter(s => statusKind(s) === 'wait').length,
+    none: monthList.filter(s => statusKind(s) === 'none').length,
+    noConti: upcoming.filter(s => s.model && !contiCount(s)).length,
+    noOwner: upcoming.filter(s => s.model && !s.assignee).length,
+  };
+  const statuses = ['미배정', '배정', ...DATA.options.statuses];
+
+  $('#app').innerHTML = header(`<button class="btn ghost sm" onclick="openModels()">모델 정보</button>
+      <button class="btn primary sm" style="background:#fff;color:var(--brand);border-color:#fff" onclick="openShoot(null)">+ 촬영 일정</button>`) +
+  `<main class="wrap">
+    <div class="stats">
+      <div class="stat"><b>${st.month}</b><span>${VIEW.m + 1}월 촬영 슬롯</span></div>
+      <div class="stat"><b style="color:var(--ok)">${st.ok}</b><span>확정</span></div>
+      <div class="stat"><b style="color:var(--wait)">${st.wait}</b><span>조율 중</span></div>
+      <div class="stat"><b class="muted">${st.none}</b><span>모델 미배정</span></div>
+      <div class="stat"><b style="color:${st.noConti ? 'var(--sun)' : 'inherit'}">${st.noConti}</b><span>예정 촬영 중 콘티 미등록</span></div>
+      <div class="stat"><b style="color:${st.noOwner ? 'var(--sun)' : 'inherit'}">${st.noOwner}</b><span>예정 촬영 중 담당자 미지정</span></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn sm" onclick="moveMonth(-1)" aria-label="이전 달">‹</button>
+      <h2>${VIEW.y}. ${pad(VIEW.m + 1)}</h2>
+      <button class="btn sm" onclick="moveMonth(1)" aria-label="다음 달">›</button>
+      <button class="btn sm" onclick="goToday()">오늘</button>
+      <span class="sp"></span>
+      <select onchange="setFilter('center',this.value)"><option value="">전체 센터</option>${DATA.options.centers.map(c => `<option ${VIEW.center === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      <select onchange="setFilter('status',this.value)"><option value="">전체 상태</option>${statuses.map(c => `<option ${VIEW.status === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      <label class="chk"><input type="checkbox" ${VIEW.showOff ? 'checked' : ''} onchange="setFilter('showOff',this.checked)">사용 N 포함</label>
+      <label class="chk"><input type="checkbox" ${VIEW.showTest ? 'checked' : ''} onchange="setFilter('showTest',this.checked)">테스트 포함</label>
+    </div>
+    <div class="legend">
+      ${DATA.options.centers.map(c => `<span><i style="background:${centerColor(c)}"></i>${esc(c)}</span>`).join('')}
+      <span><span class="dot ok"></span> 확정</span><span><span class="dot wait"></span> 조율 중</span><span><span class="dot cancel"></span> 취소</span><span><span class="dot none"></span> 미배정</span>
+      <span>· 일정을 클릭하면 새 탭에서 콘티 기획안을 확인할 수 있어요</span>
+    </div>
+    <div class="card cal">${calendarHtml(list)}</div>
+    <section class="block">
+      <h3>${VIEW.m + 1}월 촬영 목록 <span class="muted small">${monthList.length}건</span></h3>
+      <div class="card tblwrap">${tableHtml(monthList)}</div>
+    </section>
+  </main>`;
+}
+
+function calendarHtml(list) {
+  const byDate = {};
+  list.forEach(s => (byDate[s.date] = byDate[s.date] || []).push(s));
+  const first = new Date(VIEW.y, VIEW.m, 1);
+  const start = new Date(VIEW.y, VIEW.m, 1 - first.getDay());
+  const last = new Date(VIEW.y, VIEW.m + 1, 0);
+  const weeks = Math.ceil((first.getDay() + last.getDate()) / 7);
+  const today = todayStr();
+  let h = DOW.map((d, i) => `<div class="dow ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${d}</div>`).join('');
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const ds = ymd(d);
+    const items = byDate[ds] || [];
+    const cls = ['day', d.getMonth() !== VIEW.m ? 'out' : '', ds === today ? 'today' : '', d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''].join(' ');
+    h += `<div class="${cls}">
+      <div class="head"><span class="num">${d.getDate()}</span><button class="add" title="${ds} 촬영 추가" onclick="openShoot(null,'${ds}')">+</button></div>
+      ${items.map(chipHtml).join('')}
+    </div>`;
+  }
+  return h;
+}
+
+function chipHtml(s) {
+  const k = statusKind(s);
+  const cls = ['chip', 'st-' + k, k === 'cancel' ? 'cancel' : '', s.use === 'N' ? 'off' : '', s.test ? 'test' : ''].join(' ');
+  const cc = contiCount(s);
+  const title = `${s.time} ${s.center} · ${s.model || '미배정'} · ${statusLabel(s)}${s.assignee ? ' · 담당 ' + s.assignee : ''}`;
+  return `<a class="${cls}" style="--cc:${centerColor(s.center)}" href="${esc(shootUrl(s.id))}" target="_blank" rel="noopener" title="${esc(title)}">
+    <span class="l1"><span class="dot ${k}"></span><span class="t">${esc(s.time)}</span><span class="c">${esc(s.center)}</span>${cc ? `<span class="clip">콘티${cc}</span>` : ''}</span>
+    <span class="l2"><span class="m">${esc(s.model || '미배정')}</span>${s.assignee ? `<span>· ${esc(s.assignee)}</span>` : ''}</span>
+  </a>`;
+}
+
+function tableHtml(list) {
+  if (!list.length) return '<div class="empty">이 달에 등록된 촬영이 없습니다. 달력의 + 버튼이나 상단 [+ 촬영 일정]으로 추가하세요.</div>';
+  return `<table><thead><tr>
+    <th>일자</th><th>시간</th><th>센터</th><th>확정</th><th>모델</th><th>상태</th><th>작업 담당자</th><th>콘티</th><th>연락</th><th>센터장</th><th>캘린더</th><th>사용</th><th>메모 · 비고</th><th></th>
+  </tr></thead><tbody>${list.map(s => {
+    const k = statusKind(s);
+    return `<tr class="${s.use === 'N' || k === 'cancel' ? 'dim' : ''}">
+      <td class="num">${esc(s.date.slice(5).replace('-', '/'))} <span class="muted">${DOW[parseYmd(s.date)?.getDay() ?? 0]}</span></td>
+      <td class="num">${esc(s.time)}</td>
+      <td><span class="ctag" style="--cc:${centerColor(s.center)}">${esc(s.center)}</span></td>
+      <td class="num">${esc(confirmedText(s))}</td>
+      <td>${esc(s.model || '—')}</td>
+      <td><span class="badge ${k}">${esc(statusLabel(s))}</span></td>
+      <td>${s.assignee ? esc(s.assignee) : '<span class="muted">—</span>'}</td>
+      <td>${contiCount(s) ? `<a href="${esc(shootUrl(s.id))}" target="_blank" rel="noopener">링크 ${s.links.length} · 파일 ${s.files.length}</a>` : '<span class="muted">없음</span>'}</td>
+      <td>${esc(s.contact || '—')}</td>
+      <td>${s.dirOk ? '✓' : ''}</td>
+      <td>${s.calendar ? '✓' : ''}</td>
+      <td>${esc(s.use)}</td>
+      <td class="wrap-cell small">${esc([s.memo, s.note].filter(Boolean).join(' · '))}</td>
+      <td><button class="btn sm" onclick="openShoot('${esc(s.id)}')">수정</button> <a class="btn sm" href="${esc(shootUrl(s.id))}" target="_blank" rel="noopener">열기</a></td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function renderDetail() {
+  const s = DATA.shoots.find(x => x.id === BOOT.shootId);
+  if (!s) {
+    $('#app').innerHTML = header() + `<main class="wrap"><div class="empty">일정을 찾을 수 없습니다. 시트에서 삭제되었을 수 있어요.<br><br><a class="btn" href="${esc(BOOT.baseUrl)}">캘린더로</a></div></main>`;
+    return;
+  }
+  document.title = `${s.date} ${s.center} ${s.model || ''} · 콘티`;
+  const k = statusKind(s);
+  const m = DATA.models.find(x => x.name === s.model);
+  const links = s.links || [], files = s.files || [];
+  $('#app').innerHTML = header(`<a class="btn ghost sm" href="${esc(BOOT.baseUrl)}">← 캘린더</a>`) +
+  `<main class="wrap">
+    <div class="detail-head">
+      <div class="kicker"><span class="ctag" style="--cc:${centerColor(s.center)}">${esc(s.center)}</span><span class="badge ${k}">${esc(statusLabel(s))}</span>${s.test ? '<span class="badge none">테스트</span>' : ''}${s.use === 'N' ? '<span class="badge none">사용 N</span>' : ''}<span class="muted">시트 ${s.row}행</span></div>
+      <h1>${esc(fmtKDate(s.date))} ${esc(s.time)} · ${esc(s.model || '모델 미배정')}</h1>
+      <div><button class="btn primary" onclick="openShoot('${esc(s.id)}')">수정 · 콘티 업로드</button></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="ch">촬영 일정</div><div class="cb"><dl class="kv">
+        <dt>센터</dt><dd>${esc(s.center)}</dd>
+        <dt>촬영 일자</dt><dd>${esc(fmtKDate(s.date))} ${esc(s.time)}</dd>
+        <dt>정원 / 확정</dt><dd>${esc(s.capacity || '—')} / ${esc(confirmedText(s))}</dd>
+        <dt>작업 담당자</dt><dd>${s.assignee ? `<b>${esc(s.assignee)}</b>` : '<span class="muted">미지정</span>'}</dd>
+        <dt>센터장 확인</dt><dd>${s.dirOk ? '확인 완료' : '<span class="muted">미확인</span>'}</dd>
+        <dt>캘린더 등록</dt><dd>${s.calendar ? '등록됨' : '<span class="muted">미등록</span>'}</dd>
+        <dt>메모</dt><dd>${esc(s.memo || '—')}</dd>
+        <dt>비고</dt><dd>${esc(s.note || '—')}</dd>
+      </dl></div></div>
+      <div class="card"><div class="ch">모델 기본 정보</div><div class="cb">${s.model ? `<dl class="kv">
+        <dt>이름</dt><dd><b>${esc(s.model)}</b></dd>
+        <dt>배정 상태</dt><dd><span class="badge ${k}">${esc(statusLabel(s))}</span></dd>
+        <dt>연락 방식</dt><dd>${esc(s.contact || (m && m.contact) || '—')}</dd>
+        <dt>연락처</dt><dd>${m && m.phone ? `<a href="tel:${esc(m.phone.replace(/[^0-9+]/g, ''))}">${esc(m.phone)}</a>` : '—'}</dd>
+        <dt>성별 · 연령대</dt><dd>${esc([m && m.gender, m && m.age].filter(Boolean).join(' · ') || '—')}</dd>
+        <dt>촬영 부위</dt><dd>${esc((m && m.part) || '—')}</dd>
+        <dt>메모</dt><dd>${esc((m && m.memo) || '—')}</dd>
+      </dl>${m ? '' : '<p class="hint">‘모델 정보’ 탭에 이 모델이 없습니다. 상단 메뉴의 모델 정보에서 등록하세요.</p>'}` : '<div class="muted">아직 배정된 모델이 없습니다.</div>'}</div></div>
+    </div>
+    <section class="block card">
+      <div class="ch">콘티 기획안 <span class="muted small">링크 ${links.length} · 파일 ${files.length}</span></div>
+      <div class="cb conti-list">
+        ${!links.length && !files.length ? `<div class="empty">등록된 콘티 기획안이 없습니다.<br><br><button class="btn primary" onclick="openShoot('${esc(s.id)}')">콘티 업로드</button></div>` : ''}
+        ${files.map(f => contiBlock(f.name, f.url, '파일')).join('')}
+        ${links.map(l => contiBlock(l.label || l.url, l.url, '링크')).join('')}
+      </div>
+    </section>
+  </main>`;
+}
+
+/** 구글 드라이브·문서·슬라이드·시트는 미리보기 임베드, 그 외는 열기 버튼 */
+function previewUrl(u) {
+  u = normUrl(u);
+  let m = u.match(/^https:\/\/docs\.google\.com\/(presentation|document|spreadsheets)\/d\/([\w-]+)/);
+  if (m) return `https://docs.google.com/${m[1]}/d/${m[2]}/preview`;
+  m = u.match(/^https:\/\/drive\.google\.com\/file\/d\/([\w-]+)/) || u.match(/^https:\/\/drive\.google\.com\/open\?id=([\w-]+)/);
+  if (m) return `https://drive.google.com/file/d/${m[1]}/preview`;
+  m = u.match(/^https:\/\/www\.figma\.com\/(file|design|proto)\//);
+  if (m) return 'https://www.figma.com/embed?embed_host=share&url=' + encodeURIComponent(u);
+  m = u.match(/^https:\/\/(?:www\.)?youtube\.com\/watch\?v=([\w-]+)/) || u.match(/^https:\/\/youtu\.be\/([\w-]+)/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1];
+  return '';
+}
+function contiBlock(name, url, kind) {
+  const pv = previewUrl(url);
+  return `<div class="conti">
+    <div class="bar"><span class="badge none">${kind}</span><span class="nm" title="${esc(name)}">${esc(name)}</span>
+      <a class="btn sm" href="${esc(safeHref(url))}" target="_blank" rel="noopener">새 탭에서 열기</a></div>
+    ${pv ? `<iframe src="${esc(pv)}" loading="lazy" allow="autoplay; fullscreen" allowfullscreen></iframe>` : `<div class="cb small muted" style="word-break:break-all">${esc(url)}</div>`}
+  </div>`;
+}
+
+/* ── 내비게이션 / 필터 ── */
+function moveMonth(d) { const t = new Date(VIEW.y, VIEW.m + d, 1); VIEW.y = t.getFullYear(); VIEW.m = t.getMonth(); saveView(); renderMain(); }
+function goToday() { const t = new Date(); VIEW.y = t.getFullYear(); VIEW.m = t.getMonth(); saveView(); renderMain(); }
+function setFilter(k, v) { VIEW[k] = v; saveView(); renderMain(); }
+function saveView() { try { localStorage.setItem('shootView', JSON.stringify(VIEW)); } catch (e) {} }
+function loadView() {
+  const t = new Date(); VIEW.y = t.getFullYear(); VIEW.m = t.getMonth();
+  try { Object.assign(VIEW, JSON.parse(localStorage.getItem('shootView') || '{}')); } catch (e) {}
+}
+async function refresh() {
+  if (busy) return;
+  $('#sync') && ($('#sync').textContent = '동기화 중…');
+  await load(true);
+}
+
+/* ── 촬영 일정 편집 ── */
+function opts(list, cur, blank) {
+  const all = list.slice(); if (cur && all.indexOf(cur) < 0) all.push(cur);
+  return (blank ? '<option value=""></option>' : '') + all.map(v => `<option ${v === cur ? 'selected' : ''}>${esc(v)}</option>`).join('');
+}
+function fillStaticOptions() {
+  const names = DATA.models.map(m => m.name);
+  DATA.shoots.forEach(s => { if (s.model && names.indexOf(s.model) < 0) names.push(s.model); });
+  $('#modelNames').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+  const owners = [...new Set(DATA.shoots.map(s => s.assignee).filter(Boolean))];
+  $('#assigneeNames').innerHTML = owners.map(n => `<option value="${esc(n)}">`).join('');
+}
+
+function openShoot(id, date) {
+  const s = id ? DATA.shoots.find(x => x.id === id) : null;
+  editing = s;
+  pendingFiles = []; removedFiles = [];
+  const f = $('#fShoot');
+  const v = s || { center: DATA.options.centers[0] || '', date: date || todayStr(), time: '10:00', capacity: 1, use: 'Y', links: [], files: [] };
+  $('#dlgShootTitle').textContent = s ? `촬영 일정 수정 · ${s.date} ${s.time} ${s.center}` : '새 촬영 일정';
+  f.center.innerHTML = opts(DATA.options.centers, v.center);
+  f.use.innerHTML = opts(DATA.options.uses, v.use, true);
+  f.status.innerHTML = opts(DATA.options.statuses, v.status, true);
+  f.contact.innerHTML = opts(DATA.options.contacts, v.contact, true);
+  f.date.value = v.date || ''; f.time.value = v.time || ''; f.capacity.value = v.capacity ?? '';
+  f.dirOk.checked = !!v.dirOk; f.test.checked = !!v.test; f.calendar.checked = !!v.calendar;
+  f.model.value = s ? (s.modelAuto && !s.model ? '' : s.model) : '';
+  f.assignee.value = v.assignee || ''; f.memo.value = v.memo || ''; f.note.value = v.note || '';
+  $('#linkRows').innerHTML = '';
+  (v.links || []).forEach(l => addLinkRow(l.label, l.url));
+  if (!(v.links || []).length) addLinkRow();
+  renderFileList();
+  updateModelHint();
+  $('#btnDelete').style.display = s ? '' : 'none';
+  $('#dlgShoot').showModal();
+}
+function addLinkRow(label, url) {
+  const row = document.createElement('div'); row.className = 'lrow';
+  row.innerHTML = `<input placeholder="이름 (예: 1차 콘티)" value="${esc(label || '')}" data-k="label"><input placeholder="https://" value="${esc(url || '')}" data-k="url" inputmode="url"><button type="button" class="btn sm" aria-label="링크 삭제">✕</button>`;
+  row.querySelector('button').onclick = () => row.remove();
+  $('#linkRows').appendChild(row);
+}
+function renderFileList() {
+  const existing = (editing ? editing.files : []).filter(f => removedFiles.indexOf(f.url) < 0);
+  $('#fileList').innerHTML =
+    existing.map(f => `<div class="fitem"><span class="badge ok">Drive</span><a href="${esc(safeHref(f.url))}" target="_blank" rel="noopener">${esc(f.name)}</a><button type="button" class="btn sm" data-rm="${esc(f.url)}">연결 해제</button></div>`).join('') +
+    pendingFiles.map((f, i) => `<div class="fitem"><span class="badge wait">대기</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)} <span class="muted small">${(f.size / 1048576).toFixed(1)}MB</span></span><button type="button" class="btn sm" data-pi="${i}">✕</button></div>`).join('');
+  $('#fileList').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { removedFiles.push(b.dataset.rm); renderFileList(); });
+  $('#fileList').querySelectorAll('[data-pi]').forEach(b => b.onclick = () => { pendingFiles.splice(+b.dataset.pi, 1); renderFileList(); });
+}
+function addFiles(list) {
+  [...list].forEach(f => {
+    if (f.size > MAX_FILE) { toast(`${f.name}: 30MB를 넘는 파일은 Drive에 직접 올린 뒤 링크로 추가하세요`, true); return; }
+    pendingFiles.push(f);
+  });
+  renderFileList();
+}
+function updateModelHint() {
+  const name = $('#fShoot').model.value.trim();
+  const m = DATA.models.find(x => x.name === name);
+  $('#modelInfoHint').innerHTML = !name ? '' : m
+    ? `등록된 모델 · ${esc([m.phone, m.gender, m.age, m.part].filter(Boolean).join(' · ') || '추가 정보 없음')}`
+    : `‘모델 정보’ 탭에 없는 이름입니다. <a href="#" onclick="event.preventDefault();openModels('${esc(name)}')">모델 정보 등록</a>`;
+}
+function readFile64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1] || '');
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+async function submitShoot() {
+  const f = $('#fShoot');
+  const links = [...$('#linkRows').querySelectorAll('.lrow')].map(r => ({
+    label: r.querySelector('[data-k=label]').value.trim(),
+    url: normUrl(r.querySelector('[data-k=url]').value),
+  })).filter(l => l.url);
+  const payload = {
+    id: editing ? editing.id : '',
+    center: f.center.value, date: f.date.value, time: f.time.value,
+    capacity: f.capacity.value === '' ? '' : Number(f.capacity.value),
+    use: f.use.value, dirOk: f.dirOk.checked, test: f.test.checked,
+    model: f.model.value.trim(), status: f.status.value, contact: f.contact.value, calendar: f.calendar.checked,
+    assignee: f.assignee.value.trim(), memo: f.memo.value, note: f.note.value, links,
+  };
+  if (editing && removedFiles.length) payload.files = editing.files.filter(x => removedFiles.indexOf(x.url) < 0);
+  busy = true; $('#btnSave').disabled = true; $('#btnSave').textContent = '저장 중…';
+  try {
+    let saved = await api('saveShoot', payload);
+    for (let i = 0; i < pendingFiles.length; i++) {
+      const file = pendingFiles[i];
+      $('#btnSave').textContent = `업로드 ${i + 1}/${pendingFiles.length}…`;
+      saved = await api('uploadConti', saved.id, file.name, file.type, await readFile64(file));
+    }
+    upsertLocal(saved);
+    $('#dlgShoot').close();
+    fillStaticOptions(); render();
+    toast('시트에 저장했습니다');
+  } catch (e) {
+    toast('저장 실패: ' + errMsg(e), true);
+  } finally {
+    busy = false; $('#btnSave').disabled = false; $('#btnSave').textContent = '시트에 저장';
+  }
+}
+async function removeShoot() {
+  if (!editing) return;
+  if (!confirm(`${editing.date} ${editing.time} ${editing.center} 일정을 시트에서 삭제할까요?\n(시트 ${editing.row}행이 삭제됩니다)`)) return;
+  try {
+    await api('deleteShoot', editing.id);
+    DATA.shoots = DATA.shoots.filter(x => x.id !== editing.id);
+    $('#dlgShoot').close(); render(); toast('삭제했습니다');
+  } catch (e) { toast('삭제 실패: ' + errMsg(e), true); }
+}
+
+/* ── 모델 정보 ── */
+let editingModel = null;
+function openModels(prefillName) {
+  renderModels();
+  resetModelForm(prefillName);
+  if (!$('#dlgModels').open) $('#dlgModels').showModal();
+}
+function renderModels() {
+  const counts = {};
+  DATA.shoots.forEach(s => { if (s.model && s.status !== '취소') counts[s.model] = (counts[s.model] || 0) + 1; });
+  $('#modelRows').innerHTML = DATA.models.length ? DATA.models.map((m, i) => `<tr>
+    <td><b>${esc(m.name)}</b></td><td>${esc(m.phone)}</td><td>${esc(m.gender)}</td><td>${esc(m.age)}</td><td>${esc(m.contact)}</td><td>${esc(m.part)}</td><td class="num">${counts[m.name] || 0}</td>
+    <td><button type="button" class="btn sm" data-edit="${i}">수정</button> <button type="button" class="btn sm danger" data-del="${i}">삭제</button></td></tr>`).join('')
+    : '<tr><td colspan="8" class="empty">등록된 모델이 없습니다.</td></tr>';
+  $('#modelRows').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editModel(DATA.models[+b.dataset.edit]));
+  $('#modelRows').querySelectorAll('[data-del]').forEach(b => b.onclick = () => delModel(DATA.models[+b.dataset.del]));
+}
+function resetModelForm(name) {
+  editingModel = null;
+  const f = $('#fModels');
+  ['name', 'phone', 'part', 'memo'].forEach(k => f[k].value = '');
+  f.gender.value = ''; f.age.value = '';
+  f.contact.innerHTML = opts(DATA.options.contacts, '', true);
+  if (name) f.name.value = name;
+  $('#modelFormTitle').textContent = '새 모델 등록';
+}
+function editModel(m) {
+  editingModel = m;
+  const f = $('#fModels');
+  ['name', 'phone', 'part', 'memo', 'gender', 'age'].forEach(k => f[k].value = m[k] || '');
+  f.contact.innerHTML = opts(DATA.options.contacts, m.contact, true);
+  $('#modelFormTitle').textContent = `모델 정보 수정 · ${m.name}`;
+  f.name.focus();
+}
+async function saveModelForm() {
+  const f = $('#fModels');
+  const m = {}; ['name', 'phone', 'gender', 'age', 'contact', 'part', 'memo'].forEach(k => m[k] = f[k].value.trim());
+  if (!m.name) { toast('이름을 입력하세요', true); return; }
+  const btn = $('#btnModelSave'); btn.disabled = true;
+  try {
+    DATA.models = await api('saveModel', m, editingModel ? editingModel.name : '');
+    renderModels(); resetModelForm(); fillStaticOptions(); updateModelHint();
+    if (BOOT.shootId) render();
+    toast('모델 정보를 저장했습니다');
+  } catch (e) { toast(errMsg(e), true); } finally { btn.disabled = false; }
+}
+async function delModel(m) {
+  if (!confirm(`${m.name} 모델 정보를 삭제할까요? (촬영 일정은 유지됩니다)`)) return;
+  try { DATA.models = await api('deleteModel', m.name); renderModels(); fillStaticOptions(); }
+  catch (e) { toast(errMsg(e), true); }
+}
+
+/* ── 이벤트 ── */
+$('#fShoot').addEventListener('submit', e => {
+  if (e.submitter && e.submitter.value === 'save') { e.preventDefault(); if ($('#fShoot').reportValidity()) submitShoot(); }
+});
+$('#dlgShoot').addEventListener('cancel', e => { if (busy) e.preventDefault(); });
+$('#addLink').onclick = () => addLinkRow();
+$('#btnDelete').onclick = removeShoot;
+$('#fShoot').model.addEventListener('input', updateModelHint);
+$('#fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+$('#btnModelSave').onclick = saveModelForm;
+$('#btnModelReset').onclick = () => resetModelForm();
+
+// 1분마다, 탭에 돌아올 때 시트 변경사항 반영 (편집 중이면 건너뜀)
+function canAutoRefresh() { return !busy && !$('#dlgShoot').open && !$('#dlgModels').open && document.visibilityState === 'visible'; }
+setInterval(() => { if (canAutoRefresh()) refresh(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (canAutoRefresh()) refresh(); });
+
+loadView();
+load();
+</script>
+</body>
+</html>
