@@ -87,10 +87,11 @@ function doGet(e) {
     baseUrl: ScriptApp.getService().getUrl() || '',
     initial: initial,
     initialError: initialError,
-  }).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
-  // 템플릿 엔진을 쓰지 않고 파일 원문에 데이터만 끼워 넣음 (템플릿 변환 시 스크립트가 깨지는 문제 방지)
+  });
+  // 데이터는 base64로 감싸 끼워 넣음 (구글 화면 변환 과정에서 글자가 바뀌어 스크립트가 깨지는 문제 방지)
+  const bootB64 = Utilities.base64Encode(boot, Utilities.Charset.UTF_8);
   const html = HtmlService.createHtmlOutputFromFile('Index').getContent()
-    .replace('/*__BOOT__*/null', function () { return boot; });
+    .replace('__BOOT_B64__', function () { return bootB64; });
   return HtmlService.createHtmlOutput(html)
     .setTitle(CONFIG.APP_TITLE)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
