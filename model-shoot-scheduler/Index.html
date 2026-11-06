@@ -233,11 +233,11 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;word-break:break-word}
 // 화면 스크립트 오류가 나면 로딩 화면에 그대로 표시 (원인 확인용)
 window.addEventListener('error', function (e) {
   var el = document.getElementById('loading');
-  if (el && el.style.display !== 'none') el.innerHTML = '<div style="max-width:520px;padding:16px;text-align:center"><b>화면 오류</b><p class="small" style="word-break:break-all">' + String(e.message || e).replace(/</g, '&lt;') + '</p></div>';
+  if (el && el.style.display !== 'none') el.innerHTML = '<div style="max-width:520px;padding:16px;text-align:center"><b>화면 오류</b><p class="small" style="word-break:break-all">' + (String(e.message || e) + ' (줄 ' + e.lineno + ':' + e.colno + ')').replace(/</g, '&lt;') + '</p></div>';
 });
 </script>
 <script>
-const BOOT = <?!= boot ?>;
+const BOOT = /*__BOOT__*/null || { shootId: '', baseUrl: '' };
 const DOW = ['일','월','화','수','목','금','토'];
 const MAX_FILE = 30 * 1024 * 1024;
 let DATA = { shoots: [], models: [], options: { centers: [], statuses: [], contacts: [], uses: [] } };

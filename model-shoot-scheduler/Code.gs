@@ -79,17 +79,19 @@ function onOpen() {
 }
 
 function doGet(e) {
-  const t = HtmlService.createTemplateFromFile('Index');
   // 첫 화면 데이터는 페이지에 바로 넣어서 보냄 (브라우저→서버 호출 없이 즉시 표시)
   let initial = null, initialError = '';
   try { initial = getData(); } catch (err) { initialError = String(err && err.message || err); }
-  t.boot = JSON.stringify({
+  const boot = JSON.stringify({
     shootId: (e && e.parameter && e.parameter.shoot) || '',
     baseUrl: ScriptApp.getService().getUrl() || '',
     initial: initial,
     initialError: initialError,
-  }).replace(/</g, '\\u003c');
-  return t.evaluate()
+  }).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  // 템플릿 엔진을 쓰지 않고 파일 원문에 데이터만 끼워 넣음 (템플릿 변환 시 스크립트가 깨지는 문제 방지)
+  const html = HtmlService.createHtmlOutputFromFile('Index').getContent()
+    .replace('/*__BOOT__*/null', function () { return boot; });
+  return HtmlService.createHtmlOutput(html)
     .setTitle(CONFIG.APP_TITLE)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
