@@ -230,6 +230,13 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;word-break:break-word}
 <div id="toast" role="status"></div>
 
 <script>
+// 화면 스크립트 오류가 나면 로딩 화면에 그대로 표시 (원인 확인용)
+window.addEventListener('error', function (e) {
+  var el = document.getElementById('loading');
+  if (el && el.style.display !== 'none') el.innerHTML = '<div style="max-width:520px;padding:16px;text-align:center"><b>화면 오류</b><p class="small" style="word-break:break-all">' + String(e.message || e).replace(/</g, '&lt;') + '</p></div>';
+});
+</script>
+<script>
 const BOOT = <?!= boot ?>;
 const DOW = ['일','월','화','수','목','금','토'];
 const MAX_FILE = 30 * 1024 * 1024;
@@ -719,7 +726,16 @@ setInterval(() => { if (canAutoRefresh()) refresh(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (canAutoRefresh()) refresh(); });
 
 loadView();
-load();
+if (BOOT.initial && BOOT.initial.shoots) {
+  DATA = BOOT.initial;
+  fillStaticOptions();
+  render();
+  $('#loading').style.display = 'none';
+} else if (BOOT.initialError) {
+  $('#loading').innerHTML = `<div style="max-width:480px;padding:16px;text-align:center"><b>시트를 불러오지 못했습니다</b><p class="small">${esc(BOOT.initialError)}</p></div>`;
+} else {
+  load();
+}
 </script>
 </body>
 </html>

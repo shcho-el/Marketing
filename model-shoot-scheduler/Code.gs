@@ -80,10 +80,15 @@ function onOpen() {
 
 function doGet(e) {
   const t = HtmlService.createTemplateFromFile('Index');
+  // 첫 화면 데이터는 페이지에 바로 넣어서 보냄 (브라우저→서버 호출 없이 즉시 표시)
+  let initial = null, initialError = '';
+  try { initial = getData(); } catch (err) { initialError = String(err && err.message || err); }
   t.boot = JSON.stringify({
     shootId: (e && e.parameter && e.parameter.shoot) || '',
     baseUrl: ScriptApp.getService().getUrl() || '',
-  });
+    initial: initial,
+    initialError: initialError,
+  }).replace(/</g, '\\u003c');
   return t.evaluate()
     .setTitle(CONFIG.APP_TITLE)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
