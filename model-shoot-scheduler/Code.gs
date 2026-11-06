@@ -62,11 +62,22 @@ const MODEL_COLS = {
 };
 
 const DEFAULT_OPTIONS = {
-  centers: ['재활', '롱래스팅', '두피', '발톱'],
+  centers: ['도수', '롱래스팅', '두피', '발톱'],
   statuses: ['조율 중', '확정', '취소'],
   contacts: ['문자', '메일', '전화', '카톡'],
   uses: ['Y', 'N'],
 };
+
+/**
+ * 센터 표시 이름: 시트 값은 그대로 두고 화면에서만 바꿔 보여줌 (저장할 때는 시트 값으로 되돌려 기록)
+ * 기존 신청 폼이 시트의 '도수'를 기준으로 동작하므로 시트 값은 바꾸지 않습니다.
+ */
+const CENTER_DISPLAY = { '도수': '재활' };
+function centerToDisplay_(v) { return CENTER_DISPLAY[v] || v; }
+function centerToSheet_(v) {
+  for (const k in CENTER_DISPLAY) if (CENTER_DISPLAY[k] === v) return k;
+  return v;
+}
 
 /* ───────────────────────── 메뉴 / 진입점 ───────────────────────── */
 
@@ -362,7 +373,7 @@ function rowToShoot_(map, vals, disp, tz, row) {
   return {
     id: norm_(get('id')),
     row: row,
-    center: center,
+    center: centerToDisplay_(center),
     date: date,
     time: fmtTime_(get('time'), getD('time'), tz),
     capacity: capRaw === '' || capRaw == null ? '' : Number(capRaw) || '',
@@ -396,6 +407,7 @@ function writeRow_(sh, map, row, input) {
     else if (k === 'capacity') v = v === '' || v == null ? '' : Number(v);
     else if (k === 'date' && v) v = parseDate_(v);
     else if (k === 'time' && v) v = String(v);
+    else if (k === 'center') v = centerToSheet_(v);
     else v = v == null ? '' : v;
     sh.getRange(row, map[k]).setValue(v);
   });
@@ -457,7 +469,8 @@ function readOptions_(sh, shoots) {
     return list.filter(function (v) { return v; });
   };
   return {
-    centers: map.center ? pick('center', DEFAULT_OPTIONS.centers, 'center') : DEFAULT_OPTIONS.centers,
+    centers: (map.center ? pick('center', DEFAULT_OPTIONS.centers, 'center') : DEFAULT_OPTIONS.centers)
+      .map(centerToDisplay_).filter(function (v, i, a) { return a.indexOf(v) === i; }),
     statuses: map.status ? pick('status', DEFAULT_OPTIONS.statuses, 'status') : DEFAULT_OPTIONS.statuses,
     contacts: map.contact ? pick('contact', DEFAULT_OPTIONS.contacts, 'contact') : DEFAULT_OPTIONS.contacts,
     uses: map.use ? pick('use', DEFAULT_OPTIONS.uses, 'use') : DEFAULT_OPTIONS.uses,
