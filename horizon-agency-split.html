@@ -35,6 +35,7 @@ b,strong{font-weight:600}
 p{margin:0} .muted{color:var(--muted)} .meta{font-size:.85rem;color:var(--muted)}
 section{display:grid;gap:16px}
 header{display:grid;gap:10px}
+.col .grp{font-size:.8rem;font-weight:600;color:var(--split);margin-top:4px}
 .badge{display:inline-block;font-size:.85rem;font-weight:600;padding:4px 12px;margin-right:8px;border-radius:99px;background:#c4694d;color:#fff;letter-spacing:0;vertical-align:1px}
 ul{margin:0;padding-left:20px;display:grid;gap:4px}
 
@@ -94,17 +95,24 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
     </div>
     <div class="col split">
       <h3>분담</h3>
+      <p class="grp">검색광고</p>
       <ul>
         <li>소재 방향·문안 다듬기 → 인하우스</li>
         <li>랜딩·홈페이지 고도화 → 인하우스</li>
         <li>1차 소재 기획·의료심의·세팅 → 살만</li>
+      </ul>
+      <p class="grp">카페 바이럴 <span class="muted">(홀딩)</span></p>
+      <ul>
+        <li>초기 가이드 전달 → 인하우스</li>
+        <li>가이드 기준 발행 초기 세팅 → 살만</li>
+        <li>세부 피드백 → 인하우스</li>
       </ul>
     </div>
     <div class="col home">
       <h3>인하우스 전환</h3>
       <ul>
         <li>체험단 업체 핸들링</li>
-        <li>카페 바이럴 <span class="muted">(홀딩, 재개 시 인하우스 핸들링)</span></li>
+        <li>체험단 원고 피드백</li>
       </ul>
     </div>
   </div>
@@ -140,16 +148,16 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
         <td>진행 시 결과 괜찮았음. 재개하면 그대로 살만에 맡긴다.</td>
       </tr>
       <tr>
-        <td>체험단 업체 핸들링</td>
+        <td>체험단 업체 핸들링<span class="sub">원고 수급·모집 현황·발행 일정 체크, 원고 피드백</span></td>
         <td>진행 중</td>
         <td><span class="tag home">인하우스 전환</span></td>
-        <td>업체를 반복적으로 챙기고 독촉해야 하는데 핸들링이 수동적이었음. 원고 수급 일정, 체험단 모집 현황, 발행 일정을 루틴하게 체크하는 관리는 인하우스가 직접 한다.</td>
+        <td>업체를 반복적으로 챙기고 독촉해야 하는데 핸들링이 수동적이었음. 원고 수급 일정, 체험단 모집 현황, 발행 일정을 루틴하게 체크하는 관리는 인하우스가 직접 한다. 원고 피드백도 일정이 더뎌 인하우스에서 직접 준다.</td>
       </tr>
       <tr>
         <td>카페 바이럴</td>
         <td><span class="tag hold">홀딩</span></td>
-        <td><span class="tag home">인하우스 전환</span></td>
-        <td>체험단과 같은 문제(업체 커뮤니케이션 지연). 재개 시 업체 소통·일정 조율은 인하우스가 맡는다. 계약은 직접 하지 않는다.</td>
+        <td><span class="tag split">분담</span></td>
+        <td>재개 시 초기 가이드는 인하우스가 전달, 가이드에 맞춘 발행 초기 세팅은 살만, 세부 피드백은 인하우스. 계약은 직접 하지 않는다.</td>
       </tr>
       <tr>
         <td>신규 마케팅 업체 도입<span class="sub">업체 소싱, 견적 비교, 최초 발행 테스트</span></td>
@@ -205,7 +213,7 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
   <h2>전환 시 체크할 것</h2>
   <ol>
     <li><b>체험단 업체 이관</b> — 업체 담당자 연락처, 계약 조건, 진행 중인 캠페인 일정과 발행 현황을 살만으로부터 인수.</li>
-    <li><b>살만 업무 범위·비용 재협의</b> — 체험단·카페 핸들링 제외분 반영. 검색광고는 1차 소재 기획·심의·세팅이 명시되도록 계약 범위 정리.</li>
+    <li><b>살만 업무 범위·비용 재협의</b> — 체험단 핸들링·원고 피드백 제외, 카페 바이럴은 발행 초기 세팅만 남는 것 반영. 검색광고는 1차 소재 기획·심의·세팅이 명시되도록 계약 범위 정리.</li>
     <li><b>평판 관리와의 경계</b> — 체험단 후기도 살만 모니터링 범위에 포함되는지 확인.</li>
     <li><b>살만 테스트 기준 정하기</b> — 테스트 발행 건수, 비교 항목(단가·발행 속도·노출 결과), 결과 공유 양식.</li>
     <li><b>인하우스 담당자 지정</b> — 체험단 일정, 검색광고 소재 방향·문안 다듬기, 랜딩·홈페이지 고도화를 누가 맡을지와 소재 교체 주기(월 1회 등) 확정.</li>
