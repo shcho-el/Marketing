@@ -14,16 +14,17 @@
   --keep:#0f6b63; --keep-soft:#e2f0ee;
   --home:#9a5b00; --home-soft:#fbf0dc;
   --split:#3d5a99; --split-soft:#e6ecf8;
+  --test:#7a3f8f; --test-soft:#f3e8f6;
   --f-display:"Pretendard",system-ui,sans-serif; --f-body:"Pretendard",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#111716; --surface:#18201f; --fg:#e4ecea; --muted:#9aa8a5; --line:#2c3836;
   --keep:#5cc2b6; --keep-soft:#1d3532; --home:#e5b25a; --home-soft:#3a2e17;
-  --split:#93aee8; --split-soft:#1e2a40; color-scheme:dark}}
+  --split:#93aee8; --split-soft:#1e2a40; --test:#d19be3; --test-soft:#34233b; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111716; --surface:#18201f; --fg:#e4ecea; --muted:#9aa8a5; --line:#2c3836;
   --keep:#5cc2b6; --keep-soft:#1d3532; --home:#e5b25a; --home-soft:#3a2e17;
-  --split:#93aee8; --split-soft:#1e2a40; color-scheme:dark}
+  --split:#93aee8; --split-soft:#1e2a40; --test:#d19be3; --test-soft:#34233b; color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:300 15px/1.7 var(--f-body);letter-spacing:-.01em;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -37,11 +38,11 @@ section{display:grid;gap:16px}
 header{display:grid;gap:10px}
 ul{margin:0;padding-left:20px;display:grid;gap:4px}
 
-.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:14px}
 .col{border-radius:6px;padding:16px 18px;display:grid;gap:8px;align-content:start}
-.col.keep{background:var(--keep-soft)} .col.home{background:var(--home-soft)} .col.split{background:var(--split-soft)}
+.col.keep{background:var(--keep-soft)} .col.home{background:var(--home-soft)} .col.split{background:var(--split-soft)} .col.test{background:var(--test-soft)}
 .col h3{font-size:.95rem}
-.col.keep h3{color:var(--keep)} .col.home h3{color:var(--home)} .col.split h3{color:var(--split)}
+.col.keep h3{color:var(--keep)} .col.home h3{color:var(--home)} .col.split h3{color:var(--split)} .col.test h3{color:var(--test)}
 .col ul{font-size:.92rem}
 
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
@@ -56,6 +57,11 @@ td .sub{display:block;font-weight:300;font-size:.8rem;color:var(--muted)}
 .tag.keep{background:var(--keep-soft);color:var(--keep)}
 .tag.home{background:var(--home-soft);color:var(--home)}
 .tag.split{background:var(--split-soft);color:var(--split)}
+.tag.test{background:var(--test-soft);color:var(--test)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:6px;align-content:start;font-size:.88rem;counter-increment:s}
+.steps li::before{content:counter(s);font-weight:600;font-size:.8rem;color:var(--muted)}
+.steps .tag{justify-self:start}
 .tag.hold{background:transparent;color:var(--muted);border:1px solid var(--line)}
 
 .rr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
@@ -71,7 +77,7 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
 <header>
   <p class="meta">송도 호라이즌의원 · 마케팅 운영 구조 · 2026.11 기준</p>
   <h1>대행사 · 인하우스 업무 분리안</h1>
-  <p class="muted">현재 대행사에 맡긴 6개 업무를 운영 결과 기준으로 다시 나눴다. 일정 조율과 빠른 대응이 필요한 외부 업체 핸들링은 인하우스로 가져오고, 반복 운영과 리소스가 많이 드는 실무는 대행을 유지한다.</p>
+  <p class="muted">현재 대행사에 맡긴 6개 업무를 운영 결과 기준으로 다시 나눴다. 일정 조율과 빠른 대응이 필요한 외부 업체 핸들링은 인하우스로 가져오고, 반복 운영과 리소스가 많이 드는 실무는 대행을 유지한다. 신규 업체 소싱·견적 비교와 최초 발행 테스트는 살만에서 맡는다.</p>
 </header>
 
 <section>
@@ -91,6 +97,14 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
       <ul>
         <li>검색광고 소재 기획 → 인하우스</li>
         <li>의료심의 접수·세팅 → 대행</li>
+      </ul>
+    </div>
+    <div class="col test">
+      <h3>살만</h3>
+      <ul>
+        <li>신규 마케팅 업체 소싱</li>
+        <li>견적 비교</li>
+        <li>최초 발행 테스트</li>
       </ul>
     </div>
     <div class="col home">
@@ -144,6 +158,12 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
         <td><span class="tag home">인하우스 전환</span></td>
         <td>체험단과 같은 문제(업체 커뮤니케이션 지연). 재개 시 업체와 직접 계약·소통.</td>
       </tr>
+      <tr>
+        <td>신규 마케팅 업체 도입<span class="sub">업체 소싱, 견적 비교, 최초 발행 테스트</span></td>
+        <td>신규</td>
+        <td><span class="tag test">살만</span></td>
+        <td>업체 탐색과 테스트까지는 살만에서 진행하고, 검증된 업체만 인하우스가 계약·운영한다.</td>
+      </tr>
     </tbody>
   </table></div>
   <p class="note">공통 원인은 <b>대행사를 한 번 더 거치는 외부 업체 핸들링</b>이다. 병원 → 대행사 → 업체로 전달 단계가 하나 늘면서 일정과 속도 문제가 생겼다. 대행사가 직접 실행하는 업무(평판·검색광고·블로그·플레이스)는 문제가 없었다.</p>
@@ -175,11 +195,22 @@ ol{margin:0;padding-left:20px;display:grid;gap:6px}
 </section>
 
 <section>
+  <h2>신규 업체 도입 흐름</h2>
+  <ol class="steps">
+    <li><span class="tag test">살만</span>신규 마케팅 업체 소싱</li>
+    <li><span class="tag test">살만</span>견적·조건 비교</li>
+    <li><span class="tag test">살만</span>최초 발행 테스트, 결과 공유</li>
+    <li><span class="tag home">인하우스</span>계약 결정, 이후 일정 조율·운영 핸들링</li>
+  </ol>
+</section>
+
+<section>
   <h2>전환 시 체크할 것</h2>
   <ol>
     <li><b>체험단 업체 이관</b> — 업체 담당자 연락처, 계약 조건, 진행 중인 캠페인 일정과 발행 현황을 대행사로부터 인수.</li>
     <li><b>대행 범위·비용 재협의</b> — 체험단·카페 핸들링 제외분 반영. 검색광고는 소재 기획이 빠지고 심의·세팅이 명시되도록 계약 범위 정리.</li>
     <li><b>평판 관리와의 경계</b> — 체험단 후기도 대행사 모니터링 범위에 포함되는지 확인.</li>
+    <li><b>살만 테스트 기준 정하기</b> — 테스트 발행 건수, 비교 항목(단가·발행 속도·노출 결과), 결과 공유 양식.</li>
     <li><b>인하우스 담당자 지정</b> — 체험단 일정과 검색광고 소재 기획을 누가 맡을지, 소재 기획 주기(월 1회 등) 확정.</li>
   </ol>
 </section>
