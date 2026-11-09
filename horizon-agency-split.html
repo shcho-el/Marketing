@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>대행·인하우스 업무 분리</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Nanum+Myeongjo:wght@700;800&display=swap">
+<style>
+:root{
+  --bg:#f6f8f8; --surface:#ffffff; --fg:#17201f; --muted:#5b6866; --line:#d9e1df;
+  --keep:#0f6b63; --keep-soft:#e2f0ee;
+  --home:#9a5b00; --home-soft:#fbf0dc;
+  --split:#3d5a99; --split-soft:#e6ecf8;
+  --f-display:"Nanum Myeongjo",Georgia,serif; --f-body:"IBM Plex Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111716; --surface:#18201f; --fg:#e4ecea; --muted:#9aa8a5; --line:#2c3836;
+  --keep:#5cc2b6; --keep-soft:#1d3532; --home:#e5b25a; --home-soft:#3a2e17;
+  --split:#93aee8; --split-soft:#1e2a40; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111716; --surface:#18201f; --fg:#e4ecea; --muted:#9aa8a5; --line:#2c3836;
+  --keep:#5cc2b6; --keep-soft:#1d3532; --home:#e5b25a; --home-soft:#3a2e17;
+  --split:#93aee8; --split-soft:#1e2a40; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:880px;margin:0 auto;padding-block:40px 64px;display:grid;gap:40px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:1.9rem} h2{font-size:1.3rem;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{margin:0;font-size:1.02rem}
+p{margin:0} .muted{color:var(--muted)} .meta{font-size:.85rem;color:var(--muted)}
+section{display:grid;gap:16px}
+header{display:grid;gap:10px}
+ul{margin:0;padding-left:20px;display:grid;gap:4px}
+
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.col{border-radius:6px;padding:16px 18px;display:grid;gap:8px;align-content:start}
+.col.keep{background:var(--keep-soft)} .col.home{background:var(--home-soft)} .col.split{background:var(--split-soft)}
+.col h3{font-size:.95rem}
+.col.keep h3{color:var(--keep)} .col.home h3{color:var(--home)} .col.split h3{color:var(--split)}
+.col ul{font-size:.92rem}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:.88rem}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--muted);font-size:.78rem;letter-spacing:.04em;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700}
+td .sub{display:block;font-weight:400;font-size:.8rem;color:var(--muted)}
+
+.tag{display:inline-block;font-size:.74rem;font-weight:500;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.tag.keep{background:var(--keep-soft);color:var(--keep)}
+.tag.home{background:var(--home-soft);color:var(--home)}
+.tag.split{background:var(--split-soft);color:var(--split)}
+.tag.hold{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
+.rr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:grid;gap:8px;align-content:start}
+.card h3 .tag{margin-left:6px;vertical-align:2px}
+.flow{font-size:.86rem;color:var(--muted);border-left:3px solid var(--split);padding:4px 0 4px 12px}
+.note{border-left:3px solid var(--home);padding:4px 0 4px 12px;font-size:.88rem;color:var(--muted)}
+ol{margin:0;padding-left:20px;display:grid;gap:6px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="meta">송도 호라이즌의원 · 마케팅 운영 구조 · 2026.11 기준</p>
+  <h1>대행사 · 인하우스 업무 분리안</h1>
+  <p class="muted">현재 대행사에 맡긴 6개 업무를 운영 결과 기준으로 다시 나눴다. 일정 조율과 빠른 대응이 필요한 외부 업체 핸들링은 인하우스로 가져오고, 반복 운영과 리소스가 많이 드는 실무는 대행을 유지한다.</p>
+</header>
+
+<section>
+  <h2>한눈에 보기</h2>
+  <div class="overview">
+    <div class="col keep">
+      <h3>대행 유지</h3>
+      <ul>
+        <li>평판 관리</li>
+        <li>네이버 검색광고 운영·세팅</li>
+        <li>네이버 블로그</li>
+        <li>플레이스 상위노출 <span class="muted">(홀딩)</span></li>
+      </ul>
+    </div>
+    <div class="col split">
+      <h3>분담</h3>
+      <ul>
+        <li>검색광고 소재 기획 → 인하우스</li>
+        <li>의료심의 접수·세팅 → 대행</li>
+      </ul>
+    </div>
+    <div class="col home">
+      <h3>인하우스 전환</h3>
+      <ul>
+        <li>체험단 업체 핸들링</li>
+        <li>카페 바이럴 <span class="muted">(홀딩, 재개 시 직접)</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>업무별 정리</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>업무</th><th>현재 상태</th><th>결정</th><th>근거</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>평판 관리<span class="sub">악성 리뷰 신고, 플레이스 매체 리뷰 발행, 매체 모니터링</span></td>
+        <td>진행 중</td>
+        <td><span class="tag keep">대행 유지</span></td>
+        <td>운영 만족. 상시 모니터링·신고 반복 업무라 대행 효율이 높다.</td>
+      </tr>
+      <tr>
+        <td>네이버 검색광고<span class="sub">키워드·입찰 운영, 소재 세팅</span></td>
+        <td>진행 중</td>
+        <td><span class="tag split">분담</span></td>
+        <td>운영은 만족. 다만 소재 방향은 병원이 가장 잘 알기 때문에 기획은 인하우스, 의료심의·세팅은 리소스가 커서 대행.</td>
+      </tr>
+      <tr>
+        <td>네이버 블로그<span class="sub">송도 단독 브랜드블로그, 송도·종로 통합 발톱 블로그 (김선빈님 협업)</span></td>
+        <td>진행 중</td>
+        <td><span class="tag keep">대행 유지</span></td>
+        <td>운영 만족. 종로와 함께 쓰는 통합 블로그는 김선빈님과 주제·발행 일정만 공유.</td>
+      </tr>
+      <tr>
+        <td>플레이스 상위노출</td>
+        <td><span class="tag hold">홀딩</span></td>
+        <td><span class="tag keep">대행 유지</span></td>
+        <td>진행 시 결과 괜찮았음. 재개하면 그대로 대행에 맡긴다.</td>
+      </tr>
+      <tr>
+        <td>체험단 업체 핸들링</td>
+        <td>진행 중</td>
+        <td><span class="tag home">인하우스 전환</span></td>
+        <td>일정 조율 지연, 급한 건 대응이 늦음. 방문 일정이 진료 예약과 바로 맞물려 병원이 직접 잡는 편이 빠르다.</td>
+      </tr>
+      <tr>
+        <td>카페 바이럴</td>
+        <td><span class="tag hold">홀딩</span></td>
+        <td><span class="tag home">인하우스 전환</span></td>
+        <td>체험단과 같은 문제(업체 커뮤니케이션 지연). 재개 시 업체와 직접 계약·소통.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="note">공통 원인은 <b>대행사를 한 번 더 거치는 외부 업체 핸들링</b>이다. 병원 → 대행사 → 업체로 전달 단계가 하나 늘면서 일정과 속도 문제가 생겼다. 대행사가 직접 실행하는 업무(평판·검색광고·블로그·플레이스)는 문제가 없었다.</p>
+</section>
+
+<section>
+  <h2>검색광고 역할 분담</h2>
+  <div class="rr">
+    <div class="card">
+      <h3>인하우스<span class="tag split">기획</span></h3>
+      <ul>
+        <li>시즌·이벤트·주력 시술 우선순위 결정</li>
+        <li>광고 소재 방향, 카피·이미지 기획안 작성</li>
+        <li>랜딩 페이지 방향 결정</li>
+        <li>최종 소재 컨펌</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>대행사<span class="tag keep">실행</span></h3>
+      <ul>
+        <li>기획안 기준으로 소재 문안 다듬기</li>
+        <li>의료광고 심의 접수, 수정 요청 대응</li>
+        <li>심의 통과 소재 등록·세팅</li>
+        <li>키워드·입찰 운영, 성과 리포트</li>
+      </ul>
+    </div>
+  </div>
+  <p class="flow">인하우스 기획안 → 대행사 문안 정리 → 인하우스 컨펌 → 대행사 의료심의 접수 → 통과 후 세팅 → 성과 리포트 → 다음 소재 기획에 반영</p>
+</section>
+
+<section>
+  <h2>전환 시 체크할 것</h2>
+  <ol>
+    <li><b>체험단 업체 이관</b> — 업체 담당자 연락처, 계약 조건, 진행 중인 캠페인 일정과 발행 현황을 대행사로부터 인수.</li>
+    <li><b>대행 범위·비용 재협의</b> — 체험단·카페 핸들링 제외분 반영. 검색광고는 소재 기획이 빠지고 심의·세팅이 명시되도록 계약 범위 정리.</li>
+    <li><b>평판 관리와의 경계</b> — 체험단 후기도 대행사 모니터링 범위에 포함되는지 확인.</li>
+    <li><b>인하우스 담당자 지정</b> — 체험단 일정과 검색광고 소재 기획을 누가 맡을지, 소재 기획 주기(월 1회 등) 확정.</li>
+  </ol>
+</section>
+</main>
+</body>
+</html>
