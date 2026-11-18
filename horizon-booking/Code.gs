@@ -38,7 +38,7 @@ const CONFIG = {
     '': '인천대입구역 근처 발톱치료의원 또는 재활치료의원',
   },
   // 일정 변경·문의 담당자 (비우면 화면에서 숨겨요)
-  CONTACT: { name: '', phone: '', email: '' },
+  CONTACT: { name: '조소희 책임', phone: '010-2791-2736', email: 'sh.cho@medibuilder.com' },
 
   ALLOW_WITHOUT_LINK: false,   // true면 개인 링크 없이도 신청 가능
   MAX_FILE_MB: 10,
