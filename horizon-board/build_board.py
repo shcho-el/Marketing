@@ -85,6 +85,12 @@ shim = '''
 <script>
 /* Feeds the dashboard's own drawings from the Apps Script server (getRaw) and saves through saveStatus. */
 const BOOT = <?!= JSON.stringify(boot) ?>;
+/* 문제가 생기면 화면 위 빨간 칸에 이유를 바로 보여줘요 */
+function hzShowError(msg) {
+  document.querySelectorAll('#loaderr').forEach((p) => { p.hidden = false; p.textContent = '데이터를 불러오지 못했어요: ' + msg; });
+}
+window.addEventListener('error', (e) => hzShowError((e.message || '스크립트 오류') + (e.lineno ? ' (줄 ' + e.lineno + ')' : '')));
+window.addEventListener('unhandledrejection', (e) => hzShowError(String((e.reason && e.reason.message) || e.reason)));
 if (BOOT.canEdit) document.body.classList.add('can-edit');
 window.dash = (() => {
   const src = {}, calcs = [], calcVal = {}, draws = [], onDatas = [];
@@ -119,16 +125,20 @@ window.dash = (() => {
     _set(raw) {
       ['mails', 'applicants', 'requests', 'schedule'].forEach((k) => { src[k] = raw[k] || []; });
       status = 'ok';
-      document.querySelectorAll('#loaderr').forEach((p) => { p.hidden = !(raw.errors && raw.errors.length); });
-      if (raw.errors && raw.errors.length) console.warn(raw.errors);
+      document.querySelectorAll('#loaderr').forEach((p) => { p.hidden = true; });
+      if (raw.errors && raw.errors.length) hzShowError(raw.errors.join(' / '));
       compute(); render();
     },
-    _fail(e) { console.error(e); document.querySelectorAll('#loaderr').forEach((p) => { p.hidden = false; }); if (status === 'loading') { status = 'error'; render(); } },
+    _fail(e) { console.error(e); hzShowError(String((e && e.message) || e)); if (status === 'loading') { status = 'error'; render(); } },
     _render: render,
   };
 })();
 function load() {
-  google.script.run.withSuccessHandler((raw) => dash._set(raw)).withFailureHandler((e) => dash._fail(e)).getRaw(BOOT.key);
+  const waiting = setTimeout(() => hzShowError('서버 응답이 60초 넘게 없어요. 새로고침해 주세요.'), 60000);
+  google.script.run
+    .withSuccessHandler((raw) => { clearTimeout(waiting); if (!raw) { hzShowError('서버가 빈 응답을 보냈어요.'); return; } dash._set(raw); })
+    .withFailureHandler((e) => { clearTimeout(waiting); dash._fail(e); })
+    .getRaw(BOOT.key);
 }
 window.claude = {
   use: async (name) => {
@@ -156,6 +166,13 @@ boot = '''
   load();
 </script>
 '''
+
+# Apps Script strips everything after "//" on a script line, even inside strings
+# (it cut `https://mail…` and broke the whole script). Escape "://" in every script.
+def _escape_urls(block):
+    return re.sub(r'(<script>)(.*?)(</script>)', lambda m: m.group(1) + m.group(2).replace('://', ':\\/\\/') + m.group(3), block, flags=re.S)
+scripts = _escape_urls(scripts)
+shim = _escape_urls(shim)
 
 page = head + styles.replace('<style>', '<style>', 1) + '\n</head>\n<body>\n<div class="hz-page">' + markup + '</div>\n' + shim + scripts + boot + '</body>\n</html>\n'
 open(out, 'w', encoding='utf-8').write(page)
