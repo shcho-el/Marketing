@@ -27,6 +27,8 @@ const CONFIG = {
   EXCLUDE_BY_WEEKDAY: { 3: ['15:00'], 4: ['16:00'] },
   // 특정 날짜만 따로 정한 시간 (이 날은 위 규칙 대신 여기 적은 시간만 열려요)
   DATE_TIMES: { '2026-11-19': ['14:00'] },
+  // 특정 날짜에서만 빼는 시간 (요일 규칙은 그대로 두고 이 시간만 닫아요)
+  EXCLUDE_BY_DATE: { '2026-11-25': ['10:00'], '2026-11-26': ['10:00'] },
   MAX_PER_SLOT: 1,             // 한 시간대에 1순위로 받을 인원. 넘으면 '마감'
   BLOCKED_DATES: [],           // 촬영 없는 날 'yyyy-MM-dd'
   MAX_PICKS: 3,
@@ -169,7 +171,8 @@ function getSlots() {
     if (CONFIG.SHOOT_WEEKDAYS.indexOf(dt.getUTCDay()) < 0) continue;
     const key = Utilities.formatDate(dt, 'UTC', 'yyyy-MM-dd');
     if (CONFIG.BLOCKED_DATES.indexOf(key) >= 0) continue;
-    const exclude = CONFIG.EXCLUDE_BY_WEEKDAY[dt.getUTCDay()] || [];
+    const exclude = (CONFIG.EXCLUDE_BY_WEEKDAY[dt.getUTCDay()] || [])
+      .concat(CONFIG.EXCLUDE_BY_DATE[key] || []);
     const times = CONFIG.DATE_TIMES[key] ||
       CONFIG.TIMES.filter(function (t) { return exclude.indexOf(t) < 0; });
     if (!times.length) continue;
