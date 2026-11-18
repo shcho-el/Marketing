@@ -31,7 +31,7 @@ rep('편집 권한이 있는 사람만 저장할 수 있고, 저장한 내용은
 rep('저장하지 못했어요. 이 대시보드의 편집 권한이 있어야 저장할 수 있어요.',
     '저장하지 못했어요. 편집 링크로 열어야 저장할 수 있어요.')
 rep('지원자 목록 시트를 읽을 수 있는 사람에게만 보여요. 행을 누르면 입력칸에 불러와요.',
-    '<span class="hz-viewer-only">연락처는 편집 링크에서만 전체가 보여요.</span><span class="hz-edit-only">행을 누르면 입력칸에 불러와요.</span>')
+    '<span class="hz-viewer-only">상태·촬영일은 편집 링크에서 바꿀 수 있어요.</span><span class="hz-edit-only">행을 누르면 입력칸에 불러와요.</span>')
 rep('이름을 누르면 아래 입력칸에 불러와요.', '<span class="hz-edit-only">이름을 누르면 아래 입력칸에 불러와요.</span>')
 rep('<p class="hz-note">카드를 누르면 아래 입력칸에 불러와요.</p>',
     '<p class="hz-note"><span class="hz-edit-only">카드를 누르면 아래 입력칸에 불러와요.</span><span class="hz-viewer-only">단계별로 지원자를 모아 보여줘요.</span></p>')
