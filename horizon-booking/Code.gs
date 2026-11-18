@@ -186,13 +186,20 @@ function clean_(v, max) {
   return String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max || 200);
 }
 
-function applicantFolder_(type, name) {
+/**
+ * 지원자 폴더 찾기. 이미 만들어 둔 폴더(예: 재활_김지영_여_31)가 있으면 반드시 그 폴더를 써요.
+ * 폴더 이름의 두 번째 칸(이름)이 본명 또는 활동명과 같으면 같은 사람으로 봐요. 띄어쓰기는 무시해요.
+ * 같은 이름 폴더가 없을 때만 새로 만들어요.
+ */
+function applicantFolder_(type, name, nick) {
   const parent = DriveApp.getFolderById(CONFIG.PARENT_FOLDER_ID);
-  // 이미 정리된 지원자 폴더(예: 재활_홍길동_여_27)가 있으면 그 안에 넣어요.
-  const it = parent.searchFolders("title contains '" + name.replace(/'/g, '') + "'");
+  const norm = function (s) { return String(s || '').replace(/\s+/g, ''); };
+  const wants = [norm(name), norm(nick)].filter(Boolean);
+  const it = parent.getFolders();
   while (it.hasNext()) {
     const f = it.next();
-    if (f.getName().split('_')[1] === name) return f;
+    if (f.isTrashed()) continue; // 휴지통에 넣은 폴더는 건너뛰어요
+    if (wants.indexOf(norm(f.getName().split('_')[1])) >= 0) return f;
   }
   return parent.createFolder((type || '모델') + '_' + name);
 }
@@ -249,7 +256,7 @@ function submitApplication(form) {
     if ((slotCounts_()[picks[0]] || 0) >= CONFIG.MAX_PER_SLOT) {
       throw new Error('1순위로 고른 ' + picks[0] + ' 시간이 방금 마감됐어요. 다른 시간을 골라 주세요.');
     }
-    const docs = subFolder_(applicantFolder_(type, name), '계약서류');
+    const docs = subFolder_(applicantFolder_(type, name, clean_(form.nick, 30)), '계약서류');
     const idUrl = saveFile_(docs, form.idCard, '신분증', name);
     const bankUrl = saveFile_(docs, form.bankBook, '통장', name);
     const now = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm');
