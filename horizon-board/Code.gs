@@ -228,3 +228,26 @@ function setup() {
     Logger.log('배포한 뒤 다시 setup()을 실행하면 보기·편집 링크가 나와요.');
   }
 }
+
+/* ---------- 이름 바로잡기 ---------- */
+
+/** 지원자_목록 시트와 '현황' 탭에서 이름을 한 번에 바꿔요. 아래 fixName()을 고쳐서 실행하세요. */
+function renameApplicant_(oldName, newName) {
+  let changed = 0;
+  const swap = function (sheet, header) {
+    const values = sheet.getDataRange().getValues();
+    const col = values[0].map(function (h) { return String(h).trim(); }).indexOf(header);
+    if (col < 0) return;
+    for (let r = 1; r < values.length; r++) {
+      if (String(values[r][col]).trim() === oldName) { sheet.getRange(r + 1, col + 1).setValue(newName); changed++; }
+    }
+  };
+  swap(SpreadsheetApp.openById(CONFIG.APPLICANT_SHEET_ID).getSheets()[0], '이름');
+  swap(statusSheet_(), '이름');
+  CacheService.getScriptCache().remove('raw');
+  Logger.log(oldName + ' → ' + newName + ': ' + changed + '칸 바꿨어요.');
+}
+
+function fixName() {
+  renameApplicant_('차예지', '박예지');
+}

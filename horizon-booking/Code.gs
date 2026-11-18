@@ -20,8 +20,8 @@ const CONFIG = {
   SHEET_ID: '',
 
   TIMEZONE: 'Asia/Seoul',
-  WEEKS_AHEAD: 2,              // 오늘부터 2주 뒤까지 보여줘요 (매일 하루씩 밀려나요)
-  LAST_DATE: '',               // 날짜로 끝을 고정하려면 'yyyy-MM-dd'. 비우면 WEEKS_AHEAD까지
+  WEEKS_AHEAD: 6,              // 내일부터 몇 주 뒤까지 보여줄지 (LAST_DATE가 있으면 그 날짜까지만)
+  LAST_DATE: '2026-12-03',     // 이 날짜까지만 신청 가능. 비우면 WEEKS_AHEAD까지
   SHOOT_WEEKDAYS: [3, 4],      // 0=일 … 3=수, 4=목
   TIMES: ['11:00', '14:00', '15:00', '16:00', '17:00'], // 오전 10시는 모든 날짜에서 닫음
   // 요일마다 빼는 시간 (3=수, 4=목). 수요일 15~16시, 목요일 16~17시는 촬영 불가
