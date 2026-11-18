@@ -21,6 +21,7 @@ const CONFIG = {
 
   TIMEZONE: 'Asia/Seoul',
   WEEKS_AHEAD: 6,              // 내일부터 몇 주 뒤까지 보여줄지
+  LAST_DATE: '2026-12-05',     // 이 날짜까지만 신청 가능 (12월 첫째 주). 비우면 WEEKS_AHEAD까지
   SHOOT_WEEKDAYS: [3, 4],      // 0=일 … 3=수, 4=목
   TIMES: ['11:00', '14:00', '15:00', '16:00', '17:00'], // 오전 10시는 모든 날짜에서 닫음
   // 요일마다 빼는 시간 (3=수, 4=목). 수요일 15~16시, 목요일 16~17시는 촬영 불가
@@ -170,6 +171,7 @@ function getSlots() {
     const dt = new Date(Date.UTC(today[0], today[1] - 1, today[2] + i));
     if (CONFIG.SHOOT_WEEKDAYS.indexOf(dt.getUTCDay()) < 0) continue;
     const key = Utilities.formatDate(dt, 'UTC', 'yyyy-MM-dd');
+    if (CONFIG.LAST_DATE && key > CONFIG.LAST_DATE) break;
     if (CONFIG.BLOCKED_DATES.indexOf(key) >= 0) continue;
     const exclude = (CONFIG.EXCLUDE_BY_WEEKDAY[dt.getUTCDay()] || [])
       .concat(CONFIG.EXCLUDE_BY_DATE[key] || []);
