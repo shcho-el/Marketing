@@ -40,7 +40,7 @@ const CONFIG = {
   // 일정 변경·문의 담당자 (비우면 화면에서 숨겨요)
   CONTACT: { name: '조소희 책임', phone: '010-2791-2736', email: 'sh.cho@medibuilder.com' },
 
-  ALLOW_WITHOUT_LINK: false,   // true면 개인 링크 없이도 신청 가능
+  ALLOW_WITHOUT_LINK: true,    // true면 개인 링크 없이 /exec 주소 하나로 신청 가능 (같은 전화번호는 한 번만)
   MAX_FILE_MB: 10,
   NOTIFY_EMAIL: '',            // 비우면 스크립트 소유자에게, 'off'면 안 보냄
 };
@@ -218,7 +218,10 @@ function submitApplication(form) {
   if (inv && inv.status) throw new Error('이미 신청하셨어요. 변경은 담당자에게 문의해 주세요.');
 
   const name = clean_(form.name, 30);
-  const phone = clean_(form.phone, 20).replace(/[^\d-]/g, '');
+  // 010-1234-5678 형태로 맞춰 저장 (시트가 숫자로 바꿔 앞자리 0이 사라지지 않게)
+  const pd = clean_(form.phone, 20).replace(/\D/g, '');
+  const phone = pd.length === 11 ? pd.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')
+    : pd.length === 10 ? pd.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3') : pd;
   const email = clean_(form.email, 100);
   const birth = clean_(form.birth, 8).replace(/\D/g, '');
   const addr = clean_(form.addr, 200);
@@ -240,6 +243,9 @@ function submitApplication(form) {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
+    if (alreadyApplied_(phone)) {
+      throw new Error('이 전화번호로 이미 신청하셨어요. 일정 변경은 담당자에게 문의해 주세요.');
+    }
     if ((slotCounts_()[picks[0]] || 0) >= CONFIG.MAX_PER_SLOT) {
       throw new Error('1순위로 고른 ' + picks[0] + ' 시간이 방금 마감됐어요. 다른 시간을 골라 주세요.');
     }
@@ -260,6 +266,17 @@ function submitApplication(form) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** 같은 전화번호로 이미 접수된 신청이 있는지 */
+function alreadyApplied_(phone) {
+  const want = String(phone).replace(/\D/g, '');
+  const sh = responses_();
+  const last = sh.getLastRow();
+  if (!want || last < 2) return false;
+  const col = RESP_HEADER.indexOf('전화번호') + 1;
+  return sh.getRange(2, col, last - 1, 1).getValues()
+    .some(function (r) { return String(r[0]).replace(/\D/g, '') === want; });
 }
 
 function notify_(type, name, picks, folderUrl) {
