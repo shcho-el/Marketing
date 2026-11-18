@@ -1,5 +1,5 @@
 /**
- * 송도 호라이즌 모델 촬영 — 촬영 일정 신청 (선정자용)
+ * 모델 촬영 — 촬영 일정 신청
  *
  * 기존 촬영 일정 신청 페이지와 별개인 새 Apps Script 프로젝트예요.
  *
@@ -73,7 +73,7 @@ function doGet(e) {
     maxFileMb: CONFIG.MAX_FILE_MB,
   };
   return t.evaluate()
-    .setTitle('송도 호라이즌 촬영 일정 신청')
+    .setTitle('촬영 일정 신청')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 

@@ -77,7 +77,10 @@
   .agree input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--brand); flex: none; }
 
   .submit { margin-top: 16px; width: 100%; font: inherit; font-size: 16px; font-weight: 800; border: 0; border-radius: 10px; padding: 14px; color: #fff; background: var(--ink); cursor: pointer; }
-  .submit:disabled { background: #b9b2ac; cursor: not-allowed; }
+  .submit { background: #8f8780; }
+  .submit.ready { background: var(--ink); }
+  .submit:disabled { background: #b9b2ac; cursor: progress; }
+  .todo { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); text-align: center; }
   .err { color: var(--bad); font-weight: 600; font-size: 14px; margin: 10px 0 0; }
   .state { text-align: center; padding: 40px 16px; }
   .state h2 { justify-content: center; font-size: 20px; }
@@ -87,7 +90,7 @@
 <body>
 <div class="wrap">
   <h1>촬영 일정 신청</h1>
-  <p class="lead" id="lead">송도 호라이즌 모델 촬영 일정 신청 페이지예요. 아래 내용을 입력해 주세요.</p>
+  <p class="lead" id="lead">모델 촬영 일정 신청 페이지예요. 아래 내용을 입력해 주세요.</p>
 
   <section class="card state" id="stateBox" hidden><h2 id="stateTitle"></h2><p id="stateMsg"></p></section>
 
@@ -124,7 +127,7 @@
     <label class="field">이메일 <small>(확정 안내·계약서를 받을 주소)</small><input type="email" id="email" maxlength="100" autocomplete="email"></label>
     <label class="field">생년월일 <small>(8자리)</small><input type="text" id="birth" maxlength="8" inputmode="numeric" placeholder="19950312"></label>
     <div class="field">주소 <small>(계약서 기재용)</small>
-      <div class="row"><input type="text" id="addr" placeholder="도로명 주소" readonly><button type="button" class="btn-line" id="findAddr">주소 검색</button></div>
+      <div class="row"><input type="text" id="addr" maxlength="200" placeholder="도로명 주소 (검색하거나 직접 입력)"><button type="button" class="btn-line" id="findAddr">주소 검색</button></div>
       <div id="postcode"><button type="button" class="btn-line close" id="closeAddr">닫기</button></div>
       <input type="text" id="addr2" maxlength="100" placeholder="상세 주소 (동·호수)">
     </div>
@@ -165,7 +168,8 @@
     </div>
   </section>
 
-  <button type="submit" class="submit" id="submitBtn" disabled>신청하기</button>
+  <button type="submit" class="submit" id="submitBtn">신청하기</button>
+  <p class="todo" id="todo"></p>
   <p class="err" id="err" hidden></p>
   </form>
   </div>
@@ -295,7 +299,7 @@
       const f = input.files[0];
       if (!f) return;
       if (f.size > D.maxFileMb * 1048576) { err(`파일이 ${D.maxFileMb}MB를 넘어요. 사진 크기를 줄여 주세요.`); input.value = ''; return; }
-      if (!/^image\/|application\/pdf/.test(f.type)) { err('이미지나 PDF 파일로 올려 주세요.'); input.value = ''; return; }
+      if (!/^image\/|application\/pdf/.test(f.type) && !/\.(jpe?g|png|heic|heif|webp|gif|pdf)$/i.test(f.name)) { err('이미지나 PDF 파일로 올려 주세요.'); input.value = ''; return; }
       files[key] = f; name.textContent = f.name; box.classList.add('ok'); err(''); check();
     };
   });
@@ -317,7 +321,12 @@
     if (!$('agreePrivacy').checked || !$('agreeUnique').checked) out.push('필수 동의');
     return out;
   }
-  function check() { $('submitBtn').disabled = missing().length > 0; }
+  // 버튼은 항상 눌리게 두고, 아직 남은 항목을 버튼 아래에 보여줘요.
+  function check() {
+    const m = missing();
+    $('submitBtn').classList.toggle('ready', m.length === 0);
+    $('todo').textContent = m.length ? '남은 항목: ' + m.join(', ') : '모두 입력했어요. 신청하기를 눌러 주세요.';
+  }
   document.querySelectorAll('#f input').forEach((el) => el.addEventListener('input', check));
   document.querySelectorAll('#f input[type=checkbox], #f input[type=radio]').forEach((el) => el.addEventListener('change', check));
   const b64 = (f) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(f); });
@@ -325,10 +334,11 @@
   $('f').addEventListener('submit', async (e) => {
     e.preventDefault();
     const miss = missing();
-    if (miss.length) { err('확인해 주세요: ' + miss.join(', ')); return; }
+    if (miss.length) { err('아직 입력하지 않은 항목이 있어요: ' + miss.join(', ')); $('err').scrollIntoView({block: 'center'}); return; }
     const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '서류 올리는 중…'; err('');
     try {
-      const pack = async (f) => ({ name: f.name, mimeType: f.type, data: await b64(f) });
+      const guess = (f) => f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : /\.png$/i.test(f.name) ? 'image/png' : /\.(heic|heif)$/i.test(f.name) ? 'image/heic' : 'image/jpeg');
+      const pack = async (f) => ({ name: f.name, mimeType: guess(f), data: await b64(f) });
       const payload = {
         code: D.code, type: D.type || (document.querySelector('input[name=type]:checked') || {}).value || '',
         name: v('name'), nick: v('nick'), phone: v('phone'), email: v('email'), birth: v('birth'),
@@ -344,11 +354,11 @@
         })
         .withFailureHandler((x) => {
           err((x && x.message) || '접수하지 못했어요. 잠시 후 다시 시도해 주세요.');
-          btn.textContent = '신청하기'; check(); loadSlots();
+          btn.disabled = false; btn.textContent = '신청하기'; check(); loadSlots();
         })
         .submitApplication(payload);
     } catch (ex) {
-      err('파일을 읽지 못했어요. 다시 선택해 주세요.'); btn.textContent = '신청하기'; check();
+      err('파일을 읽지 못했어요. 다시 선택해 주세요.'); btn.disabled = false; btn.textContent = '신청하기'; check();
     }
   });
 </script>
