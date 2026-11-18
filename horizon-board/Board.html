@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_blank">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script>
+/* The two d3 helpers the dashboard drawings use (group, format) — no external library needed */
+window.d3 = window.d3 || {
+  group: (arr, f) => { const m = new Map(); (arr || []).forEach((x) => { const k = f(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }); return m; },
+  format: () => (n) => Number(n).toLocaleString('en-US'),
+};
+</script>
+<style>
+/* Tokens that the Claude dashboard host normally provides */
+:root {
+  --color-bg: #ffffff; --color-fg: #2b2724; --color-fg-muted: #6b625c; --color-panel: #ffffff;
+  --color-border-line: #e3ddd8; --color-ok: #3f8a5f; --color-warn: #c98a1e; --color-bad: #b83a55;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 16px; --cds-gap-xl: 24px;
+  --cds-pad-xs: 4px; --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 16px; --cds-pad-xl: 24px;
+  --cds-radius: 10px; --cds-font-size-caption: 12.5px; --cds-font-size-body: 15px;
+  --cds-font-size-heading: 18px; --cds-font-size-title: 28px; --cds-font-weight-medium: 600;
+  --font-anthropic-sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { margin: 0; background: #f4f2f0; color: var(--color-fg); font-family: var(--font-anthropic-sans); font-size: 15px; }
+.hz-page { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.dash-select { appearance: none; -webkit-appearance: none; font: inherit; font-size: var(--cds-font-size-body); color: var(--color-fg); background-color: var(--color-bg); border: 1px solid #d8d1cb; border-radius: var(--cds-radius); padding: 7px 30px 7px 9px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b625c'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+[hidden] { display: none !important; }
+body:not(.can-edit) .hz-edit-only { display: none !important; }
+body.can-edit .hz-viewer-only { display: none !important; }
+</style>
+<style>
+
+/* Songdo key color: terracotta brand on a warm, low-glare ground; muted status hues */
+.hz {
+  --hz-brand: #a8523b; --hz-brand-2: #c46a50; --hz-neutral: #4a4440; --hz-sun: #c46a50; --hz-head: #c46a50;
+  --hz-font: "Pretendard", "Pretendard Variable", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --hz-ground: color-mix(in srgb, #a89f97 13%, var(--color-bg));
+  --hz-surface: color-mix(in srgb, var(--hz-brand) 2%, var(--color-bg));
+  --hz-line: color-mix(in srgb, var(--hz-neutral) 28%, var(--color-border-line));
+  --hz-ink: var(--color-fg);
+  --hz-ink-2: color-mix(in srgb, var(--color-fg) 84%, var(--hz-ground));
+  display: flex; flex-direction: column; gap: var(--cds-gap-xl);
+  font-family: var(--hz-font); font-weight: 400; color: var(--hz-ink);
+  background: var(--hz-ground); border-radius: calc(var(--cds-radius) * 2); padding: var(--cds-pad-lg);
+}
+.hz button, .hz input, .hz select, .hz textarea { font-family: inherit; }
+.hz b, .hz strong { font-weight: 600; }
+
+[data-st="0"] { --pc: #7d736b; }
+[data-st="1"] { --pc: #c98a1e; }
+[data-st="2"] { --pc: #7461b8; }
+[data-st="3"] { --pc: #3f8a5f; }
+[data-st="4"] { --pc: #3c74a0; }
+[data-st="5"] { --pc: #9a7b63; }
+[data-st="6"] { --pc: #b83a55; }
+.hz-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: var(--cds-font-size-caption); font-weight: 600; white-space: nowrap; color: color-mix(in srgb, var(--pc) 80%, var(--color-fg)); background: color-mix(in srgb, var(--pc) 22%, var(--color-bg)); }
+.hz-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--pc); }
+
+/* hero */
+.hz-head { display: flex; flex-direction: column; gap: var(--cds-gap-sm); padding: var(--cds-pad-xl) var(--cds-pad-lg); border-radius: calc(var(--cds-radius) * 1.5); color: #fff; background: var(--hz-head); position: relative; overflow: hidden; }
+.hz-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,0.35); }
+.hz-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--cds-gap-sm); flex-wrap: wrap; }
+.hz-stamp { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; margin-left: auto; padding: 6px 12px; border-radius: 10px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); }
+.hz-stamp-today { font-size: 15px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.hz-stamp-today b { font-weight: 800; }
+.hz-stamp-upd { font-size: 11.5px; color: rgba(255,255,255,0.82); font-variant-numeric: tabular-nums; }
+.hz-stamp-upd b { font-weight: 600; color: #fff; }
+.hz-eyebrow { margin: 0; font-size: var(--cds-font-size-caption); font-weight: 600; letter-spacing: 0.12em; color: rgba(255,255,255,0.78); }
+.hz-title { margin: 0; font-family: var(--hz-font); font-weight: 800; font-size: clamp(22px, 4vw, 32px); letter-spacing: -0.01em; text-wrap: balance; }
+.hz-lede { margin: 0; font-size: var(--cds-font-size-body); line-height: 1.7; max-width: 70ch; color: rgba(255,255,255,0.92); }
+.hz-lede b { font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; background: rgba(255,255,255,0.16); padding: 0 6px; border-radius: 6px; }
+
+/* kpis */
+.hz-alert { margin: 0; padding: 10px 14px; border-radius: var(--cds-radius); background: color-mix(in srgb, #c0566a 12%, var(--color-bg)); border: 1px solid #c0566a; color: var(--color-fg); font-weight: 600; font-size: var(--cds-font-size-caption); }
+.hz-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: var(--cds-gap-sm); }
+.hz-kpi { --pc: var(--hz-brand); background: var(--color-bg); border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent); border-top: 5px solid var(--pc); box-shadow: 0 1px 3px rgba(40,35,30,0.08); border-radius: var(--cds-radius); padding: var(--cds-pad-md) var(--cds-pad-lg); display: flex; flex-direction: column; gap: 2px; }
+.hz-kpi-label { font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--color-fg); display: flex; align-items: center; gap: 6px; }
+.hz-kpi-num { font-family: var(--hz-font); font-weight: 800; font-size: 32px; font-variant-numeric: tabular-nums; line-height: 1.15; color: color-mix(in srgb, var(--pc) 85%, var(--color-fg)); }
+.hz-kpi-unit { font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); }
+.hz-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pc); flex: none; }
+
+/* sections */
+.hz-sec { display: flex; flex-direction: column; gap: var(--cds-gap-md); min-width: 0; }
+.hz-sec-head { display: flex; flex-direction: column; gap: 2px; padding-left: 12px; border-left: 4px solid var(--hz-neutral); }
+.hz-sec-head h2 { margin: 0; font-size: 18px; font-weight: 800; color: var(--hz-ink); }
+.hz-note { margin: 0; font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); line-height: 1.55; }
+
+/* calendar */
+.hz-cal { background: var(--hz-surface); border: 1px solid var(--hz-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); min-height: 320px; display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.hz-cal-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--cds-gap-sm); }
+.hz-cal-month { font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; color: var(--hz-neutral); }
+.hz-navbtn { border: 1px solid var(--hz-line); background: var(--color-bg); color: var(--hz-ink); border-radius: 999px; padding: 5px 12px; font-size: var(--cds-font-size-caption); font-weight: 600; cursor: pointer; }
+.hz-navbtn:hover { background: color-mix(in srgb, var(--hz-neutral) 12%, var(--color-bg)); }
+.hz-navbtn:focus-visible, .hz-chip:focus-visible, .hz-card:focus-visible, .hz-table tbody tr:focus-visible { outline: 2px solid var(--hz-sun); outline-offset: 2px; }
+.hz-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.hz-wd { font-size: var(--cds-font-size-caption); font-weight: 600; color: #fff; background: var(--hz-neutral); text-align: center; padding: 4px 0; border-radius: 6px; }
+.hz-day { min-height: 78px; border-radius: 8px; padding: 5px; display: flex; flex-direction: column; gap: 3px; min-width: 0; background: var(--color-bg); border: 1px solid color-mix(in srgb, var(--hz-neutral) 18%, transparent); }
+.hz-day.is-shoot { background: color-mix(in srgb, var(--hz-neutral) 13%, var(--color-bg)); border-color: color-mix(in srgb, var(--hz-neutral) 40%, transparent); }
+.hz-day.is-out { opacity: 0.38; }
+.hz-day-num { font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--hz-ink-2); font-variant-numeric: tabular-nums; }
+.hz-day.is-today { border: 2px solid var(--hz-sun); }
+.hz-day.is-today .hz-day-num { color: #fff; background: var(--hz-sun); border-radius: 999px; padding: 0 7px; align-self: flex-start; }
+.hz-chip { display: block; width: 100%; text-align: left; border: 0; border-left: 3px solid var(--pc); cursor: pointer; font-size: 11px; font-weight: 600; line-height: 1.35; padding: 3px 5px; border-radius: 4px; color: #fff; background: var(--pc); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hz-chip.is-tentative { color: color-mix(in srgb, var(--pc) 70%, var(--color-fg)); background: color-mix(in srgb, var(--pc) 12%, var(--color-bg)); border: 1.5px dashed var(--pc); }
+.hz-cal-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-sm) var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); }
+.hz-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; background: color-mix(in srgb, var(--hz-neutral) 13%, var(--color-bg)); border: 1px solid color-mix(in srgb, var(--hz-neutral) 40%, transparent); }
+
+/* pipeline */
+.hz-pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--cds-gap-sm); min-height: 120px; }
+.hz-col { background: color-mix(in srgb, var(--pc) 10%, var(--color-bg)); border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent); border-top: 5px solid var(--pc); border-radius: var(--cds-radius); padding: var(--cds-pad-sm); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.hz-col-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 2px 4px; }
+.hz-col-count { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 16px; color: color-mix(in srgb, var(--pc) 85%, var(--color-fg)); }
+.hz-card { text-align: left; color: var(--hz-ink); background: var(--color-bg); border: 1px solid color-mix(in srgb, var(--pc) 40%, transparent); border-left: 4px solid var(--pc); border-radius: 6px; padding: 7px 9px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; box-shadow: 0 1px 3px rgba(40,35,30,0.10); }
+.hz-card:hover { border-color: var(--pc); }
+.hz-card-name { font-weight: 600; font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.hz-name { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.hz-type { display: inline-block; font-size: 10.5px; font-weight: 800; line-height: 1; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.02em; color: #fff; background: var(--tc); white-space: nowrap; }
+.hz-type[data-type="재활"] { --tc: #2f7a6e; }
+.hz-type[data-type="발톱"] { --tc: #b4512f; }
+.hz-src { display: inline-block; font-size: 10.5px; font-weight: 800; line-height: 1; padding: 2px 5px; border-radius: 4px; white-space: nowrap; border: 1.5px solid var(--sc); color: var(--sc); background: var(--color-bg); }
+.hz-src[data-src="자체 지원"] { --sc: #4a4440; }
+.hz-src[data-src="인플루언서"] { --sc: #8a3f6e; color: #fff; background: #8a3f6e; }
+.hz-kpi-src { font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); display: flex; gap: 8px; flex-wrap: wrap; }
+.hz-new { display: inline-block; font-size: 10.5px; font-weight: 800; line-height: 1; padding: 3px 6px; border-radius: 4px; color: #9a6a1f; background: color-mix(in srgb, #cf9d45 18%, var(--color-bg)); border: 1px solid #cf9d45; white-space: nowrap; }
+.hz-kpi-new { margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--hz-line); font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hz-kpi-split { font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); display: flex; gap: 8px; flex-wrap: wrap; }
+.hz-card-sub { font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); overflow-wrap: anywhere; }
+.hz-empty { font-size: var(--cds-font-size-caption); color: var(--hz-ink-2); padding: 4px 2px; margin: 0; }
+
+/* form */
+.hz-form { background: var(--hz-surface); border: 1px solid var(--hz-line); border-top: 4px solid var(--hz-sun); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--cds-gap-md); }
+.hz-field { display: flex; flex-direction: column; gap: 5px; font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--hz-ink-2); min-width: 0; }
+.hz-field.hz-wide { grid-column: 1 / -1; }
+.hz-field input, .hz-field textarea { font-size: var(--cds-font-size-body); font-weight: 500; color: var(--hz-ink); background-color: var(--color-bg); border: 1px solid var(--hz-line); border-radius: var(--cds-radius); padding: 7px 9px; min-width: 0; }
+.hz-field input:focus, .hz-field textarea:focus { outline: 2px solid color-mix(in srgb, var(--hz-neutral) 55%, transparent); outline-offset: 0; }
+.hz-field textarea { resize: vertical; }
+.hz-field select { width: 100%; font-weight: 400; }
+.hz-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-md); }
+.hz-btn { font-weight: 800; font-size: 14px; background: var(--hz-brand); color: #fff; border: 0; border-radius: 999px; padding: 9px 26px; cursor: pointer; }
+.hz-btn:hover { background: var(--hz-brand-2); }
+.hz-btn:focus-visible { outline: 2px solid var(--hz-sun); outline-offset: 2px; }
+.hz-msg { margin: 0; font-size: var(--cds-font-size-caption); font-weight: 600; color: var(--hz-ink-2); }
+.hz-msg.ok { color: #4e8a68; }
+.hz-msg.bad { color: #b4475c; }
+
+/* table */
+.hz-tablewrap { overflow-x: auto; border: 1px solid var(--hz-line); border-radius: var(--cds-radius); background: var(--hz-surface); }
+.hz-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+.hz-table th { text-align: left; font-weight: 600; color: #fff; background: var(--hz-neutral); border-bottom: 0; padding: 9px 10px; white-space: nowrap; }
+.hz-table td { padding: 9px 10px; border-bottom: 1px solid color-mix(in srgb, var(--hz-neutral) 20%, transparent); vertical-align: top; }
+.hz-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--hz-neutral) 6%, transparent); }
+.hz-table tbody tr { cursor: pointer; }
+.hz-table tbody tr:hover td { background: color-mix(in srgb, var(--hz-neutral) 13%, transparent); }
+.hz-table tbody tr:last-child td { border-bottom: 0; }
+.hz-table .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hz-table .name { font-weight: 600; white-space: nowrap; }
+.hz-links { display: flex; gap: 6px; white-space: nowrap; }
+.hz-links a { color: var(--hz-brand); font-weight: 600; text-decoration: none; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--hz-brand) 12%, var(--color-bg)); }
+.hz-links a:hover { text-decoration: underline; }
+.hz-warn { color: #a85a2e; font-weight: 600; }
+@media (max-width: 480px) { .hz { padding: var(--cds-pad-sm); } .hz-day { min-height: 58px; padding: 3px; } .hz-chip { font-size: 10px; padding: 2px 3px; } }
+</style>
+</head>
+<body>
+<div class="hz-page">
+
+<div class="hz">
+  <header class="hz-head" id="top">
+    <div class="hz-head-top">
+      <p class="hz-eyebrow">모델 촬영 스케줄링</p>
+      <div class="hz-stamp" id="stamp">
+        <span class="hz-stamp-today">오늘 <b data-draw="today">—</b></span>
+        <span class="hz-stamp-upd">최근 업데이트 <b data-draw="lastupdate" data-source="board">—</b></span>
+        <span class="hz-stamp-upd">신청서 <b data-draw="refreshreq">—</b>분 · 메일·시트 <b data-draw="refreshevery">—</b>분마다 자동 새로고침</span>
+      </div>
+    </div>
+    <h1 class="hz-title">송도 호라이즌 모델 섭외 현황</h1>
+    <p class="hz-lede" id="takeaway" data-read lang="ko">지원자는 모두 <b data-draw="kpi" data-source="counts" data-field="전체" data-row="0">—</b>명이에요. 재활 지원자 <b data-draw="kpi" data-source="counts" data-field="재활" data-row="0">—</b>명, 발톱 지원자 <b data-draw="kpi" data-source="counts" data-field="발톱" data-row="0">—</b>명이고, 자체 지원 <b data-draw="kpi" data-source="counts" data-field="자체 지원" data-row="0">—</b>명 · 인플루언서 <b data-draw="kpi" data-source="counts" data-field="인플루언서" data-row="0">—</b>명이에요. 일정 신청서를 낸 사람은 <b data-draw="kpi" data-source="counts" data-field="신청서 제출" data-row="0">—</b>명이에요. 촬영 일정이 확정된 사람은 <b data-draw="kpi" data-source="counts" data-field="일정 확정" data-row="0">—</b>명이고, 원내 확인을 기다리는 희망 일정은 <b data-draw="kpi" data-source="counts" data-field="희망 일정" data-row="0">—</b>명이에요. 다음 확정 촬영은 <b data-draw="next">—</b></p>
+  </header>
+
+  <p class="hz-alert" id="loaderr" hidden>데이터를 불러오지 못했어요. 잠시 후 새로고침해 주세요.</p>
+  <p class="hz-alert" id="reqwarn" hidden>신청서가 많아 일부만 불러왔어요. 촬영일정_신청 시트에서 빠진 신청이 없는지 확인해 주세요.</p>
+  <section class="hz-kpis" id="kpis" aria-label="단계별 인원">
+    <div class="hz-kpi"><span class="hz-kpi-label">전체 지원자</span><span><b class="hz-kpi-num" data-draw="kpi" data-source="counts" data-field="전체" data-row="0">—</b> <span class="hz-kpi-unit">명</span></span><span class="hz-kpi-split"><span><span class="hz-type" data-type="재활">재활 지원자</span> <b data-draw="kpi" data-source="counts" data-field="재활" data-row="0">—</b></span><span><span class="hz-type" data-type="발톱">발톱 지원자</span> <b data-draw="kpi" data-source="counts" data-field="발톱" data-row="0">—</b></span></span><span class="hz-kpi-src"><span><span class="hz-src" data-src="자체 지원">자체 지원</span> <b data-draw="kpi" data-source="counts" data-field="자체 지원" data-row="0">—</b></span><span><span class="hz-src" data-src="인플루언서">인플루언서</span> <b data-draw="kpi" data-source="counts" data-field="인플루언서" data-row="0">—</b></span></span><span class="hz-kpi-new"><span class="hz-new">신규</span> 시트·폴더 정리 전 <b data-draw="kpi" data-source="counts" data-field="시트 미등록" data-row="0">—</b>명</span></div>
+    <div class="hz-kpi" data-st="0"><span class="hz-kpi-label"><i class="hz-dot"></i>검토 대기</span><span><b class="hz-kpi-num" data-draw="kpi" data-source="counts" data-field="검토 대기" data-row="0">—</b> <span class="hz-kpi-unit">명</span></span></div>
+    <div class="hz-kpi" data-st="1"><span class="hz-kpi-label"><i class="hz-dot"></i>연락 중</span><span><b class="hz-kpi-num" data-draw="kpi" data-source="counts" data-field="연락 중" data-row="0">—</b> <span class="hz-kpi-unit">명</span></span></div>
+    <div class="hz-kpi" data-st="2"><span class="hz-kpi-label"><i class="hz-dot"></i>희망 일정</span><span><b class="hz-kpi-num" data-draw="kpi" data-source="counts" data-field="희망 일정" data-row="0">—</b> <span class="hz-kpi-unit">명</span></span></div>
+    <div class="hz-kpi" data-st="3"><span class="hz-kpi-label"><i class="hz-dot"></i>일정 확정</span><span><b class="hz-kpi-num" data-draw="kpi" data-source="counts" data-field="일정 확정" data-row="0">—</b> <span class="hz-kpi-unit">명</span></span></div>
+    <div class="hz-kpi" data-st="4"><span class="hz-kpi-label"><i class="hz-dot"></i>촬영 완료</span><span><b class="hz-kpi-num" data-draw="kpi" data-source="counts" data-field="촬영 완료" data-row="0">—</b> <span class="hz-kpi-unit">명</span></span></div>
+  </section>
+
+  <section class="hz-sec" id="calendar">
+    <div class="hz-sec-head">
+      <h2>촬영 캘린더</h2>
+      <p class="hz-note">희망 일정(점선)과 일정 확정·촬영 완료로 저장한 촬영일이 표시돼요. <span class="hz-edit-only">이름을 누르면 아래 입력칸에 불러와요.</span></p>
+    </div>
+    <div class="hz-cal" data-draw="calendar" data-source="board"></div>
+    <div class="hz-cal-legend">
+      <span><i class="hz-swatch"></i>공고 촬영 요일 (<span data-draw="shootdays">—</span>)</span>
+      <span data-st="2"><span class="hz-pill">희망 일정 (원내 확인 전)</span></span>
+      <span data-st="3"><span class="hz-pill">일정 확정</span></span>
+      <span data-st="4"><span class="hz-pill">촬영 완료</span></span>
+    </div>
+  </section>
+
+  <section class="hz-sec" id="pipeline">
+    <div class="hz-sec-head">
+      <h2>섭외 진행 단계</h2>
+      <p class="hz-note"><span class="hz-edit-only">카드를 누르면 아래 입력칸에 불러와요.</span><span class="hz-viewer-only">단계별로 지원자를 모아 보여줘요.</span></p>
+    </div>
+    <div class="hz-pipe" data-draw="pipeline" data-source="board"></div>
+  </section>
+
+  <section class="hz-sec hz-edit-only" id="edit">
+    <div class="hz-sec-head">
+      <h2>상태·촬영일 입력</h2>
+      <p class="hz-note">모델이 원하는 날짜는 희망 일정으로 저장하고, 원내 확인이 끝나면 일정 확정으로 바꿔 주세요. 편집 링크로 연 사람만 저장할 수 있고, 저장한 내용은 이 현황판을 여는 모든 사람에게 보여요.</p>
+    </div>
+    <form class="hz-form" id="hz-form">
+      <label class="hz-field" for="f-who"><span>지원자</span><select class="dash-select" id="f-who" name="who" data-draw="who" data-source="board" aria-label="지원자"></select></label>
+      <label class="hz-field" for="f-source"><span>구분</span>
+        <select class="dash-select" id="f-source" name="source" aria-label="구분">
+          <option>자체 지원</option><option>인플루언서</option>
+        </select></label>
+      <label class="hz-field" for="f-type"><span>지원 항목</span>
+        <select class="dash-select" id="f-type" name="type" aria-label="지원 항목">
+          <option>재활</option><option>발톱</option><option>재활+발톱</option>
+        </select></label>
+      <label class="hz-field" for="f-status"><span>상태</span>
+        <select class="dash-select" id="f-status" name="status" aria-label="상태">
+          <option>검토 대기</option><option>연락 중</option><option>희망 일정</option><option>일정 확정</option><option>촬영 완료</option><option>보류</option><option>미선정</option>
+        </select></label>
+      <label class="hz-field" for="f-date"><span>촬영일 (희망 또는 확정)</span><input type="date" id="f-date" name="date" min="2026-01-01" max="2027-12-31"></label>
+      <label class="hz-field" for="f-time"><span>시간</span><input type="time" id="f-time" name="time" step="1800"></label>
+      <label class="hz-field hz-wide" for="f-memo"><span>메모</span><textarea id="f-memo" name="memo" rows="2" maxlength="500" placeholder="예: 12/2 문자로 일정 문의, 회신 대기"></textarea></label>
+      <div class="hz-actions">
+        <button type="submit" class="hz-btn">저장</button>
+        <p class="hz-msg" id="hz-nopick" hidden>지원자를 먼저 골라 주세요.</p>
+        <p class="hz-msg bad" id="hz-baddate" hidden>촬영일을 다시 확인해 주세요.</p>
+        <p class="hz-msg ok" id="hz-saved" hidden>저장했어요.</p>
+        <p class="hz-msg bad" id="hz-unsaved" hidden>저장하지 못했어요. 편집 링크로 열어야 저장할 수 있어요.</p>
+      </div>
+    </form>
+  </section>
+
+  <section class="hz-sec" id="roster">
+    <div class="hz-sec-head">
+      <h2>지원자 목록</h2>
+      <p class="hz-note"><span class="hz-viewer-only">연락처는 편집 링크에서만 전체가 보여요.</span><span class="hz-edit-only">행을 누르면 입력칸에 불러와요.</span></p>
+    </div>
+    <div class="hz-tablewrap">
+      <table class="hz-table" data-source="board" data-row-key="key">
+        <thead><tr>
+          <th data-field="상태">상태</th>
+          <th data-field="이름">이름 · 지원 항목</th>
+          <th data-field="나이">나이</th>
+          <th data-field="촬영 가능 일자">촬영 가능 일자</th>
+          <th data-field="촬영일">촬영일</th>
+          <th data-field="연락처">연락처</th>
+          <th data-field="자료 만료">대용량 자료 만료</th>
+          <th>자료</th>
+          <th data-field="희망 신청">신청서 희망 일정</th>
+          <th data-field="메모">메모</th>
+        </tr></thead>
+        <tbody data-draw="roster"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+</div>
+
+<script>
+/* Feeds the dashboard's own drawings from the Apps Script server (getRaw) and saves through saveStatus. */
+const BOOT = <?!= JSON.stringify(boot) ?>;
+if (BOOT.canEdit) document.body.classList.add('can-edit');
+window.dash = (() => {
+  const src = {}, calcs = [], calcVal = {}, draws = [], onDatas = [];
+  let status = 'loading';
+  const value = (id) => (id in calcVal ? calcVal[id] : (src[id] || []));
+  function compute() {
+    calcs.forEach((c) => { try { calcVal[c.id] = c.fn(...c.inputs.map(value)); } catch (e) { console.error(c.id, e); calcVal[c.id] = []; } });
+  }
+  function runDraw(d) {
+    document.querySelectorAll('[data-draw="' + d.name + '"]').forEach((el) => {
+      if (el.closest('[hidden]')) return;
+      try {
+        if (typeof d.spec === 'function') d.spec(el);
+        else { if (!el.__hzMade) el.__hzMade = d.spec.mount ? d.spec.mount(el) : {}; d.spec.update && d.spec.update(el, el.__hzMade); }
+      } catch (e) { console.error(d.name, e); }
+    });
+  }
+  function render() { onDatas.forEach((f) => { try { f(); } catch (e) { console.error(e); } }); draws.forEach(runDraw); }
+  let timer = null;
+  return {
+    colors: ['#a8523b'],
+    loader() {},
+    calc(id, spec) { calcs.push({id, inputs: spec.inputs || [], fn: spec.fn}); },
+    data(id) {
+      const has = (id in src) || calcs.some((c) => c.id === id);
+      return {status: has ? status : 'missing', data: status === 'ok' ? value(id) : [], truncated: false, refreshing: false, columns: []};
+    },
+    draw(name, spec) { if (spec === undefined) { draws.filter((d) => d.name === name).forEach(runDraw); return; } draws.push({name, spec}); },
+    onData(fn) { onDatas.push(fn); },
+    params() { return {}; }, setParams() {}, resetParams() {}, setLink() {},
+    refresh() { clearTimeout(timer); timer = setTimeout(load, 300); },
+    _set(raw) {
+      ['mails', 'applicants', 'requests', 'schedule'].forEach((k) => { src[k] = raw[k] || []; });
+      status = 'ok';
+      document.querySelectorAll('#loaderr').forEach((p) => { p.hidden = !(raw.errors && raw.errors.length); });
+      if (raw.errors && raw.errors.length) console.warn(raw.errors);
+      compute(); render();
+    },
+    _fail(e) { console.error(e); document.querySelectorAll('#loaderr').forEach((p) => { p.hidden = false; }); if (status === 'loading') { status = 'error'; render(); } },
+    _render: render,
+  };
+})();
+function load() {
+  google.script.run.withSuccessHandler((raw) => dash._set(raw)).withFailureHandler((e) => dash._fail(e)).getRaw(BOOT.key);
+}
+window.claude = {
+  use: async (name) => {
+    if (name !== 'db') throw new Error('unsupported');
+    return {
+      doc: (path) => ({
+        set: (obj) => new Promise((resolve, reject) => {
+          const id = String(path).split('/').pop();
+          const r = ((window.HZ && window.HZ.rows()) || []).find((x) => x.key === id);
+          google.script.run
+            .withSuccessHandler(() => { resolve(); dash.refresh(); })
+            .withFailureHandler(reject)
+            .saveStatus(BOOT.key, id, Object.assign({name: r ? r['이름'] : ''}, obj));
+        }),
+      }),
+    };
+  },
+};
+</script>
+<script>
+dash.loader('applicants', {
+  description: '시트를 표로 읽어 한 사람당 한 행으로 바꾸고, 지원 메일 주소에서 메일 ID를 뽑아 key로 붙여요.',
+  fn: ({answer}) => {
+    const text = typeof answer === 'string' ? answer : (answer && (answer.fileContent || answer.content)) || '';
+    if (!text) throw new Error('시트 내용을 읽지 못했어요.');
+    const at = text.indexOf('Table Sample Data');
+    let sect = at >= 0 ? text.slice(at) : text;
+    const end = sect.indexOf('\n###', 5);
+    if (end > 0) sect = sect.slice(0, end);
+    const unesc = (s) => s.replace(/\\([\\`*_{}\[\]()#+\-.!~|<>])/g, '$1').trim();
+    const cells = sect.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('|'))
+      .map((l) => l.replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(unesc))
+      .filter((c) => !c.every((x) => x === '' || /^:?-+:?$/.test(x)));
+    if (!cells.length) throw new Error('시트에서 표를 찾지 못했어요.');
+    const header = cells[0];
+    const keep = {'지원 항목': '지원 항목', '이름': '이름', '성별': '성별', '나이': '나이', '연락처': '연락처', '촬영 가능 일자': '촬영 가능 일자', 'SNS': 'SNS', '지원일': '지원일', '폴더 링크': '폴더 링크', '지원 메일': '지원 메일', '대용량 첨부(만료일)': '자료 만료', '비고': '비고', '구분': '구분'};
+    const rows = cells.slice(1).map((c) => {
+      const o = {};
+      header.forEach((h, i) => { if (keep[h]) o[keep[h]] = c[i] ?? ''; });
+      const m = /#all\/([0-9a-zA-Z]+)/.exec(o['지원 메일'] || '');
+      o.key = m ? m[1] : (o['이름'] || '');
+      o['나이'] = o['나이'] === '' || isNaN(Number(o['나이'])) ? null : Number(o['나이']);
+      return o;
+    }).filter((o) => o['이름']);
+    const columns = ['key', ...Object.values(keep)];
+    return {columns, rows};
+  },
+});
+
+dash.loader('mails', {
+  description: '지원 메일 한 통을 한 행으로 바꿔요. 제목의 "이름_성별_나이_연락처"에서 정보를 뽑고, 형식이 다르면 보낸 사람 이름과 제목 속 나이·연락처를 써요. 제목에 "발톱"이 있으면 발톱, 아니면 재활로 둬요.',
+  fn: ({answer}) => {
+    if (answer && answer.error) throw new Error(typeof answer.error === 'string' ? answer.error : (answer.error.message || 'Gmail 검색에 실패했어요.'));
+    const threads = (answer && answer.threads) || [];
+    const pad = (n) => String(n).padStart(2, '0');
+    const rows = threads.map((t) => {
+      const m = (t.messages && t.messages[0]) || {};
+      const subject = m.subject || '';
+      const display = ((m.addressDisplayNames || [])[0] || {}).displayName || '';
+      const f = /([^\s\[\]()_]+)_([남여])_(\d{1,2})_(01\d[-\s]?\d{3,4}[-\s]?\d{4})/.exec(subject);
+      const phone = f ? f[4] : ((/01\d[-\s]{0,3}\d{3,4}[-\s]{0,3}\d{4}/.exec(subject) || [''])[0]).replace(/\s+/g, '');
+      const age = f ? Number(f[3]) : (/(\d{2})\s*세/.exec(subject) ? Number(/(\d{2})\s*세/.exec(subject)[1]) : null);
+      const gender = f ? f[2] : ((/[(_\s](여|남)[)_\s]/.exec(subject) || [])[1] || '');
+      const d = m.date ? new Date(m.date) : null;
+      return {
+        key: t.id,
+        '이름': f ? f[1] : display,
+        '성별': gender,
+        '나이': age,
+        '연락처': phone,
+        '지원 항목': /발톱/.test(subject) ? '발톱' : '재활',
+        '지원일': d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` : '',
+        '지원 메일': `https://mail.google.com/mail/#all/${t.id}`,
+        '메일 제목': subject,
+        '수신 시각': m.date || '',
+      };
+    }).filter((r) => r['이름']);
+    return {columns: ['key', '이름', '성별', '나이', '연락처', '지원 항목', '지원일', '지원 메일', '메일 제목', '수신 시각'], rows};
+  },
+});
+
+dash.loader('requests', {
+  description: "Drive에서 '촬영일정_신청' 시트를 찾아 '응답' 탭을 읽고, 신청 한 건을 한 행으로 바꿔요. 주소·생년월일·서류 링크는 가져오지 않아요. 시트가 아직 없으면 빈 목록이에요.",
+  fn: async ({answer, call}) => {
+    const files = (answer && answer.files) || [];
+    const sheet = files.find((f) => /spreadsheet/.test(f.mimeType || '')) || files[0];
+    if (!sheet) return {columns: ['key', '본명', '전화번호', '지원 항목', '접수 시각', '희망 1순위', '희망 2순위', '희망 3순위'], rows: []};
+    const res = await call('read_file_content', {fileId: sheet.id});
+    const text = typeof res === 'string' ? res : (res && (res.fileContent || res.content)) || '';
+    if (!text) throw new Error('촬영일정_신청 시트를 읽지 못했어요.');
+    const unesc = (s) => s.replace(/\\([\\`*_{}\[\]()#+\-.!~|<>])/g, '$1').trim();
+    const parts = text.split(/\n(?=#+\s*Sheet Name:)/);
+    const pick = parts.find((p) => /Sheet Name:\s*응답/.test(p)) || parts.find((p) => p.includes('희망 1순위')) || '';
+    const at = pick.indexOf('Table Sample Data');
+    let sect = at >= 0 ? pick.slice(at) : pick;
+    const end = sect.indexOf('\n###', 5);
+    if (end > 0) sect = sect.slice(0, end);
+    const cells = sect.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('|'))
+      .map((l) => l.replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(unesc))
+      .filter((c) => !c.every((x) => x === '' || /^:?-+:?$/.test(x)));
+    if (!cells.length) return {columns: ['key'], rows: []};
+    const header = cells[0];
+    const want = ['접수 시각', '지원 항목', '본명', '전화번호', '희망 1순위', '희망 2순위', '희망 3순위'];
+    const rows = cells.slice(1).map((c) => {
+      const o = {};
+      header.forEach((hd, i) => { if (want.includes(hd)) o[hd] = c[i] ?? ''; });
+      o.key = 'req' + String(o['전화번호'] || '').replace(/\D/g, '');
+      return o;
+    }).filter((o) => o['본명']);
+    const range = /Table Range:\s*[A-Z]+\d+:[A-Z]+(\d+)/.exec(pick);
+    const expected = range ? Math.max(0, Number(range[1]) - 1) : rows.length;
+    return {columns: ['key', ...want], rows, truncated: rows.length < expected};
+  },
+});
+
+dash.calc('board', {
+  inputs: ['mails', 'applicants', 'schedule', 'requests'],
+  title: '지원자별 섭외 상태',
+  description: '지원 메일과 지원자 목록 시트를 메일 ID로 합치고(시트에 있으면 시트 내용 우선), 촬영 일정 신청서를 연락처(없으면 이름)로 붙이고, 이 대시보드에서 저장한 구분·지원 항목·상태·촬영일·메모를 붙여요. 신청서를 냈고 저장된 상태가 일정 확정 전이면 희망 일정(1순위 날짜)으로 봐요. 저장한 상태가 없으면 검토 대기, 구분이 없으면 자체 지원이에요.',
+  fn: (mails, applicants, schedule, requests) => {
+    const known = ['검토 대기', '연락 중', '희망 일정', '일정 확정', '촬영 완료', '보류', '미선정'];
+    const types = ['재활', '발톱', '재활+발톱'];
+    const saved = new Map((schedule || []).map((s) => [s.id, s]));
+    const sheet = new Map((applicants || []).map((a) => [a.key, a]));
+    const keys = [...new Set([...(applicants || []).map((a) => a.key), ...(mails || []).map((m) => m.key)])];
+    const mailBy = new Map((mails || []).map((m) => [m.key, m]));
+    const digits = (v) => String(v || '').replace(/\D/g, '');
+    const reqs = (requests || []).slice();
+    const used = new Set();
+    const findReq = (base) => {
+      const p = digits(base['연락처']);
+      let i = p ? reqs.findIndex((q, j) => !used.has(j) && digits(q['전화번호']) === p) : -1;
+      if (i < 0) i = reqs.findIndex((q, j) => !used.has(j) && q['본명'] && q['본명'] === base['이름']);
+      if (i < 0) return null;
+      used.add(i);
+      return reqs[i];
+    };
+    const late = ['일정 확정', '촬영 완료', '보류', '미선정'];
+    const build = (key, base, sheetRow, req) => {
+      const s = saved.get(key) || {};
+      const sheetType = String(base['지원 항목'] || '재활');
+      let status = known.includes(s.status) ? s.status : '검토 대기';
+      let date = s.date || '', time = s.time || '';
+      const hope = req ? [req['희망 1순위'], req['희망 2순위'], req['희망 3순위']].filter(Boolean) : [];
+      if (req && !late.includes(status)) {
+        if (!(status === '희망 일정' && date)) {
+          const [d, t] = String(hope[0] || '').split(' ');
+          date = /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d : date;
+          time = t || time;
+        }
+        status = '희망 일정';
+      }
+      const src = ['자체 지원', '인플루언서'];
+      return {...base, key,
+        '구분': src.includes(s.source) ? s.source : (src.includes(base['구분']) ? base['구분'] : '자체 지원'),
+        '지원 항목': types.includes(s.type) ? s.type : (types.includes(sheetType) ? sheetType : '재활'),
+        '시트 등록': sheetRow ? '등록' : '미등록',
+        '신청서': req ? '제출' : '',
+        '희망 신청': hope.join(' / '),
+        '신청 시각': req ? (req['접수 시각'] || '') : '',
+        '상태': status, '촬영일': date, '촬영시간': time, '메모': s.memo || '', '저장 시각': s.updatedAt || ''};
+    };
+    const out = keys.map((key) => {
+      const a = sheet.get(key);
+      const m = mailBy.get(key) || {};
+      const base = a ? {...m, ...a} : {...m, '촬영 가능 일자': '', 'SNS': '', '폴더 링크': '', '자료 만료': '', '비고': ''};
+      return build(key, base, a, findReq(base));
+    });
+    reqs.forEach((q, j) => {
+      if (used.has(j)) return;
+      const base = {'이름': q['본명'], '연락처': q['전화번호'], '지원 항목': q['지원 항목'] || '재활', '성별': '', '나이': null,
+        '촬영 가능 일자': '', 'SNS': '', '폴더 링크': '', '자료 만료': '', '비고': '', '지원 메일': ''};
+      out.push(build(q.key, base, null, q));
+    });
+    return out;
+  },
+});
+
+dash.calc('counts', {
+  inputs: ['board'],
+  title: '단계별 인원',
+  description: '전체 지원자 수, 지원 항목별 인원(재활+발톱은 양쪽에 셈), 자체 지원·인플루언서 인원, 일정 신청서를 낸 인원, 시트에 아직 없는 신규 지원자 수, 섭외 단계별 인원이에요.',
+  fn: (board) => {
+    const c = {'전체': board.length, '재활': 0, '발톱': 0, '자체 지원': 0, '인플루언서': 0, '신청서 제출': 0, '시트 미등록': 0, '검토 대기': 0, '연락 중': 0, '희망 일정': 0, '일정 확정': 0, '촬영 완료': 0, '보류': 0, '미선정': 0};
+    board.forEach((r) => {
+      if (r['상태'] in c) c[r['상태']] += 1;
+      if (String(r['지원 항목']).includes('재활')) c['재활'] += 1;
+      if (String(r['지원 항목']).includes('발톱')) c['발톱'] += 1;
+      if (r['시트 등록'] === '미등록') c['시트 미등록'] += 1;
+      if (r['구분'] in c) c[r['구분']] += 1;
+      if (r['신청서'] === '제출') c['신청서 제출'] += 1;
+    });
+    return [c];
+  },
+});
+
+window.HZ = (() => {
+  const STATUSES = ['검토 대기', '연락 중', '희망 일정', '일정 확정', '촬영 완료', '보류', '미선정'];
+  const SHOOT_DAYS = [3, 4];
+  const REFRESH_MIN = 5;
+  const REFRESH_REQ_MIN = 5;
+  const WD = '일월화수목금토';
+  const pad = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+  const fmtDate = (s) => { const d = parse(s); return d ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})` : ''; };
+  const rows = () => { const d = dash.data('board'); return d.status === 'ok' && Array.isArray(d.data) ? d.data : null; };
+  const safeUrl = (u) => (typeof u === 'string' && /^https:\/\//.test(u.trim()) ? u.trim() : null);
+  const state = {selected: ''};
+  function nameWith(r, cls) {
+    const wrap = document.createElement('span'); wrap.className = cls || 'hz-name';
+    const n = document.createElement('span'); n.textContent = r['이름']; wrap.append(n);
+    if (r['구분']) { const sb = document.createElement('span'); sb.className = 'hz-src'; sb.setAttribute('data-src', r['구분']); sb.textContent = r['구분']; wrap.append(sb); }
+    String(r['지원 항목'] || '').split('+').filter(Boolean).forEach((t) => {
+      const b = document.createElement('span'); b.className = 'hz-type'; b.setAttribute('data-type', t); b.textContent = t; wrap.append(b);
+    });
+    if (r['시트 등록'] === '미등록') { const nb = document.createElement('span'); nb.className = 'hz-new'; nb.textContent = '신규'; nb.title = '시트·폴더 정리 전'; wrap.append(nb); }
+    return wrap;
+  }
+  function pick(key) {
+    state.selected = key || '';
+    const r = (rows() || []).find((x) => x.key === key);
+    document.querySelectorAll('#f-who').forEach((el) => { el.value = state.selected; });
+    document.querySelectorAll('#f-status').forEach((el) => { el.value = r ? r['상태'] : '검토 대기'; });
+    document.querySelectorAll('#f-type').forEach((el) => { el.value = r ? r['지원 항목'] : '재활'; });
+    document.querySelectorAll('#f-source').forEach((el) => { el.value = r ? r['구분'] : '자체 지원'; });
+    document.querySelectorAll('#f-date').forEach((el) => { el.value = r ? r['촬영일'] : ''; });
+    document.querySelectorAll('#f-time').forEach((el) => { el.value = r ? r['촬영시간'] : ''; });
+    document.querySelectorAll('#f-memo').forEach((el) => { el.value = r ? r['메모'] : ''; });
+    document.querySelectorAll('#hz-saved, #hz-unsaved, #hz-nopick, #hz-baddate').forEach((p) => { p.hidden = true; });
+  }
+  function pickAndGo(key) {
+    pick(key);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('#edit').forEach((s) => s.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block: 'start'}));
+  }
+  return {REFRESH_MIN, REFRESH_REQ_MIN, STATUSES, SHOOT_DAYS, WD, ymd, parse, fmtDate, rows, safeUrl, state, pick, pickAndGo, nameWith};
+})();
+
+(() => {
+  const H = window.HZ;
+  // 신청서는 5분, 메일·시트는 30분마다 다시 불러와요 (화면을 보고 있을 때만)
+  const last = {req: Date.now(), rest: Date.now()};
+  const tick = () => {
+    if (document.visibilityState !== 'visible') return;
+    const now = Date.now();
+    if (now - last.req >= H.REFRESH_REQ_MIN * 60 * 1000) { last.req = now; dash.refresh('requests'); }
+    if (now - last.rest >= H.REFRESH_MIN * 60 * 1000) { last.rest = now; ['mails', 'applicants'].forEach((id) => dash.refresh(id)); }
+  };
+  setInterval(tick, 60 * 1000);
+  document.addEventListener('visibilitychange', tick);
+})();
+
+dash.onData(() => {
+  const r = dash.data('requests');
+  document.querySelectorAll('#reqwarn').forEach((el) => { el.hidden = !(r.status === 'ok' && r.truncated); });
+});
+
+document.querySelectorAll('#hz-form').forEach((form) => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const H = window.HZ;
+    const msgs = (id, show) => document.querySelectorAll(id).forEach((p) => { p.hidden = !show; });
+    ['#hz-saved', '#hz-unsaved', '#hz-nopick', '#hz-baddate'].forEach((id) => msgs(id, false));
+    const who = form.querySelector('#f-who');
+    const key = who ? who.value : '';
+    if (!key) { msgs('#hz-nopick', true); return; }
+    const dateEl = form.querySelector('#f-date');
+    const date = dateEl && dateEl.value && dateEl.validity.valid ? dateEl.value : '';
+    if (dateEl && dateEl.value && !date) { msgs('#hz-baddate', true); return; }
+    const statusEl = form.querySelector('#f-status');
+    const status = statusEl && H.STATUSES.includes(statusEl.value) ? statusEl.value : '검토 대기';
+    const time = (form.querySelector('#f-time') || {}).value || '';
+    const memo = ((form.querySelector('#f-memo') || {}).value || '').slice(0, 500);
+    let ok = true;
+    try {
+      const db = await claude.use('db');
+      const typeEl = form.querySelector('#f-type');
+      const type = typeEl && ['재활', '발톱', '재활+발톱'].includes(typeEl.value) ? typeEl.value : '재활';
+      const srcEl = form.querySelector('#f-source');
+      const source = srcEl && ['자체 지원', '인플루언서'].includes(srcEl.value) ? srcEl.value : '자체 지원';
+      await db.doc(`data/team/schedule/${key}`).set({type, source, status, date, time, memo, updatedAt: new Date().toISOString()});
+    } catch { ok = false; }
+    msgs(ok ? '#hz-saved' : '#hz-unsaved', true);
+  });
+});
+</script>
+
+<script>
+(() => {
+  const H = window.HZ;
+  const stIndex = (s) => String(Math.max(0, H.STATUSES.indexOf(s)));
+
+  dash.draw('kpi', (el) => {
+    const d = dash.data('counts');
+    const row = d.status === 'ok' && Array.isArray(d.data) ? d.data[0] : null;
+    const f = el.getAttribute('data-field');
+    el.textContent = row && row[f] != null ? d3.format(',')(row[f]) : '—';
+  });
+
+  dash.draw('refreshevery', (el) => { el.textContent = String(H.REFRESH_MIN); });
+  dash.draw('refreshreq', (el) => { el.textContent = String(H.REFRESH_REQ_MIN); });
+
+  dash.draw('today', (el) => {
+    const d = new Date();
+    el.textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${H.WD[d.getDay()]})`;
+  });
+
+  dash.draw('lastupdate', (el) => {
+    const rows = H.rows();
+    if (!rows) { el.textContent = '—'; return; }
+    let best = null;
+    rows.forEach((r) => {
+      [[r['수신 시각'], `${r['이름']} 님 지원 메일`], [r['저장 시각'], `${r['이름']} 님 상태 저장`]].forEach(([t, what]) => {
+        const d = t ? new Date(t) : null;
+        if (d && !isNaN(d) && (!best || d > best.d)) best = {d, what};
+      });
+    });
+    if (!best) { el.textContent = '기록 없음'; return; }
+    const d = best.d; const pad = (n) => String(n).padStart(2, '0');
+    el.textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())} · ${best.what}`;
+  });
+
+  dash.draw('shootdays', (el) => { el.textContent = H.SHOOT_DAYS.map((d) => H.WD[d]).join('·'); });
+
+  dash.draw('next', (el) => {
+    const rows = H.rows();
+    if (!rows) { el.textContent = '—'; return; }
+    const today = H.ymd(new Date());
+    const up = rows.filter((r) => r['상태'] === '일정 확정' && r['촬영일'] && r['촬영일'] >= today)
+      .sort((a, b) => (a['촬영일'] + a['촬영시간']).localeCompare(b['촬영일'] + b['촬영시간']));
+    el.textContent = up.length
+      ? `${H.fmtDate(up[0]['촬영일'])}${up[0]['촬영시간'] ? ' ' + up[0]['촬영시간'] : ''}, ${up[0]['이름']} 님이에요.`
+      : '아직 잡히지 않았어요.';
+  });
+
+  dash.draw('calendar', {
+    mount(el) {
+      el.replaceChildren();
+      const bar = document.createElement('div'); bar.className = 'hz-cal-bar';
+      const prev = document.createElement('button'); prev.type = 'button'; prev.className = 'hz-navbtn'; prev.textContent = '‹ 이전 달';
+      const label = document.createElement('span'); label.className = 'hz-cal-month';
+      const next = document.createElement('button'); next.type = 'button'; next.className = 'hz-navbtn'; next.textContent = '다음 달 ›';
+      bar.append(prev, label, next);
+      const grid = document.createElement('div'); grid.className = 'hz-grid'; grid.setAttribute('role', 'grid'); grid.setAttribute('aria-label', '촬영 캘린더');
+      el.append(bar, grid);
+      const now = new Date();
+      const made = {y: now.getFullYear(), m: now.getMonth(), init: false, label, grid};
+      prev.onclick = () => { made.m -= 1; if (made.m < 0) { made.m = 11; made.y -= 1; } dash.draw('calendar'); };
+      next.onclick = () => { made.m += 1; if (made.m > 11) { made.m = 0; made.y += 1; } dash.draw('calendar'); };
+      return made;
+    },
+    update(el, made) {
+      const rows = H.rows();
+      const events = (rows || []).filter((r) => (r['상태'] === '희망 일정' || r['상태'] === '일정 확정' || r['상태'] === '촬영 완료') && H.parse(r['촬영일']));
+      if (!made.init && rows) {
+        const today = H.ymd(new Date());
+        const up = events.filter((r) => r['상태'] !== '촬영 완료' && r['촬영일'] >= today).map((r) => r['촬영일']).sort()[0];
+        if (up) { const d = H.parse(up); made.y = d.getFullYear(); made.m = d.getMonth(); }
+        made.init = true;
+      }
+      made.label.textContent = `${made.y}년 ${made.m + 1}월`;
+      const g = made.grid;
+      g.replaceChildren();
+      for (let i = 0; i < 7; i += 1) {
+        const h = document.createElement('div'); h.className = 'hz-wd'; h.textContent = H.WD[i]; g.append(h);
+      }
+      const first = new Date(made.y, made.m, 1);
+      const start = new Date(made.y, made.m, 1 - first.getDay());
+      const todayStr = H.ymd(new Date());
+      const byDate = d3.group(events, (r) => r['촬영일']);
+      const weeks = Math.ceil((first.getDay() + new Date(made.y, made.m + 1, 0).getDate()) / 7);
+      for (let i = 0; i < weeks * 7; i += 1) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const key = H.ymd(d);
+        const cell = document.createElement('div');
+        cell.className = 'hz-day';
+        if (d.getMonth() !== made.m) cell.classList.add('is-out');
+        if (H.SHOOT_DAYS.includes(d.getDay())) cell.classList.add('is-shoot');
+        if (key === todayStr) cell.classList.add('is-today');
+        const num = document.createElement('span'); num.className = 'hz-day-num'; num.textContent = d.getDate();
+        cell.append(num);
+        (byDate.get(key) || []).sort((a, b) => (a['촬영시간'] || '').localeCompare(b['촬영시간'] || '')).forEach((r) => {
+          const chip = document.createElement('button');
+          chip.type = 'button'; chip.className = 'hz-chip';
+          chip.setAttribute('data-st', stIndex(r['상태']));
+          if (r['상태'] === '희망 일정') chip.classList.add('is-tentative');
+          chip.textContent = `${r['상태'] === '희망 일정' ? '희망 ' : ''}${r['촬영시간'] ? r['촬영시간'] + ' ' : ''}${r['이름']} · ${r['지원 항목']}`;
+          chip.setAttribute('aria-label', `${H.fmtDate(r['촬영일'])} ${r['촬영시간'] || ''} ${r['이름']} ${r['상태']}`);
+          chip.onclick = () => H.pickAndGo(r.key);
+          cell.append(chip);
+        });
+        g.append(cell);
+      }
+    },
+  });
+
+  dash.draw('pipeline', (el) => {
+    const rows = H.rows();
+    el.replaceChildren();
+    if (!rows) {
+      const d = dash.data('board');
+      const p = document.createElement('p'); p.className = 'hz-empty';
+      p.textContent = d.status === 'error' ? '지원자 목록을 불러오지 못했어요.' : '—';
+      el.append(p); return;
+    }
+    H.STATUSES.forEach((s, i) => {
+      const list = rows.filter((r) => r['상태'] === s);
+      const col = document.createElement('div'); col.className = 'hz-col'; col.setAttribute('data-st', String(i));
+      const head = document.createElement('div'); head.className = 'hz-col-head';
+      const pill = document.createElement('span'); pill.className = 'hz-pill'; pill.textContent = s;
+      const cnt = document.createElement('span'); cnt.className = 'hz-col-count';
+      cnt.setAttribute('data-source', 'counts'); cnt.setAttribute('data-field', s); cnt.setAttribute('data-row', '0');
+      cnt.textContent = `${list.length}명`;
+      head.append(pill, cnt); col.append(head);
+      if (!list.length) {
+        const e = document.createElement('p'); e.className = 'hz-empty'; e.textContent = '없음'; col.append(e);
+      }
+      list.forEach((r) => {
+        const card = document.createElement('button'); card.type = 'button'; card.className = 'hz-card';
+        const n = H.nameWith(r, 'hz-card-name');
+        const sub = document.createElement('span'); sub.className = 'hz-card-sub';
+        sub.textContent = [r['성별'], r['나이'] != null ? `${r['나이']}세` : ''].filter(Boolean).join(' · ');
+        const sub2 = document.createElement('span'); sub2.className = 'hz-card-sub';
+        sub2.textContent = r['촬영일'] ? `${r['상태'] === '희망 일정' ? '희망' : '촬영'} ${H.fmtDate(r['촬영일'])}${r['촬영시간'] ? ' ' + r['촬영시간'] : ''}` : `가능: ${r['촬영 가능 일자'] || '미기재'}`;
+        card.append(n, sub, sub2);
+        card.onclick = () => H.pickAndGo(r.key);
+        col.append(card);
+      });
+      el.append(col);
+    });
+  });
+
+  dash.draw('who', (sel) => {
+    const rows = H.rows() || [];
+    sel.replaceChildren(new Option('지원자 선택', ''), ...rows.map((r) => new Option(`${r['이름']} (${r['상태']})`, r.key)));
+    sel.value = rows.some((r) => r.key === H.state.selected) ? H.state.selected : '';
+    sel.onchange = () => H.pick(sel.value);
+  });
+
+  dash.draw('roster', (tb) => {
+    const rows = H.rows();
+    tb.replaceChildren();
+    if (!rows) return;
+    const order = (s) => H.STATUSES.indexOf(s);
+    [...rows].sort((a, b) => order(a['상태']) - order(b['상태']) || (a['촬영일'] || '9').localeCompare(b['촬영일'] || '9') || a['이름'].localeCompare(b['이름'], 'ko'))
+      .forEach((r) => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-key', r.key); tr.tabIndex = 0;
+        tr.onclick = (e) => { if (e.target.closest('a')) return; H.pickAndGo(r.key); };
+        tr.onkeydown = (e) => { if (e.key === 'Enter') H.pickAndGo(r.key); };
+        const td = (text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text ?? ''; tr.append(c); return c; };
+        const st = document.createElement('td');
+        const pill = document.createElement('span'); pill.className = 'hz-pill'; pill.setAttribute('data-st', stIndex(r['상태'])); pill.textContent = r['상태'];
+        st.append(pill); tr.append(st);
+        const nm = td('', 'name'); nm.append(H.nameWith(r));
+        td(r['나이'] != null ? r['나이'] : '', 'num');
+        td(r['촬영 가능 일자']);
+        td(r['촬영일'] ? `${H.fmtDate(r['촬영일'])}${r['촬영시간'] ? ' ' + r['촬영시간'] : ''}` : '', 'num');
+        td(r['연락처'], 'num');
+        td(r['자료 만료'] && r['자료 만료'] !== '없음' ? r['자료 만료'] : '', r['자료 만료'] && r['자료 만료'] !== '없음' ? 'hz-warn' : '');
+        const links = document.createElement('td'); const wrap = document.createElement('span'); wrap.className = 'hz-links';
+        [['폴더', r['폴더 링크']], ['메일', r['지원 메일']], ['SNS', r['SNS']]].forEach(([label, url]) => {
+          const u = H.safeUrl(url); if (!u) return;
+          const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = label; wrap.append(a);
+        });
+        links.append(wrap); tr.append(links);
+        td(r['희망 신청']);
+        td(r['메모']);
+        tb.append(tr);
+      });
+  });
+})();
+</script>
+
+<script>
+  dash._render();
+  load();
+</script>
+</body>
+</html>
