@@ -275,7 +275,7 @@ function notify_(type, name, picks, folderUrl) {
 
 /** 처음 한 번 편집기에서 실행: 권한 승인 + 시트(응답·초대 탭) 만들기 */
 function setup() {
+  responses_(); // 첫 번째 탭이 '응답'이어야 대시보드가 바로 읽어요
   invites_();
-  responses_();
   Logger.log('시트: ' + book_().getUrl());
 }
