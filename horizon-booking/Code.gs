@@ -149,16 +149,38 @@ function makeInviteLinks() {
 
 /* ---------- 일정 ---------- */
 
+function slotKey_(v) {
+  // 시트가 날짜로 바꿔 저장했어도 'yyyy-MM-dd HH:mm' 글자로 맞춰요
+  if (v instanceof Date) return Utilities.formatDate(v, CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm');
+  return String(v || '').trim();
+}
+
+/** 시간대별 인원: 응답의 1순위 + 현황판에서 '일정 확정·촬영 완료'로 잡힌 촬영 (확정된 시간은 바로 마감) */
 function slotCounts_() {
+  const out = {};
   const sh = responses_();
   const last = sh.getLastRow();
-  const out = {};
-  if (last < 2) return out;
-  const col = RESP_HEADER.indexOf('희망 1순위') + 1;
-  sh.getRange(2, col, last - 1, 1).getValues().forEach(function (r) {
-    const v = String(r[0] || '').trim();
-    if (v) out[v] = (out[v] || 0) + 1;
-  });
+  if (last >= 2) {
+    const col = RESP_HEADER.indexOf('희망 1순위') + 1;
+    sh.getRange(2, col, last - 1, 1).getValues().forEach(function (r) {
+      const v = slotKey_(r[0]);
+      if (v) out[v] = (out[v] || 0) + 1;
+    });
+  }
+  const st = book_().getSheetByName('현황');
+  if (st && st.getLastRow() >= 2) {
+    const values = st.getDataRange().getValues();
+    const h = values[0].map(function (x) { return String(x).trim(); });
+    const iS = h.indexOf('상태'), iD = h.indexOf('촬영일'), iT = h.indexOf('시간');
+    if (iS >= 0 && iD >= 0 && iT >= 0) {
+      values.slice(1).forEach(function (r) {
+        if (['일정 확정', '촬영 완료'].indexOf(String(r[iS]).trim()) < 0) return;
+        const d = r[iD] instanceof Date ? Utilities.formatDate(r[iD], CONFIG.TIMEZONE, 'yyyy-MM-dd') : String(r[iD]).trim();
+        const t = r[iT] instanceof Date ? Utilities.formatDate(r[iT], CONFIG.TIMEZONE, 'HH:mm') : String(r[iT]).trim();
+        if (d && t) out[d + ' ' + t] = CONFIG.MAX_PER_SLOT;
+      });
+    }
+  }
   return out;
 }
 
