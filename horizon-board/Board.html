@@ -448,7 +448,7 @@ dash.loader('requests', {
 dash.calc('board', {
   inputs: ['mails', 'applicants', 'schedule', 'requests'],
   title: '지원자별 섭외 상태',
-  description: '지원 메일과 지원자 목록 시트를 메일 ID로 합치고(시트에 있으면 시트 내용 우선), 촬영 일정 신청서를 연락처(없으면 이름)로 붙이고, 이 대시보드에서 저장한 구분·지원 항목·상태·촬영일·메모를 붙여요. 신청서를 냈고 저장된 상태가 일정 확정 전이면 희망 일정(1순위 날짜)으로 봐요. 저장한 상태가 없으면 검토 대기, 구분이 없으면 자체 지원이에요.',
+  description: '지원 메일과 지원자 목록 시트를 메일 ID로 합치고(시트에 있으면 시트 내용 우선), 촬영 일정 신청서를 연락처(없으면 이름)로 붙이고, 이 대시보드에서 저장한 구분·지원 항목·상태·촬영일·메모를 붙여요. 같은 연락처로 재활·발톱을 따로 지원했으면 한 명(재활+발톱)으로 합쳐요. 신청서를 냈고 저장된 상태가 일정 확정 전이면 희망 일정(1순위 날짜)으로 봐요. 저장한 상태가 없으면 검토 대기, 구분이 없으면 자체 지원이에요.',
   fn: (mails, applicants, schedule, requests) => {
     const known = ['검토 대기', '연락 중', '희망 일정', '일정 확정', '촬영 완료', '보류', '미선정'];
     const types = ['재활', '발톱', '재활+발톱'];
@@ -504,7 +504,28 @@ dash.calc('board', {
         '촬영 가능 일자': '', 'SNS': '', '폴더 링크': '', '자료 만료': '', '비고': '', '지원 메일': ''};
       out.push(build(q.key, base, null, q));
     });
-    return out;
+    // 같은 연락처로 두 번 지원한 사람(재활·발톱 따로)은 한 명으로 합쳐요
+    const order = ['검토 대기', '연락 중', '희망 일정', '일정 확정', '촬영 완료', '보류', '미선정'];
+    const merged = [], byPhone = new Map();
+    out.forEach((r) => {
+      const p = digits(r['연락처']);
+      const prev = p ? byPhone.get(p) : null;
+      if (!prev) { if (p) byPhone.set(p, r); merged.push(r); return; }
+      const sheetFirst = (x) => (x['시트 등록'] === '등록' ? 1 : 0);
+      const [main, other] = sheetFirst(r) > sheetFirst(prev) ? [r, prev] : [prev, r];
+      const t = [main['지원 항목'], other['지원 항목']].join('+');
+      const both = /재활/.test(t) && /발톱/.test(t) ? '재활+발톱' : main['지원 항목'];
+      const next = {...main, '지원 항목': both};
+      ['신청서', '희망 신청', '신청 시각'].forEach((k) => { if (!next[k] && other[k]) next[k] = other[k]; });
+      const newer = String(other['저장 시각'] || '') > String(main['저장 시각'] || '');
+      if (newer || (!main['저장 시각'] && order.indexOf(other['상태']) > order.indexOf(main['상태']))) {
+        next.key = other.key;
+        ['상태', '촬영일', '촬영시간', '메모', '저장 시각'].forEach((k) => { next[k] = other[k]; });
+      }
+      merged[merged.indexOf(prev)] = next;
+      byPhone.set(p, next);
+    });
+    return merged;
   },
 });
 

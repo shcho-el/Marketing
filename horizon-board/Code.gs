@@ -102,13 +102,23 @@ function readMails_() {
       '성별': gender,
       '나이': f ? Number(f[3]) : (ageM ? Number(ageM[1]) : null),
       '연락처': phone,
-      '지원 항목': /발톱/.test(subject) ? '발톱' : '재활',
+      '지원 항목': typeOfThread_(t),
       '지원일': Utilities.formatDate(m.getDate(), CONFIG.TIMEZONE, 'yyyy-MM-dd'),
       '지원 메일': 'https://mail.google.com/mail/#all/' + t.getId(),
       '메일 제목': subject,
       '수신 시각': m.getDate().toISOString(),
     };
   }).filter(function (r) { return r['이름']; });
+}
+
+/** 스레드 안의 지원자 메일 제목을 모두 보고 재활 / 발톱 / 재활+발톱을 정해요 (같은 메일에 발톱으로 다시 지원한 경우 포함) */
+function typeOfThread_(t) {
+  const me = Session.getEffectiveUser().getEmail();
+  const subjects = t.getMessages().filter(function (m) { return m.getFrom().indexOf(me) < 0; })
+    .map(function (m) { return m.getSubject() || ''; });
+  const hasFoot = subjects.some(function (s) { return /발톱/.test(s); });
+  const hasRehab = subjects.some(function (s) { return /재활/.test(s); });
+  return hasFoot && hasRehab ? '재활+발톱' : (hasFoot ? '발톱' : '재활');
 }
 
 /** 지원자_목록 시트 → 행 (대시보드의 applicants와 같은 규칙) */
@@ -274,4 +284,152 @@ function renameApplicant_(oldName, newName) {
 
 function fixName() {
   renameApplicant_('차예지', '박예지');
+}
+
+/* ---------- 지원 메일 → Drive 폴더 자동 정리 (30분마다) ---------- */
+
+const FOLDER_CONFIG = {
+  PARENT_FOLDER_ID: '1MRnHEcA1A8OPkJGDwD37jx_rkVYZ9GNo', // 인천재활모델지원
+  LOOKBACK: 'newer_than:30d',
+  MAX_DOWNLOAD_MB: 45,   // 대용량 첨부(네이버·다음 링크)는 이 크기까지 직접 받아 넣어요
+};
+
+/** 처음 한 번 실행: 30분마다 autoFolder가 돌도록 등록해요 (이미 있으면 다시 만들지 않아요) */
+function installAutoFolder() {
+  ScriptApp.getProjectTriggers().forEach(function (tr) {
+    if (tr.getHandlerFunction() === 'autoFolder') ScriptApp.deleteTrigger(tr);
+  });
+  ScriptApp.newTrigger('autoFolder').timeBased().everyMinutes(30).create();
+  autoFolder();
+  Logger.log('30분마다 자동 폴더 정리를 등록했어요.');
+}
+
+function autoFolder() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return;
+  try {
+    const me = Session.getEffectiveUser().getEmail();
+    const props = PropertiesService.getScriptProperties();
+    const done = JSON.parse(props.getProperty('FOLDERED') || '{}');
+    const parent = DriveApp.getFolderById(FOLDER_CONFIG.PARENT_FOLDER_ID);
+    const aliases = phoneAliases_();
+    const log = [];
+    GmailApp.search(CONFIG.GMAIL_QUERY + ' ' + FOLDER_CONFIG.LOOKBACK, 0, 50).forEach(function (t) {
+      t.getMessages().forEach(function (m) {
+        if (done[m.getId()] || m.getFrom().indexOf(me) >= 0) return;
+        const info = parseApplicant_(m);
+        if (!info) return;
+        const folder = findOrCreateFolder_(parent, info, aliases);
+        const saved = saveMailFiles_(folder, m, info.name);
+        done[m.getId()] = Date.now();
+        log.push(info.name + ' → ' + folder.getName() + ' (' + saved + ')');
+      });
+    });
+    // 오래된 기록은 정리 (60일)
+    const cutoff = Date.now() - 60 * 24 * 3600 * 1000;
+    Object.keys(done).forEach(function (k) { if (done[k] < cutoff) delete done[k]; });
+    props.setProperty('FOLDERED', JSON.stringify(done));
+    if (log.length) { CacheService.getScriptCache().remove('raw'); Logger.log(log.join('\n')); }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function parseApplicant_(m) {
+  const subject = m.getSubject() || '';
+  const f = /([^\s\[\]()_]+)_([남여])_(\d{1,2})_(01\d[-\s]?\d{3,4}[-\s]?\d{4})/.exec(subject);
+  const fromName = ((m.getFrom().match(/^\s*"?([^"<]+?)"?\s*</) || [])[1] || '').trim();
+  const name = f ? f[1] : fromName;
+  if (!name) return null;
+  const phone = (f ? f[4] : ((/01\d[-\s]{0,3}\d{3,4}[-\s]{0,3}\d{4}/.exec(subject) || [''])[0])).replace(/\D/g, '');
+  const ageM = /(\d{2})\s*세/.exec(subject);
+  return {
+    name: name, phone: phone,
+    gender: f ? f[2] : ((/[(_\s](여|남)[)_\s]/.exec(subject) || [])[1] || ''),
+    age: f ? f[3] : (ageM ? ageM[1] : ''),
+    type: /발톱/.test(subject) ? '발톱' : '재활',
+  };
+}
+
+/** 전화번호 → 이 사람이 쓴 이름들 (신청서의 본명·활동명, 지원자_목록 이름) */
+function phoneAliases_() {
+  const out = {};
+  const add = function (p, n) {
+    const d = String(p || '').replace(/\D/g, ''); n = String(n || '').trim();
+    if (!d || !n) return;
+    (out[d] = out[d] || []).indexOf(n) < 0 && out[d].push(n);
+  };
+  try {
+    const sh = SpreadsheetApp.openById(CONFIG.REQUEST_SHEET_ID).getSheetByName(CONFIG.REQUEST_TAB);
+    if (sh) table_(sh).forEach(function (r) { add(r['전화번호'], r['본명']); add(r['전화번호'], r['활동명']); });
+  } catch (e) { /* 없으면 건너뜀 */ }
+  try {
+    table_(SpreadsheetApp.openById(CONFIG.APPLICANT_SHEET_ID).getSheets()[0])
+      .forEach(function (r) { add(r['연락처'], r['이름']); });
+  } catch (e) { /* 없으면 건너뜀 */ }
+  return out;
+}
+
+/** 이미 있는 지원자 폴더(이름이 같거나, 같은 전화번호로 쓴 다른 이름)를 찾고, 없으면 만들어요 */
+function findOrCreateFolder_(parent, info, aliases) {
+  const norm = function (s) { return String(s || '').replace(/\s+/g, ''); };
+  const wants = [info.name].concat(aliases[info.phone] || []).map(norm);
+  const it = parent.getFolders();
+  while (it.hasNext()) {
+    const f = it.next();
+    if (!f.isTrashed() && wants.indexOf(norm(f.getName().split('_')[1])) >= 0) return f;
+  }
+  const parts = [info.type, info.name, info.gender, info.age].filter(String);
+  return parent.createFolder(parts.join('_'));
+}
+
+function hasFile_(folder, name) {
+  const it = folder.getFilesByName(name);
+  while (it.hasNext()) { if (!it.next().isTrashed()) return true; }
+  return false;
+}
+
+/** 메일 첨부(본문 사진 포함)와 대용량 첨부 링크 파일을 폴더에 넣어요. 같은 이름 파일이 있으면 건너뛰어요. */
+function saveMailFiles_(folder, m, name) {
+  let n = 0;
+  m.getAttachments({ includeInlineImages: true, includeAttachments: true }).forEach(function (a) {
+    const fname = a.getName() || ('첨부_' + (n + 1));
+    if (hasFile_(folder, fname)) return;
+    folder.createFile(a.copyBlob().setName(fname));
+    n++;
+  });
+  const html = m.getBody();
+  const links = [];
+  const re = /href="(https:\/\/(?:bigfile\.mail\.naver\.com\/download\?fid=|attach\.mail\.daum\.net\/bigfile\/)[^"]+)"[^>]*?(?:title="([^"]+?)\s*")?/g;
+  let mm;
+  while ((mm = re.exec(html))) {
+    const url = mm[1].replace(/&amp;/g, '&');
+    if (links.some(function (l) { return l.url === url; })) continue;
+    links.push({ url: url, title: (mm[2] || '').replace(/&amp;/g, '&').replace(/\s*다운로드$/, '').trim() });
+  }
+  const failed = [];
+  links.forEach(function (l) {
+    if (l.title && hasFile_(folder, l.title)) return;
+    try {
+      const res = UrlFetchApp.fetch(l.url, { muteHttpExceptions: true, followRedirects: true });
+      const blob = res.getBlob();
+      if (res.getResponseCode() !== 200 || blob.getBytes().length > FOLDER_CONFIG.MAX_DOWNLOAD_MB * 1024 * 1024) throw new Error('size');
+      const cd = String((res.getAllHeaders() || {})['Content-Disposition'] || '');
+      const fromHeader = decodeURIComponent(((cd.match(/filename\*=UTF-8''([^;]+)/i) || [])[1]) || '') ||
+        ((cd.match(/filename="?([^";]+)"?/i) || [])[1] || '');
+      const fname = l.title || fromHeader || ('대용량첨부_' + (n + 1));
+      if (hasFile_(folder, fname)) return;
+      folder.createFile(blob.setName(fname));
+      n++;
+    } catch (e) {
+      failed.push((l.title || '대용량 첨부') + '\n' + l.url);
+    }
+  });
+  if (failed.length) {
+    const doc = '대용량첨부_다운로드링크_' + name + '.txt';
+    if (!hasFile_(folder, doc)) {
+      folder.createFile(doc, '자동으로 받지 못한 대용량 첨부예요. 링크로 받아 이 폴더에 올려 주세요.\n\n' + failed.join('\n\n'), MimeType.PLAIN_TEXT);
+    }
+  }
+  return n + '개 저장' + (failed.length ? ', 링크 ' + failed.length + '개' : '');
 }
