@@ -393,6 +393,8 @@ function hasFile_(folder, name) {
 function saveMailFiles_(folder, m, name) {
   let n = 0;
   m.getAttachments({ includeInlineImages: true, includeAttachments: true }).forEach(function (a) {
+    // 이름 없는 HTML 조각(메일 본문 사본)은 지원 자료가 아니라서 건너뛰어요
+    if (!a.getName() && /html|plain/.test(a.getContentType() || '')) return;
     const fname = a.getName() || ('첨부_' + (n + 1));
     if (hasFile_(folder, fname)) return;
     folder.createFile(a.copyBlob().setName(fname));
