@@ -32,11 +32,35 @@ const STATUS_HEADER = ['key', '이름', '구분', '지원 항목', '상태', '�
 function doGet(e) {
   const key = String((e && e.parameter && e.parameter.key) || '');
   const canEdit = !!key && key === editKey_();
+  // Claude 대시보드의 '저장' 버튼이 여는 주소: …/exec?key=…&save=1&id=…&status=…
+  if (canEdit && e.parameter.save === '1') return saveFromLink_(key, e.parameter);
   const t = HtmlService.createTemplateFromFile('Board');
   t.boot = { canEdit: canEdit, key: canEdit ? key : '' };
   return t.evaluate()
     .setTitle('모델 섭외 현황')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function saveFromLink_(key, p) {
+  let ok = true, msg = '';
+  try {
+    saveStatus(key, p.id, {
+      name: p.name, source: p.source, type: p.type, status: p.status,
+      date: p.date, time: p.time, memo: p.memo,
+    });
+  } catch (err) { ok = false; msg = err.message; }
+  const esc = function (s) { return String(s || '').replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
+  const when = [p.date, p.time].filter(String).join(' ');
+  const html = '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<div style="font-family:Pretendard,system-ui,sans-serif;max-width:420px;margin:60px auto;padding:24px;border-radius:14px;' +
+    'border:1px solid #e3ddd8;text-align:center;color:#2b2724">' +
+    (ok
+      ? '<div style="font-size:40px">✓</div><h2 style="margin:8px 0">현황판에 저장했어요</h2>' +
+        '<p style="color:#6b625c">' + esc(p.name) + ' · ' + esc(p.status) + (when ? ' · ' + esc(when) : '') + '</p>' +
+        '<p style="color:#6b625c;font-size:14px">이 창은 닫아도 돼요. Claude 대시보드에는 1~2분 안에 반영돼요.</p>'
+      : '<h2 style="margin:8px 0;color:#b83a55">저장하지 못했어요</h2><p>' + esc(msg) + '</p>') +
+    '</div>';
+  return HtmlService.createHtmlOutput(html).setTitle(ok ? '저장 완료' : '저장 실패');
 }
 
 function editKey_() {
