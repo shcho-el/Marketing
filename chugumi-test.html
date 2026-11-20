@@ -117,6 +117,55 @@ p{margin:0}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--fg);color:#fff;
   padding:10px 18px;border-radius:99px;font-size:.86rem;opacity:0;pointer-events:none;transition:.25s}
 .toast.on{opacity:1;transform:translateX(-50%)}
+[hidden]{display:none!important}
+/* ---------- 상담 신청 폼 ---------- */
+.lead{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:24px 20px;display:grid;gap:12px;scroll-margin-top:16px}
+.lead h3{font-size:1.2rem}
+.lead .lsub{font-size:.88rem;color:var(--muted);margin-top:-4px}
+.lead input[type=text],.lead input[type=tel],.lead select{width:100%;min-height:54px;border:1px solid var(--line);border-radius:12px;background:#f7f5f4;
+  padding:0 16px;font:inherit;font-size:1rem;color:var(--fg);-webkit-appearance:none;appearance:none}
+.lead select{color:var(--muted);background-image:linear-gradient(45deg,transparent 50%,#9a8d92 50%),linear-gradient(135deg,#9a8d92 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.lead select.filled{color:var(--fg)}
+.lead input:focus,.lead select:focus{outline:2px solid var(--t);outline-offset:1px;background:#fff}
+.lead input.bad{border-color:#c0392b;background:#fff6f5}
+.err{font-size:.84rem;color:#c0392b;margin-top:-2px}
+.agree{display:grid;gap:10px;margin-top:4px}
+.ck{display:flex;align-items:flex-start;gap:10px;font-size:.88rem;line-height:1.45}
+.ck label{display:flex;gap:10px;align-items:flex-start;cursor:pointer;flex:1;min-width:0}
+.ck input{flex:none;width:20px;height:20px;margin:0;accent-color:var(--t);cursor:pointer}
+.ck em{font-style:normal;color:var(--t);font-weight:700}
+.ck.all{padding-bottom:10px;border-bottom:1px solid var(--line);font-weight:700;font-size:.95rem}
+.ck .view{flex:none;border:0;background:none;padding:0;font-size:.82rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.under14{font-size:.76rem;color:var(--muted)}
+.place{display:block;text-align:center;font-size:.86rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px;margin-top:2px}
+/* 카카오톡 상담 뱃지 */
+.kakao{position:fixed;z-index:15;right:max(16px,calc((100vw - 480px)/2 + 16px));bottom:calc(96px + env(safe-area-inset-bottom,0px));
+  display:flex;align-items:center;gap:7px;padding:10px 15px 10px 12px;border-radius:99px;background:#fee500;color:#191600;
+  font-weight:700;font-size:.86rem;text-decoration:none;box-shadow:0 6px 18px rgba(60,50,0,.22);transition:transform .15s}
+.kakao:active{transform:scale(.96)}
+.kakao svg{width:20px;height:20px;flex:none}
+/* 동의서 시트 */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(30,20,25,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:#fff;width:100%;max-width:480px;max-height:86svh;border-radius:22px 22px 0 0;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom)}
+.sheet .phead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.sheet .phead h3{font-family:var(--f-body);font-size:1rem}
+.sheet .x{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:1.1rem;line-height:1}
+.sheet .pbody{overflow-y:auto;padding:16px 20px 24px;font-size:.88rem;line-height:1.7;display:grid;gap:12px}
+.sheet dl{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sheet dt{background:#f7f5f4;padding:8px 14px;font-weight:700;font-size:.8rem;color:var(--muted)}
+.sheet dd{margin:0;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sheet dd:last-child{border-bottom:0}
+.sheet .note{color:var(--muted);font-size:.82rem}
+.sheet a{color:var(--t)}
+/* 완료 화면 */
+.done{flex:1;display:grid;align-content:center;justify-items:center;gap:14px;text-align:center;padding-block:40px}
+.done .chk{width:64px;height:64px;border-radius:50%;background:var(--t-soft);color:var(--t);display:grid;place-items:center;font-size:1.8rem}
+.done h2{font-size:1.5rem}
+.done p{color:var(--muted)}
+.done .stack{width:100%;margin-top:14px}
+.preview{font-size:.78rem;background:#fff4e0;color:#8a5a00;border-radius:8px;padding:8px 12px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -178,6 +227,25 @@ p{margin:0}
       </div>
     </article>
 
+    <form class="lead" id="lead" novalidate>
+      <h3>내 추구미 맞춤 상담 신청</h3>
+      <p class="lsub">남겨주신 연락처로 상담 담당자가 연락드려요.</p>
+      <input type="text" id="f-name" name="name" placeholder="이름" autocomplete="name" maxlength="20" aria-label="이름">
+      <input type="tel" id="f-phone" name="phone" placeholder="연락처 ('-' 없이 입력)" inputmode="numeric" autocomplete="tel" maxlength="11" aria-label="연락처">
+      <select id="f-time" name="time" aria-label="상담 희망 시간대">
+        <option value="">상담 희망 시간대 (선택)</option>
+        <option>오전 (10~12시)</option><option>점심 (12~14시)</option><option>오후 (14~18시)</option><option>저녁 (18시 이후)</option><option>언제든 가능</option>
+      </select>
+      <p class="err" id="f-err" role="alert" hidden></p>
+      <div class="agree">
+        <div class="ck all"><label><input type="checkbox" id="c-all"><span>전체 동의</span></label></div>
+        <div class="ck"><label><input type="checkbox" id="c-collect" data-req><span><em>[필수]</em> 개인정보 수집 및 이용에 동의합니다.</span></label><button type="button" class="view" data-doc="collect">보기</button></div>
+        <div class="ck"><label><input type="checkbox" id="c-third" data-req><span><em>[필수]</em> 개인정보 제3자 제공에 동의합니다.</span></label><button type="button" class="view" data-doc="third">보기</button></div>
+        <div class="ck"><label><input type="checkbox" id="c-ad"><span>[선택] 광고성 정보 수신에 동의합니다.</span></label><button type="button" class="view" data-doc="ad">보기</button></div>
+      </div>
+      <p class="under14">상담 신청은 만 14세 이상만 가능합니다.</p>
+    </form>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
       <button class="btn ghost" id="share">결과 공유하기</button>
       <button class="btn ghost" id="retry">다시 하기</button>
@@ -185,7 +253,8 @@ p{margin:0}
 
     <div class="others"><h3>다른 유형도 궁금하다면</h3><div class="olist" id="olist"></div></div>
 
-    <div class="cta"><a class="btn accent" id="reserve" target="_blank" rel="noopener">내 추구미 맞춤 상담 예약하기</a></div>
+    <div class="cta"><button type="submit" form="lead" class="btn accent" id="submit">내 추구미 맞춤 상담 예약하기</button></div>
+    <a class="place" id="place" target="_blank" rel="noopener">네이버 플레이스에서 병원 정보 보기</a>
 
     <p class="disclaimer">
       ※ 본 테스트는 관심사 기반의 재미용 콘텐츠로, 의학적 진단이 아닙니다.<br>
@@ -193,15 +262,44 @@ p{margin:0}
       ※ 모든 시술은 개인에 따라 붓기, 멍, 통증, 염증 등 부작용이 발생할 수 있으며 효과에는 개인차가 있습니다.
     </p>
   </section>
+
+  <!-- 6. 신청 완료 -->
+  <section class="screen" id="s-done">
+    <div class="done">
+      <div class="chk" aria-hidden="true">✓</div>
+      <h2>상담 신청이 접수됐어요</h2>
+      <p id="done-msg">입력하신 연락처로 곧 연락드릴게요.</p>
+      <p class="preview" id="done-preview" hidden>미리보기 화면이라 실제로 전송되지는 않았어요.</p>
+      <div class="stack">
+        <a class="btn accent" id="done-place" target="_blank" rel="noopener">네이버 플레이스에서 병원 정보 보기</a>
+        <button class="btn ghost" id="done-back">내 결과 다시 보기</button>
+      </div>
+    </div>
+  </section>
 </div>
 <div class="toast" id="toast"></div>
+<a class="kakao" id="kakao" target="_blank" rel="noopener" aria-label="카카오톡으로 상담하기">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#191600" d="M12 3.5c-5 0-9 3.1-9 7 0 2.5 1.7 4.7 4.2 5.9l-.9 3.4c-.1.3.3.6.6.4l4-2.6c.4 0 .7.1 1.1.1 5 0 9-3.1 9-7s-4-7.2-9-7.2z"/></svg>
+  <span>카카오톡 상담</span>
+</a>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="panel">
+    <div class="phead"><h3 id="sheet-title"></h3><button type="button" class="x" id="sheet-x" aria-label="닫기">✕</button></div>
+    <div class="pbody" id="sheet-body"></div>
+  </div>
+</div>
 
 <script>
 /* =========================================================
    설정 — 병원 정보와 예약 링크만 바꿔서 쓰세요
    ========================================================= */
 const CONFIG = {
-  reserveUrl: "https://map.naver.com/p/entry/place/1120924408"   // 상담 예약 링크 (네이버 플레이스)
+  kakaoUrl: "https://pf.kakao.com/_xaxnUjxb/chat",               // 카카오톡 상담 (플로팅 뱃지)
+  placeUrl: "https://map.naver.com/p/entry/place/1120924408",  // 네이버 플레이스 (완료 화면·하단 링크)
+  submitUrl: "",        // 상담 신청 DB 주소: 구글 Apps Script 웹앱 URL (lead-collector.gs 참고). 비어 있으면 미리보기 모드
+  privacyUrl: "https://privacy.nfavo.com/4g28rq09vii5xrfv7rf4/",  // 개인정보 처리방침
+  consentVersion: "2026-11-20"  // 동의서 문구를 바꾸면 날짜도 바꿔주세요 (동의 기록용)
 };
 
 /* ---------- 유형 데이터 ---------- */
@@ -286,15 +384,20 @@ window.addEventListener("load",fitLogo);
 
 /* ---------- 상태 & 유틸 ---------- */
 const $ = s => document.querySelector(s);
-let gender = null, step = 0, answers = [];
+let gender = null, step = 0, answers = [], currentKey = null, sending = false;
 
 function track(ev, params={}){                 // GA4 / 메타 픽셀이 있으면 자동 전송
   try{ window.gtag && gtag("event", ev, params); }catch(e){}
   try{ window.fbq && fbq("trackCustom", ev, params); }catch(e){}
 }
+function trackLead(params){                    // 광고 전환용 표준 이벤트
+  try{ window.gtag && gtag("event","generate_lead",params); }catch(e){}
+  try{ window.fbq && fbq("track","Lead",params); }catch(e){}
+}
 function show(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id==="s-"+id));
   window.scrollTo({top:0});
+  $("#kakao").hidden = ["quiz","loading","gender"].includes(id);
   fitLogo();
 }
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),1800); }
@@ -349,8 +452,7 @@ function renderResult(key, push){
   $("#rtags").innerHTML = t.tags.map(x=>`<span>${x}</span>`).join("");
   $("#rfeat").innerHTML = t.feats.map((x,i)=>`<li><b>${i+1}</b><span>${x}</span></li>`).join("");
   $("#rtreat").innerHTML = t.treats.map(([n,d])=>`<div><strong>${n}</strong><span>${d}</span></div>`).join("");
-  $("#reserve").href = CONFIG.reserveUrl;
-  $("#reserve").onclick = ()=>track("reserve_click",{result:key});
+  currentKey = key;
   $("#olist").innerHTML = "";
   Object.entries(TYPES).filter(([k,v])=>v.g===t.g && k!==key).forEach(([k,v])=>{
     const b=document.createElement("button"); b.textContent=v.name; b.onclick=()=>renderResult(k,true);
@@ -369,6 +471,108 @@ $("#share").onclick = async ()=>{
   try{ await navigator.clipboard.writeText(data.text+"\n"+data.url); toast("링크가 복사됐어요"); }
   catch(e){ toast("주소창의 링크를 복사해 공유해 주세요"); }
 };
+
+/* =========================================================
+   상담 신청 폼
+   ========================================================= */
+const DOCS = {
+  collect: { title:"개인정보 수집·이용 동의 (필수)", html:`
+    <p>본 상담 신청으로 입력하신 정보는 본 상담 신청 페이지를 운영하는 회사(이하 "회사")가 수집·이용하며, 상담 결과에 따라 제휴 의료기관에 제3자 제공될 수 있습니다.</p>
+    <dl><dt>수집·이용 목적</dt><dd>상담 신청 접수, 전화·문자·카카오톡을 통한 시술 상담 및 제휴 의료기관 진료 예약 안내, 상담 이력 관리</dd>
+    <dt>수집 항목</dt><dd>(필수) 성명, 휴대전화번호<br>(선택) 상담 희망 시간대</dd>
+    <dt>보유·이용 기간</dt><dd>수집일부터 1년<br>(목적 달성 또는 동의 철회 시 지체 없이 파기)</dd></dl>
+    <p class="note">동의를 거부할 수 있습니다. 다만 필수 항목에 동의하지 않으면 상담 신청이 접수되지 않습니다. 선택 항목은 입력하지 않아도 신청할 수 있습니다.</p>` },
+  third: { title:"개인정보 제3자 제공 동의 (필수)", html:`
+    <dl><dt>제공받는 자</dt><dd>상담하신 시술을 진료하는 제휴 의료기관</dd>
+    <dt>이용 목적</dt><dd>진료 예약·접수 및 진료 상담</dd>
+    <dt>제공 항목</dt><dd>성명, 휴대전화번호, 상담 희망 시간대</dd>
+    <dt>보유·이용 기간</dt><dd>제공일부터 1년<br>(내원하여 진료가 이루어진 경우 진료 정보는 「의료법」에 따른 기간)</dd></dl>
+    <p class="note">동의를 거부할 수 있으나, 거부 시 제휴 의료기관으로의 예약·상담 연결이 되지 않습니다.</p>` },
+  ad: { title:"광고성 정보 수신 동의 (선택)", html:`
+    <p>회사의 이벤트·시술 안내 등 광고성 정보를 문자·카카오톡·전화·이메일로 받는 데 동의할 수 있습니다.</p>
+    <p class="note">동의하지 않아도 상담 신청과 안내는 정상 제공되며, 수신한 메시지의 수신거부 안내로 언제든지 철회할 수 있습니다.</p>` }
+};
+const DOC_FOOT = () => `
+    <p class="note"><b>만 14세 미만 아동</b><br>상담 신청은 만 14세 이상만 가능합니다. 만 14세 미만은 보호자가 직접 문의해 주세요.</p>
+    <p class="note">자세한 내용은 회사의 <a href="${CONFIG.privacyUrl}" target="_blank" rel="noopener">개인정보 처리방침</a>에서 확인하실 수 있습니다.</p>`;
+
+let lastFocus = null;
+function openDoc(k){
+  lastFocus = document.activeElement;
+  $("#sheet-title").textContent = DOCS[k].title;
+  $("#sheet-body").innerHTML = DOCS[k].html + DOC_FOOT();
+  $("#sheet").hidden = false; $("#sheet-x").focus();
+}
+function closeDoc(){ $("#sheet").hidden = true; lastFocus && lastFocus.focus(); }
+document.querySelectorAll("[data-doc]").forEach(b=>b.onclick=()=>openDoc(b.dataset.doc));
+$("#sheet-x").onclick = closeDoc;
+$("#sheet").onclick = e=>{ if(e.target.id==="sheet") closeDoc(); };
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("#sheet").hidden) closeDoc(); });
+
+const boxes = ["#c-collect","#c-third","#c-ad"].map(s=>$(s));
+$("#c-all").onchange = e=>{ boxes.forEach(b=>b.checked=e.target.checked); clearErr(); };
+boxes.forEach(b=>b.onchange=()=>{ $("#c-all").checked = boxes.every(x=>x.checked); clearErr(); });
+$("#f-phone").oninput = e=>{ e.target.value = e.target.value.replace(/\D/g,"").slice(0,11); e.target.classList.remove("bad"); clearErr(); };
+$("#f-name").oninput = e=>{ e.target.classList.remove("bad"); clearErr(); };
+$("#f-time").onchange = e=>e.target.classList.toggle("filled", !!e.target.value);
+$("#place").href = $("#done-place").href = CONFIG.placeUrl;
+$("#kakao").href = CONFIG.kakaoUrl;
+$("#kakao").addEventListener("click", ()=>track("kakao_click",{result: currentKey||""}));
+
+function clearErr(){ $("#f-err").hidden = true; }
+function fail(msg, el){
+  $("#f-err").textContent = msg; $("#f-err").hidden = false;
+  if(el){ el.classList.add("bad"); }
+  $("#lead").scrollIntoView({behavior:"smooth", block:"start"});
+  if(el && el.focus) setTimeout(()=>el.focus({preventScroll:true}), 350);
+}
+function utm(){
+  const q = new URLSearchParams(location.search), o = {};
+  ["utm_source","utm_medium","utm_campaign","utm_content","utm_term"].forEach(k=>o[k]=q.get(k)||"");
+  return o;
+}
+async function send(payload){
+  if(!CONFIG.submitUrl){ await new Promise(r=>setTimeout(r,500)); return "preview"; }
+  const r = await fetch(CONFIG.submitUrl, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
+  if(!r.ok) throw new Error("http " + r.status);
+  const j = await r.json().catch(()=>({ok:true}));
+  if(j.ok === false) throw new Error(j.error || "rejected");
+  return "ok";
+}
+
+$("#lead").onsubmit = async e=>{
+  e.preventDefault();
+  if(sending) return;
+  const name = $("#f-name").value.trim(), phone = $("#f-phone").value;
+  if(!name) return fail("이름을 입력해 주세요.", $("#f-name"));
+  if(!/^01[016789]\d{7,8}$/.test(phone)) return fail("연락처를 '-' 없이 숫자로 정확히 입력해 주세요. (예: 01012345678)", $("#f-phone"));
+  if(!$("#c-collect").checked || !$("#c-third").checked) return fail("필수 동의 항목에 체크해 주세요.", !$("#c-collect").checked ? $("#c-collect") : $("#c-third"));
+
+  const t = TYPES[currentKey] || {};
+  const payload = Object.assign({
+    name, phone, time: $("#f-time").value,
+    resultKey: currentKey || "", resultName: t.name || "", gender: t.g==="m" ? "남" : t.g==="f" ? "여" : "",
+    answers: answers.join(","),
+    consentCollect: true, consentThird: true, consentAd: $("#c-ad").checked, consentVersion: CONFIG.consentVersion,
+    clientTime: new Date().toISOString(), referrer: document.referrer, page: location.href.split("#")[0], userAgent: navigator.userAgent
+  }, utm());
+
+  sending = true; const btn = $("#submit"); const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "신청 접수 중…";
+  try{
+    const mode = await send(payload);
+    trackLead({result: currentKey});
+    $("#done-preview").hidden = mode !== "preview";
+    $("#done-msg").textContent = `${name}님, 입력하신 연락처로 곧 연락드릴게요.`;
+    $("#lead").reset(); $("#f-time").classList.remove("filled");
+    show("done");
+  }catch(err){
+    fail("신청이 전송되지 않았어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+  }finally{
+    sending = false; btn.disabled = false; btn.textContent = label;
+  }
+};
+$("#done-back").onclick = ()=> currentKey ? renderResult(currentKey,false) : show("intro");
 
 /* 공유 링크(#유형)로 들어오면 결과 바로 노출 */
 const r0 = location.hash.slice(1);
