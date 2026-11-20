@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나의 추구미 테스트</title>
+<meta name="description" content="1분이면 끝! 내가 닮고 싶은 얼굴, 추구미 유형과 나에게 맞는 관리 시술을 찾아보세요.">
+<meta property="og:title" content="나의 추구미 테스트">
+<meta property="og:description" content="1분이면 끝! 나의 추구미 유형과 맞춤 관리법을 확인해 보세요.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+:root{
+  --bg:#faf6f3; --surface:#ffffff; --fg:#231c1f; --muted:#7a6d72; --line:#ece3df;
+  --accent:#8c3b5a; --accent-soft:#f6e8ed; --accent-fg:#ffffff;
+  --t:#8c3b5a; --t-soft:#f6e8ed;           /* 결과 유형별 색: JS가 덮어씀 */
+  --f-display:"Gowun Batang",Georgia,serif;
+  --f-body:"Noto Sans KR",-apple-system,system-ui,sans-serif;
+  --radius:18px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.65 var(--f-body);
+  -webkit-font-smoothing:antialiased;word-break:keep-all}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:480px;margin:0 auto;min-height:100svh;display:flex;flex-direction:column;
+  padding:0 max(20px,env(safe-area-inset-left)) 0 max(20px,env(safe-area-inset-right))}
+.screen{display:none;flex:1;flex-direction:column;padding-block:28px 40px;animation:in .45s ease both}
+.screen.on{display:flex}
+@keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.brand{font-size:.78rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;font-weight:500}
+h1,h2,h3{margin:0;font-family:var(--f-display);font-weight:700;line-height:1.3;text-wrap:balance}
+p{margin:0}
+
+/* ---------- 인트로 ---------- */
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;text-align:center;padding-block:24px}
+.orbs{position:relative;height:190px;margin-bottom:6px}
+.orb{position:absolute;border-radius:50%;filter:blur(.3px)}
+.orb.a{width:150px;height:150px;left:calc(50% - 120px);top:20px;background:radial-gradient(circle at 35% 30%,#fbe3ea,#d995ab 70%)}
+.orb.b{width:118px;height:118px;left:calc(50% + 0px);top:0;background:radial-gradient(circle at 35% 30%,#fff3e6,#e7b98f 70%);mix-blend-mode:multiply}
+.orb.c{width:96px;height:96px;left:calc(50% - 10px);top:96px;background:radial-gradient(circle at 35% 30%,#e9f0f7,#9fb3cc 70%);mix-blend-mode:multiply}
+.orbs span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--f-display);
+  font-size:1.05rem;color:#fff;letter-spacing:.06em;text-shadow:0 1px 8px rgba(80,30,50,.35)}
+.hero h1{font-size:2.1rem}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .sub{color:var(--muted);font-size:.98rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{font-size:.78rem;padding:4px 11px;border-radius:99px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border:0;border-radius:14px;
+  background:var(--fg);color:#fff;font-weight:700;font-size:1.02rem;text-decoration:none;transition:transform .15s,opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn.accent{background:var(--t)}
+.btn.ghost{background:var(--surface);color:var(--fg);border:1px solid var(--line);font-weight:500}
+.stack{display:grid;gap:10px}
+.fine{font-size:.76rem;color:var(--muted);text-align:center}
+
+/* ---------- 성별 선택 ---------- */
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pick button{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--radius);padding:26px 12px 22px;
+  display:grid;gap:6px;justify-items:center;transition:border-color .15s,transform .15s}
+.pick button:active{transform:scale(.98)}
+.pick button:hover{border-color:var(--accent)}
+.pick .ico{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem}
+.pick b{font-size:1.05rem}
+.pick small{color:var(--muted);font-size:.78rem;line-height:1.4}
+
+/* ---------- 질문 ---------- */
+.top{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.back{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width .35s ease}
+.count{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.qnum{font-family:var(--f-display);color:var(--accent);font-size:1rem;margin-bottom:6px}
+.qtext{font-size:1.45rem;margin-bottom:26px}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;
+  font-size:.98rem;line-height:1.5;transition:border-color .15s,background .15s}
+.opt:hover{border-color:#d7bcc6}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+
+/* ---------- 로딩 ---------- */
+.loading{flex:1;display:grid;place-content:center;justify-items:center;gap:18px;text-align:center}
+.spin{width:56px;height:56px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- 결과 ---------- */
+.rcard{background:var(--surface);border-radius:24px;overflow:hidden;border:1px solid var(--line);margin-top:8px}
+.rhead{background:linear-gradient(160deg,var(--t-soft),#fff 85%);padding:30px 22px 24px;text-align:center;display:grid;gap:10px}
+.rlabel{font-size:.8rem;color:var(--muted);letter-spacing:.04em}
+.rname{font-size:2rem;color:var(--t)}
+.rquote{font-family:var(--f-display);font-size:1.02rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px}
+.tags span{font-size:.82rem;font-weight:700;color:var(--t);background:#fff;border:1px solid var(--t-soft);padding:4px 12px;border-radius:99px}
+.rbody{padding:6px 22px 24px;display:grid;gap:22px}
+.rsec h3{font-family:var(--f-body);font-size:.86rem;font-weight:700;color:var(--muted);letter-spacing:.02em;margin:18px 0 10px;
+  display:flex;align-items:center;gap:8px}
+.rsec h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.feat{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.feat li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+.feat li b{width:26px;height:26px;border-radius:50%;background:var(--t-soft);color:var(--t);display:grid;place-items:center;font-size:.8rem;margin-top:1px}
+.treat{display:grid;gap:10px}
+.treat div{border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:3px}
+.treat strong{font-size:1rem}
+.treat span{font-size:.86rem;color:var(--muted)}
+.cta{position:sticky;bottom:0;z-index:2;padding:12px 0 calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--bg) 75%,transparent);margin-top:8px}
+.others{margin-top:28px}
+.others h3{font-family:var(--f-body);font-size:.9rem;margin-bottom:10px}
+.olist{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.olist button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;font-size:.86rem}
+.disclaimer{margin-top:26px;font-size:.74rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--fg);color:#fff;
+  padding:10px 18px;border-radius:99px;font-size:.86rem;opacity:0;pointer-events:none;transition:.25s}
+.toast.on{opacity:1;transform:translateX(-50%)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. 인트로 -->
+  <section class="screen on" id="s-intro">
+    <p class="brand" data-clinic></p>
+    <div class="hero">
+      <div class="orbs" aria-hidden="true"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div><span>추구미</span></div>
+      <h1>요즘 내 <em>추구미</em>,<br>어떤 얼굴일까?</h1>
+      <p class="sub">6개 질문으로 알아보는 나의 추구미 유형<br>그리고 그 얼굴에 가까워지는 관리법까지</p>
+      <div class="chips"><span class="chip">#1분컷</span><span class="chip">#여자3유형</span><span class="chip">#남자4유형</span><span class="chip">#맞춤시술매칭</span></div>
+    </div>
+    <div class="stack">
+      <button class="btn" data-go="gender">테스트 시작하기</button>
+      <p class="fine">6문항 · 약 1분 소요 · 결과 공유 가능</p>
+    </div>
+  </section>
+
+  <!-- 2. 성별 -->
+  <section class="screen" id="s-gender">
+    <div class="top"><button class="back" data-go="intro" aria-label="뒤로">‹</button><div class="bar"><i style="width:4%"></i></div></div>
+    <p class="qnum">START</p>
+    <h2 class="qtext">어떤 추구미를 찾아볼까요?</h2>
+    <div class="pick">
+      <button data-gender="f"><span class="ico" style="background:#f6e8ed">🌷</span><b>여자 추구미</b><small>어른 여자 · 인형 비율<br>꾸안꾸 클린걸</small></button>
+      <button data-gender="m"><span class="ico" style="background:#e8eef5">🧊</span><b>남자 추구미</b><small>테토남 · 에겐남<br>슈트핏 · 남친짤</small></button>
+    </div>
+  </section>
+
+  <!-- 3. 질문 -->
+  <section class="screen" id="s-quiz">
+    <div class="top"><button class="back" id="qback" aria-label="이전 질문">‹</button><div class="bar"><i id="qbar"></i></div><span class="count" id="qcount"></span></div>
+    <p class="qnum" id="qnum"></p>
+    <h2 class="qtext" id="qtext"></h2>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <!-- 4. 로딩 -->
+  <section class="screen" id="s-loading">
+    <div class="loading"><div class="spin"></div><h2 style="font-size:1.3rem">추구미 분석 중…</h2><p class="fine" id="loadmsg">답변을 바탕으로 얼굴 무드를 매칭하고 있어요</p></div>
+  </section>
+
+  <!-- 5. 결과 -->
+  <section class="screen" id="s-result">
+    <p class="brand" data-clinic></p>
+    <article class="rcard">
+      <header class="rhead">
+        <p class="rlabel">당신의 추구미는</p>
+        <h2 class="rname" id="rname"></h2>
+        <p class="rquote" id="rquote"></p>
+        <div class="tags" id="rtags"></div>
+      </header>
+      <div class="rbody">
+        <div class="rsec"><h3>추구미 키워드 &amp; 얼굴 특징</h3><ul class="feat" id="rfeat"></ul></div>
+        <div class="rsec"><h3>이 얼굴에 가까워지는 추천 관리</h3><div class="treat" id="rtreat"></div></div>
+      </div>
+    </article>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <button class="btn ghost" id="share">결과 공유하기</button>
+      <button class="btn ghost" id="retry">다시 하기</button>
+    </div>
+
+    <div class="others"><h3>다른 유형도 궁금하다면</h3><div class="olist" id="olist"></div></div>
+
+    <div class="cta"><a class="btn accent" id="reserve" target="_blank" rel="noopener">내 추구미 맞춤 상담 예약하기</a></div>
+
+    <p class="disclaimer">
+      ※ 본 테스트는 관심사 기반의 재미용 콘텐츠로, 의학적 진단이 아닙니다.<br>
+      ※ 실제 시술 여부와 방법은 의료진 상담·진료 후 개인의 피부 및 얼굴 상태에 따라 결정됩니다.<br>
+      ※ 모든 시술은 개인에 따라 붓기, 멍, 통증, 염증 등 부작용이 발생할 수 있으며 효과에는 개인차가 있습니다.
+    </p>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   설정 — 병원 정보와 예약 링크만 바꿔서 쓰세요
+   ========================================================= */
+const CONFIG = {
+  clinicName: "OBLIVE CLINIC",                 // 상단 브랜드 표기
+  reserveUrl: "https://booking.naver.com/"     // 상담 예약 링크 (네이버 예약 / 카톡 채널 등)
+};
+
+/* ---------- 유형 데이터 ---------- */
+const TYPES = {
+  // 여자
+  grown: { g:"f", name:"어른 여자형", color:"#8c3b5a", soft:"#f6e8ed",
+    quote:"꾸미지 않아도 분위기로 기억되는 얼굴",
+    tags:["#고급진분위기","#우아한얼굴선"],
+    feats:["결이 살아있는 자연스러운 눈썹","잡티·요철 없이 매끈하게 정돈된 피부결","군더더기 없이 떨어지는 날렵한 브이라인 턱선"],
+    treats:[["롱래스팅 눈썹","오래 유지되는 자연결 눈썹으로 데일리 메이크업 시간 단축"],["스킨부스터","속건조와 잔결을 채워 매끈하고 윤기 있는 피부결"],["리프팅","처진 하관과 턱선을 정리해 또렷한 브이라인"]] },
+  doll:  { g:"f", name:"인형 비율형", color:"#c0476e", soft:"#fde6ee",
+    quote:"어느 각도에서 찍어도 완성되는 비율",
+    tags:["#작은얼굴비율","#입체립포인트"],
+    feats:["빈틈없이 예쁜 헤어라인과 작은 얼굴 비율","도톰하고 입체감 있는 립 포인트","어느 각도에서도 굴곡 없는 입체 윤곽"],
+    treats:[["입술 필러 · 입꼬리 보톡스","볼륨은 살리고 입꼬리는 올려 사랑스러운 립 라인"],["중안부 콜라겐 부스터","꺼진 앞광대·중안부를 채워 동안 입체감"]] },
+  clean: { g:"f", name:"꾸안꾸 클린걸형", color:"#4f7a6a", soft:"#e4f0ea",
+    quote:"시술 티 없이, 원래 피부 좋은 사람처럼",
+    tags:["#원래피부좋은척","#클린무드"],
+    feats:["시술 티 없이 원래 좋은 듯한 모공·피부결","한 올씩 결이 살아있는 내추럴 눈썹","깔끔하게 정돈된 페이스 라인"],
+    treats:[["모공·피부결 레이저 + 스킨보톡스","모공과 잔주름, 피지 분비를 함께 정돈"],["데일리 진정·재생 관리","자극받은 피부를 꾸준히 진정시키는 베이스 케어"]] },
+  // 남자
+  teto:  { g:"m", name:"기본관리형 테토남", color:"#2f4a6b", soft:"#e5ecf4",
+    quote:"관리한 티는 없는데, 이상하게 깔끔한 남자",
+    tags:["#관리티ZERO","#깔끔남성미"],
+    feats:["지저분한 잔털 없이 숱이 살아있는 남성적인 눈썹","푸르스름한 수염 자국 없는 깔끔한 하관","번들거림·블랙헤드 없이 담백한 피부결"],
+    treats:[["남자 자연결 눈썹 반영구","숱과 결은 살리고 잔털만 정리한 남성 눈썹"],["남자 수염 레이저 제모","면도 후에도 남는 푸른 수염 자국 정리"],["피지·블랙헤드 모공 스케일링","번들거림과 블랙헤드를 덜어낸 담백한 피부"]] },
+  egen:  { g:"m", name:"꼼꼼관리형 에겐남", color:"#7d5a8c", soft:"#efe7f3",
+    quote:"맑은 피부결로 완성하는 부드러운 호감상",
+    tags:["#맑은피부결","#부드러운호감상"],
+    feats:["모공·요철 없이 맑고 촉촉하게 빛나는 결광 피부","인상이 순해 보이는 부드러운 일자·세미아치 눈썹","칙칙함 없이 혈색이 감도는 자연스러운 입술"],
+    treats:[["물광·보습 스킨부스터","속부터 채우는 수분감으로 맑은 결광 피부"],["남자 생기 입술 틴트 반영구","티 나지 않게 혈색만 더한 자연스러운 입술"],["홍조·모공 진정 레이저","붉은기와 모공을 정돈해 깨끗한 피부톤"]] },
+  suit:  { g:"m", name:"날렵 슈트핏형", color:"#3a3f47", soft:"#e9eaec",
+    quote:"첫 만남 3초, 신뢰감을 주는 인상",
+    tags:["#베일듯한턱선","#신뢰감있는인상"],
+    feats:["이중턱·군살 없이 날렵하게 떨어지는 턱선","또렷하고 단정한 눈매와 빈틈없는 헤어라인","어떤 각도에서도 무너지지 않는 입체적인 윤곽"],
+    treats:[["이중턱·턱선 탄력 리프팅","흐려진 턱선을 끌어올려 선명한 하관 라인"],["사각턱·침샘 보톡스","발달한 근육과 침샘을 줄여 갸름한 얼굴형"],["헤어라인·눈썹 윤곽 교정","이마·눈썹 라인을 정돈해 단정한 첫인상"]] },
+  bf:    { g:"m", name:"꾸안꾸 남친짤형", color:"#b0683e", soft:"#f7ebe2",
+    quote:"필터 없이 찍어도 화보가 되는 얼굴",
+    tags:["#훈남정석","#화보무드"],
+    feats:["필터 없이 찍혀도 매끈한 도자기 피부결","눈매가 깊어 보이는 깔끔한 눈썹뼈·속눈썹 라인","이목구비 조화가 돋보이는 작은 얼굴형"],
+    treats:[["스킨보톡스 + 콜라겐 부스터","잔결과 탄력을 함께 잡아 카메라에 강한 피부"],["남자 속눈썹 펌 & 눈썹 디자인","눈매를 깊고 또렷하게 살리는 디테일 정리"],["얼굴 여백 정리 윤곽주사","불필요한 볼륨을 덜어 작아 보이는 얼굴형"]] }
+};
+
+/* ---------- 질문 (각 선택지 → 점수 받는 유형) ---------- */
+const QUIZ = {
+  f: [
+    {q:"사진 찍을 때 가장 먼저 확인하는 곳은?", o:[["또렷한 턱선, 얼굴 라인","grown"],["입술과 얼굴의 입체감","doll"],["모공, 피부결","clean"]]},
+    {q:"요즘 저장해 둔 사진들의 공통 무드는?", o:[["차분하고 고급스러운 분위기","grown"],["화사하고 사랑스러운 비주얼","doll"],["꾸민 듯 안 꾸민 듯, 깨끗한 느낌","clean"]]},
+    {q:"외출 전 메이크업에서 절대 빼먹지 않는 건?", o:[["눈썹 정리와 쉐딩","grown"],["립 포인트와 블러셔","doll"],["선크림 + 톤업이면 충분","clean"]]},
+    {q:"가장 듣고 싶은 칭찬은?", o:[["\"분위기 있다, 어른스럽다\"","grown"],["\"얼굴 진짜 작다, 인형 같다\"","doll"],["\"너 피부 원래 좋지?\"","clean"]]},
+    {q:"거울 볼 때 요즘 제일 아쉬운 부분은?", o:[["예전보다 흐려진 턱선과 처짐","grown"],["밋밋한 입술, 꺼져 보이는 앞광대","doll"],["눈에 띄는 모공과 푸석한 결","clean"]]},
+    {q:"내가 원하는 관리 스타일은?", o:[["한 번 할 때 확실하게, 오래 유지","grown"],["포인트 하나로 인상이 확 달라지게","doll"],["티 안 나게, 꾸준히 조금씩","clean"]]}
+  ],
+  m: [
+    {q:"셀카나 사진에서 제일 거슬리는 건?", o:[["수염 자국과 번들거림","teto"],["칙칙한 피부톤과 입술","egen"],["이중턱, 흐릿한 턱선","suit"],["카메라에 잡히는 피부 요철","bf"]]},
+    {q:"처음 보는 사람에게 듣고 싶은 말은?", o:[["\"깔끔하다, 남자답다\"","teto"],["\"인상 진짜 순하다\"","egen"],["\"일 잘하게 생겼다\"","suit"],["\"화보 찍어도 되겠다\"","bf"]]},
+    {q:"나의 아침 루틴은?", o:[["세안하고 면도하면 끝","teto"],["토너·크림까지 꼼꼼하게","egen"],["헤어 세팅과 옷 핏에 공들임","suit"],["피부랑 눈썹까지 디테일 체크","bf"]]},
+    {q:"갖고 싶은 눈썹은?", o:[["숱 많고 진한 남자 눈썹","teto"],["부드러운 일자 눈썹","egen"],["각 잡힌 단정한 눈썹","suit"],["눈매가 깊어 보이는 눈썹","bf"]]},
+    {q:"관리를 시작하고 싶은 이유는?", o:[["귀찮지만 기본은 하고 싶어서","teto"],["피부 좋다는 말 듣고 싶어서","egen"],["면접·미팅 첫인상이 중요해서","suit"],["사진·SNS에 잘 나오고 싶어서","bf"]]},
+    {q:"관리에 투자할 수 있는 정도는?", o:[["최소한으로, 한 번에 해결","teto"],["피부엔 꾸준히 투자 가능","egen"],["확실한 변화라면 과감하게","suit"],["디테일까지 하나씩 완성","bf"]]}
+  ]
+};
+
+/* ---------- 상태 & 유틸 ---------- */
+const $ = s => document.querySelector(s);
+let gender = null, step = 0, answers = [];
+
+function track(ev, params={}){                 // GA4 / 메타 픽셀이 있으면 자동 전송
+  try{ window.gtag && gtag("event", ev, params); }catch(e){}
+  try{ window.fbq && fbq("trackCustom", ev, params); }catch(e){}
+}
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id==="s-"+id));
+  window.scrollTo({top:0});
+}
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),1800); }
+
+document.querySelectorAll("[data-clinic]").forEach(el=>el.textContent=CONFIG.clinicName);
+
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ show(b.dataset.go); if(b.dataset.go==="gender") track("quiz_start"); });
+document.querySelectorAll("[data-gender]").forEach(b=>b.onclick=()=>{ gender=b.dataset.gender; step=0; answers=[]; renderQ(); show("quiz"); });
+
+/* ---------- 질문 렌더 ---------- */
+function renderQ(){
+  const list = QUIZ[gender], item = list[step];
+  $("#qnum").textContent = "Q" + (step+1);
+  $("#qtext").textContent = item.q;
+  $("#qcount").textContent = (step+1) + " / " + list.length;
+  $("#qbar").style.width = ((step+1)/list.length*100) + "%";
+  const box = $("#opts"); box.innerHTML = "";
+  item.o.forEach(([label,type],i)=>{
+    const b = document.createElement("button");
+    b.className = "opt" + (answers[step]===type ? " sel" : "");
+    b.textContent = label;
+    b.onclick = ()=>{
+      box.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
+      b.classList.add("sel"); answers[step]=type;
+      setTimeout(()=>{ step<list.length-1 ? (step++, renderQ()) : finish(); }, 220);
+    };
+    box.appendChild(b);
+  });
+}
+$("#qback").onclick = ()=>{ if(step===0) show("gender"); else { step--; renderQ(); } };
+
+/* ---------- 채점: 최다 득표, 동점이면 마지막 질문들(관리 성향)에 가까운 쪽 ---------- */
+function score(){
+  const cnt = {};
+  answers.forEach((t,i)=>cnt[t]=(cnt[t]||0)+1+i*0.01);
+  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+}
+function finish(){
+  show("loading");
+  const key = score();
+  track("quiz_complete",{result:key});
+  setTimeout(()=>renderResult(key,true), 1600);
+}
+
+/* ---------- 결과 렌더 ---------- */
+function renderResult(key, push){
+  const t = TYPES[key]; if(!t) return show("intro");
+  gender = t.g;
+  document.documentElement.style.setProperty("--t", t.color);
+  document.documentElement.style.setProperty("--t-soft", t.soft);
+  $("#rname").textContent = t.name;
+  $("#rquote").textContent = "“" + t.quote + "”";
+  $("#rtags").innerHTML = t.tags.map(x=>`<span>${x}</span>`).join("");
+  $("#rfeat").innerHTML = t.feats.map((x,i)=>`<li><b>${i+1}</b><span>${x}</span></li>`).join("");
+  $("#rtreat").innerHTML = t.treats.map(([n,d])=>`<div><strong>${n}</strong><span>${d}</span></div>`).join("");
+  $("#reserve").href = CONFIG.reserveUrl;
+  $("#reserve").onclick = ()=>track("reserve_click",{result:key});
+  $("#olist").innerHTML = "";
+  Object.entries(TYPES).filter(([k,v])=>v.g===t.g && k!==key).forEach(([k,v])=>{
+    const b=document.createElement("button"); b.textContent=v.name; b.onclick=()=>renderResult(k,true);
+    $("#olist").appendChild(b);
+  });
+  if(push){ const u=new URL(location.href); u.searchParams.set("r",key); history.replaceState(null,"",u); }
+  show("result");
+}
+
+$("#retry").onclick = ()=>{ const u=new URL(location.href); u.searchParams.delete("r"); history.replaceState(null,"",u); show("gender"); };
+$("#share").onclick = async ()=>{
+  const t = TYPES[new URL(location.href).searchParams.get("r")];
+  const data = {title:"나의 추구미 테스트", text:`내 추구미는 '${t?t.name:""}' ${t?t.tags.join(" "):""}\n너의 추구미는?`, url:location.href};
+  track("share_click");
+  try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ return; }
+  try{ await navigator.clipboard.writeText(data.text+"\n"+data.url); toast("링크가 복사됐어요"); }
+  catch(e){ toast("주소창의 링크를 복사해 공유해 주세요"); }
+};
+
+/* 공유 링크(?r=유형)로 들어오면 결과 바로 노출 */
+const r0 = new URL(location.href).searchParams.get("r");
+if(r0 && TYPES[r0]) renderResult(r0,false);
+</script>
+</body>
+</html>
