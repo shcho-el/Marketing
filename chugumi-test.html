@@ -41,6 +41,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 @keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .logo{display:flex;flex-direction:column;align-items:center;gap:4px;margin-inline:auto}
 .logo img{display:block;width:150px;height:auto}
+.logo{cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}
+.logo:focus-visible{outline:2px solid var(--accent);outline-offset:6px}
 .logo span{font-family:"Cormorant Garamond",Georgia,serif;font-size:.95rem;letter-spacing:.2em;color:#3a3536;white-space:nowrap;line-height:1.2}
 h1,h2,h3{margin:0;font-family:var(--f-display);font-weight:700;line-height:1.3;text-wrap:balance}
 p{margin:0}
@@ -520,6 +522,17 @@ function renderResult(key, push){
   show("result");
 }
 
+/* 로고 클릭 → 메인(시작 화면)으로 */
+function goHome(){
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+  step=0; answers=[]; closeDoc && !$("#sheet").hidden && closeDoc();
+  show("intro"); track("logo_home");
+}
+document.querySelectorAll(".logo").forEach(l=>{
+  l.setAttribute("role","link"); l.tabIndex=0; l.setAttribute("aria-label","Obliv Clinic 처음 화면으로");
+  l.addEventListener("click", goHome);
+  l.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); goHome(); } });
+});
 $("#retry").onclick = ()=>{ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} show("gender"); };
 $("#share").onclick = async ()=>{
   const t = TYPES[location.hash.slice(1)];
