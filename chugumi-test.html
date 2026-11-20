@@ -9,7 +9,7 @@
 <meta property="og:description" content="1분이면 끝! 나의 추구미 유형과 맞춤 관리법을 확인해 보세요.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
 <style>
 :root{
   --bg:#faf6f3; --surface:#ffffff; --fg:#231c1f; --muted:#7a6d72; --line:#ece3df;
@@ -30,7 +30,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .screen{display:none;flex:1;flex-direction:column;padding-block:28px 40px;animation:in .45s ease both}
 .screen.on{display:flex}
 @keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-.brand{font-size:.78rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;font-weight:500}
+.logo{display:flex;flex-direction:column;align-items:center;gap:4px;margin-inline:auto}
+.logo img{display:block;width:150px;height:auto}
+.logo span{font-family:"Cormorant Garamond",Georgia,serif;font-size:.8rem;letter-spacing:.32em;color:#3a3536;text-transform:uppercase;padding-left:.32em}
 h1,h2,h3{margin:0;font-family:var(--f-display);font-weight:700;line-height:1.3;text-wrap:balance}
 p{margin:0}
 
@@ -123,7 +125,7 @@ p{margin:0}
 
   <!-- 1. 인트로 -->
   <section class="screen on" id="s-intro">
-    <p class="brand" data-clinic></p>
+    <div class="logo"><img src="assets/obliv-logo.webp" alt="Obliv Clinic" width="843" height="144"><span>Songdo Horizon</span></div>
     <div class="hero">
       <div class="orbs" aria-hidden="true"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div><span>추구미</span></div>
       <h1>요즘 내 <em>추구미</em>,<br>어떤 얼굴일까?</h1>
@@ -162,7 +164,7 @@ p{margin:0}
 
   <!-- 5. 결과 -->
   <section class="screen" id="s-result">
-    <p class="brand" data-clinic></p>
+    <div class="logo"><img src="assets/obliv-logo.webp" alt="Obliv Clinic" width="843" height="144"><span>Songdo Horizon</span></div>
     <article class="rcard">
       <header class="rhead">
         <p class="rlabel">당신의 추구미는</p>
@@ -199,7 +201,6 @@ p{margin:0}
    설정 — 병원 정보와 예약 링크만 바꿔서 쓰세요
    ========================================================= */
 const CONFIG = {
-  clinicName: "OBLIVE CLINIC",                 // 상단 브랜드 표기
   reserveUrl: "https://booking.naver.com/"     // 상담 예약 링크 (네이버 예약 / 카톡 채널 등)
 };
 
@@ -278,7 +279,6 @@ function show(id){
 }
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),1800); }
 
-document.querySelectorAll("[data-clinic]").forEach(el=>el.textContent=CONFIG.clinicName);
 
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ show(b.dataset.go); if(b.dataset.go==="gender") track("quiz_start"); });
 document.querySelectorAll("[data-gender]").forEach(b=>b.onclick=()=>{ gender=b.dataset.gender; step=0; answers=[]; renderQ(); show("quiz"); });
