@@ -465,6 +465,8 @@ function registerApplicants_(threads, parent, aliases, me) {
         (info.phone && iPhone >= 0 && digits(r[iPhone]) === info.phone);
     });
     if (at >= 0) {
+      // 다른 메일로 다른 항목에 또 지원한 경우는 따로 일정을 잡도록 시트를 바꾸지 않아요
+      if (iMail >= 0 && String(rows[at][iMail]).indexOf(tid) < 0) return;
       const cur = iType >= 0 ? String(rows[at][iType] || '') : '';
       const both = /재활/.test(cur + type) && /발톱/.test(cur + type);
       if (iType >= 0 && both && cur !== '재활+발톱') {
