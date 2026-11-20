@@ -18,7 +18,7 @@ const SHEET_NAME = '상담신청';
 const NOTIFY_EMAIL = '';
 
 const HEADERS = [
-  '접수일시', '이름', '연락처', '희망 시간대', '추구미 유형', '성별',
+  '접수일시', '이름', '연락처', '상담 메시지', '희망 시간대', '추구미 유형', '성별',
   '개인정보 수집·이용(필수)', '제3자 제공(필수)', '광고 수신(선택)', '동의서 버전',
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
   '유입 경로', '페이지', '답변', '기기', '상담 상태', '메모'
@@ -39,7 +39,7 @@ function doPost(e) {
 
     const sheet = getSheet();
     sheet.appendRow([
-      new Date(), safe(name), "'" + phone, safe(d.time), safe(d.resultName), safe(d.gender),
+      new Date(), safe(name), "'" + phone, safe(String(d.message || '').slice(0, 200)), safe(d.time), safe(d.resultName), safe(d.gender),
       'Y', 'Y', d.consentAd === true ? 'Y' : 'N', safe(d.consentVersion),
       safe(d.utm_source), safe(d.utm_medium), safe(d.utm_campaign), safe(d.utm_content), safe(d.utm_term),
       safe(d.referrer), safe(d.page), safe(d.answers), safe(d.userAgent), '신규', ''
@@ -47,7 +47,7 @@ function doPost(e) {
 
     if (NOTIFY_EMAIL) {
       MailApp.sendEmail(NOTIFY_EMAIL, '[추구미 테스트] 새 상담 신청 - ' + name,
-        '이름: ' + name + '\n연락처: ' + phone + '\n희망 시간대: ' + (d.time || '-') +
+        '이름: ' + name + '\n연락처: ' + phone + '\n상담 메시지: ' + (d.message || '-') + '\n희망 시간대: ' + (d.time || '-') +
         '\n추구미 유형: ' + (d.resultName || '-') + '\n광고 수신 동의: ' + (d.consentAd ? 'Y' : 'N'));
     }
     return json({ ok: true });

@@ -120,12 +120,16 @@ p{margin:0}
 .lead{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:24px 20px;display:grid;gap:12px;scroll-margin-top:16px}
 .lead h3{font-size:1.2rem}
 .lead .lsub{font-size:.88rem;color:var(--muted);margin-top:-4px}
-.lead input[type=text],.lead input[type=tel],.lead select{width:100%;min-height:54px;border:1px solid var(--line);border-radius:12px;background:#f7f5f4;
+.lead input[type=text],.lead input[type=tel],.lead select,.lead textarea{width:100%;min-height:54px;border:1px solid var(--line);border-radius:12px;background:#f7f5f4;
   padding:0 16px;font:inherit;font-size:1rem;color:var(--fg);-webkit-appearance:none;appearance:none}
+.lead textarea{min-height:96px;padding:14px 16px 26px;resize:none;line-height:1.5;display:block}
+.lead textarea::placeholder{color:#9a8d92}
+.msg{position:relative}
+.msg .cnt{position:absolute;right:14px;bottom:8px;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
 .lead select{color:var(--muted);background-image:linear-gradient(45deg,transparent 50%,#9a8d92 50%),linear-gradient(135deg,#9a8d92 50%,transparent 50%);
   background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat}
 .lead select.filled{color:var(--fg)}
-.lead input:focus,.lead select:focus{outline:2px solid var(--t);outline-offset:1px;background:#fff}
+.lead input:focus,.lead select:focus,.lead textarea:focus{outline:2px solid var(--t);outline-offset:1px;background:#fff}
 .lead input.bad{border-color:#c0392b;background:#fff6f5}
 .err{font-size:.84rem;color:#c0392b;margin-top:-2px}
 .agree{display:grid;gap:10px;margin-top:4px}
@@ -231,6 +235,10 @@ p{margin:0}
       <p class="lsub">남겨주신 연락처로 상담 담당자가 연락드려요.</p>
       <input type="text" id="f-name" name="name" placeholder="이름" autocomplete="name" maxlength="20" aria-label="이름">
       <input type="tel" id="f-phone" name="phone" placeholder="연락처 ('-' 없이 입력)" inputmode="numeric" autocomplete="tel" maxlength="11" aria-label="연락처">
+      <div class="msg">
+        <textarea id="f-msg" name="message" rows="3" maxlength="200" placeholder="상담 메시지 (선택)&#10;예: 턱선 리프팅이 궁금해요 / 주말 상담 원해요" aria-label="상담 메시지"></textarea>
+        <span class="cnt" id="f-msg-cnt">0/200</span>
+      </div>
       <select id="f-time" name="time" aria-label="상담 희망 시간대">
         <option value="">상담 희망 시간대 (선택)</option>
         <option>오전 (10~12시)</option><option>점심 (12~14시)</option><option>오후 (14~18시)</option><option>저녁 (18시 이후)</option><option>언제든 가능</option>
@@ -478,13 +486,13 @@ const DOCS = {
   collect: { title:"개인정보 수집·이용 동의 (필수)", html:`
     <p>본 상담 신청으로 입력하신 정보는 본 상담 신청 페이지를 운영하는 회사(이하 "회사")가 수집·이용하며, 상담 결과에 따라 제휴 의료기관에 제3자 제공될 수 있습니다.</p>
     <dl><dt>수집·이용 목적</dt><dd>상담 신청 접수, 전화·문자·카카오톡을 통한 시술 상담 및 제휴 의료기관 진료 예약 안내, 상담 이력 관리</dd>
-    <dt>수집 항목</dt><dd>(필수) 성명, 휴대전화번호<br>(선택) 상담 희망 시간대</dd>
+    <dt>수집 항목</dt><dd>(필수) 성명, 휴대전화번호<br>(선택) 상담 메시지, 상담 희망 시간대</dd>
     <dt>보유·이용 기간</dt><dd>수집일부터 1년<br>(목적 달성 또는 동의 철회 시 지체 없이 파기)</dd></dl>
     <p class="note">동의를 거부할 수 있습니다. 다만 필수 항목에 동의하지 않으면 상담 신청이 접수되지 않습니다. 선택 항목은 입력하지 않아도 신청할 수 있습니다.</p>` },
   third: { title:"개인정보 제3자 제공 동의 (필수)", html:`
     <dl><dt>제공받는 자</dt><dd>상담하신 시술을 진료하는 제휴 의료기관</dd>
     <dt>이용 목적</dt><dd>진료 예약·접수 및 진료 상담</dd>
-    <dt>제공 항목</dt><dd>성명, 휴대전화번호, 상담 희망 시간대</dd>
+    <dt>제공 항목</dt><dd>성명, 휴대전화번호, 상담 메시지, 상담 희망 시간대</dd>
     <dt>보유·이용 기간</dt><dd>제공일부터 1년<br>(내원하여 진료가 이루어진 경우 진료 정보는 「의료법」에 따른 기간)</dd></dl>
     <p class="note">동의를 거부할 수 있으나, 거부 시 제휴 의료기관으로의 예약·상담 연결이 되지 않습니다.</p>` },
   ad: { title:"광고성 정보 수신 동의 (선택)", html:`
@@ -513,6 +521,7 @@ $("#c-all").onchange = e=>{ boxes.forEach(b=>b.checked=e.target.checked); clearE
 boxes.forEach(b=>b.onchange=()=>{ $("#c-all").checked = boxes.every(x=>x.checked); clearErr(); });
 $("#f-phone").oninput = e=>{ e.target.value = e.target.value.replace(/\D/g,"").slice(0,11); e.target.classList.remove("bad"); clearErr(); };
 $("#f-name").oninput = e=>{ e.target.classList.remove("bad"); clearErr(); };
+$("#f-msg").oninput = e=>{ $("#f-msg-cnt").textContent = e.target.value.length + "/200"; };
 $("#f-time").onchange = e=>e.target.classList.toggle("filled", !!e.target.value);
 $("#place").href = $("#done-place").href = CONFIG.placeUrl;
 $("#kakao").href = CONFIG.kakaoUrl;
@@ -549,7 +558,7 @@ $("#lead").onsubmit = async e=>{
 
   const t = TYPES[currentKey] || {};
   const payload = Object.assign({
-    name, phone, time: $("#f-time").value,
+    name, phone, message: $("#f-msg").value.trim(), time: $("#f-time").value,
     resultKey: currentKey || "", resultName: t.name || "", gender: t.g==="m" ? "남" : t.g==="f" ? "여" : "",
     answers: answers.join(","),
     consentCollect: true, consentThird: true, consentAd: $("#c-ad").checked, consentVersion: CONFIG.consentVersion,
@@ -563,7 +572,7 @@ $("#lead").onsubmit = async e=>{
     trackLead({result: currentKey});
     $("#done-preview").hidden = mode !== "preview";
     $("#done-msg").textContent = `${name}님, 입력하신 연락처로 곧 연락드릴게요.`;
-    $("#lead").reset(); $("#f-time").classList.remove("filled");
+    $("#lead").reset(); $("#f-time").classList.remove("filled"); $("#f-msg-cnt").textContent = "0/200";
     show("done");
   }catch(err){
     fail("신청이 전송되지 않았어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
