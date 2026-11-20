@@ -351,13 +351,13 @@ function renderResult(key, push){
     const b=document.createElement("button"); b.textContent=v.name; b.onclick=()=>renderResult(k,true);
     $("#olist").appendChild(b);
   });
-  if(push){ const u=new URL(location.href); u.searchParams.set("r",key); history.replaceState(null,"",u); }
+  if(push){ try{ history.replaceState(null,"","#"+key); }catch(e){ location.hash=key; } }
   show("result");
 }
 
-$("#retry").onclick = ()=>{ const u=new URL(location.href); u.searchParams.delete("r"); history.replaceState(null,"",u); show("gender"); };
+$("#retry").onclick = ()=>{ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} show("gender"); };
 $("#share").onclick = async ()=>{
-  const t = TYPES[new URL(location.href).searchParams.get("r")];
+  const t = TYPES[location.hash.slice(1)];
   const data = {title:"나의 추구미 테스트", text:`내 추구미는 '${t?t.name:""}' ${t?t.tags.join(" "):""}\n너의 추구미는?`, url:location.href};
   track("share_click");
   try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ return; }
@@ -365,8 +365,8 @@ $("#share").onclick = async ()=>{
   catch(e){ toast("주소창의 링크를 복사해 공유해 주세요"); }
 };
 
-/* 공유 링크(?r=유형)로 들어오면 결과 바로 노출 */
-const r0 = new URL(location.href).searchParams.get("r");
+/* 공유 링크(#유형)로 들어오면 결과 바로 노출 */
+const r0 = location.hash.slice(1);
 if(r0 && TYPES[r0]) renderResult(r0,false);
 </script>
 </body>
