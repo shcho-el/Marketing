@@ -107,8 +107,6 @@ p{margin:0}
 .treat div{border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:3px}
 .treat strong{font-size:1rem}
 .treat span{font-size:.86rem;color:var(--muted)}
-.cta{position:sticky;bottom:0;z-index:2;padding:12px 0 calc(12px + env(safe-area-inset-bottom));
-  background:linear-gradient(to top,var(--bg) 75%,transparent);margin-top:8px}
 .others{margin-top:28px}
 .others h3{font-family:var(--f-body);font-size:.9rem;margin-bottom:10px}
 .olist{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
@@ -137,10 +135,11 @@ p{margin:0}
 .ck em{font-style:normal;color:var(--t);font-weight:700}
 .ck.all{padding-bottom:10px;border-bottom:1px solid var(--line);font-weight:700;font-size:.95rem}
 .ck .view{flex:none;border:0;background:none;padding:0;font-size:.82rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
-.under14{font-size:.76rem;color:var(--muted)}
+.under14{font-size:.76rem;color:var(--muted);text-align:center;margin-top:-4px}
+#submit{margin-top:6px}
 .place{display:block;text-align:center;font-size:.86rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px;margin-top:2px}
 /* 카카오톡 상담 뱃지 */
-.kakao{position:fixed;z-index:15;right:max(16px,calc((100vw - 480px)/2 + 16px));bottom:calc(96px + env(safe-area-inset-bottom,0px));
+.kakao{position:fixed;z-index:15;right:max(16px,calc((100vw - 480px)/2 + 16px));bottom:calc(20px + env(safe-area-inset-bottom,0px));
   display:flex;align-items:center;gap:7px;padding:10px 15px 10px 12px;border-radius:99px;background:#fee500;color:#191600;
   font-weight:700;font-size:.86rem;text-decoration:none;box-shadow:0 6px 18px rgba(60,50,0,.22);transition:transform .15s}
 .kakao:active{transform:scale(.96)}
@@ -243,7 +242,9 @@ p{margin:0}
         <div class="ck"><label><input type="checkbox" id="c-third" data-req><span><em>[필수]</em> 개인정보 제3자 제공에 동의합니다.</span></label><button type="button" class="view" data-doc="third">보기</button></div>
         <div class="ck"><label><input type="checkbox" id="c-ad"><span>[선택] 광고성 정보 수신에 동의합니다.</span></label><button type="button" class="view" data-doc="ad">보기</button></div>
       </div>
+      <button type="submit" class="btn accent" id="submit">내 추구미 맞춤 상담 예약하기</button>
       <p class="under14">상담 신청은 만 14세 이상만 가능합니다.</p>
+      <a class="place" id="place" target="_blank" rel="noopener">네이버 플레이스에서 병원 정보 보기</a>
     </form>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
@@ -253,8 +254,6 @@ p{margin:0}
 
     <div class="others"><h3>다른 유형도 궁금하다면</h3><div class="olist" id="olist"></div></div>
 
-    <div class="cta"><button type="submit" form="lead" class="btn accent" id="submit">내 추구미 맞춤 상담 예약하기</button></div>
-    <a class="place" id="place" target="_blank" rel="noopener">네이버 플레이스에서 병원 정보 보기</a>
 
     <p class="disclaimer">
       ※ 본 테스트는 관심사 기반의 재미용 콘텐츠로, 의학적 진단이 아닙니다.<br>
