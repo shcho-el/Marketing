@@ -314,7 +314,8 @@ function autoFolder() {
     const parent = DriveApp.getFolderById(FOLDER_CONFIG.PARENT_FOLDER_ID);
     const aliases = phoneAliases_();
     const log = [];
-    GmailApp.search(CONFIG.GMAIL_QUERY + ' ' + FOLDER_CONFIG.LOOKBACK, 0, 50).forEach(function (t) {
+    const threads = GmailApp.search(CONFIG.GMAIL_QUERY + ' ' + FOLDER_CONFIG.LOOKBACK, 0, 50);
+    threads.forEach(function (t) {
       t.getMessages().forEach(function (m) {
         if (done[m.getId()] || m.getFrom().indexOf(me) >= 0) return;
         const info = parseApplicant_(m);
@@ -329,6 +330,8 @@ function autoFolder() {
     const cutoff = Date.now() - 60 * 24 * 3600 * 1000;
     Object.keys(done).forEach(function (k) { if (done[k] < cutoff) delete done[k]; });
     props.setProperty('FOLDERED', JSON.stringify(done));
+    try { registerApplicants_(threads, parent, aliases, me).forEach(function (s) { log.push(s); }); }
+    catch (e) { Logger.log('지원자_목록 등록 실패: ' + e); }
     if (log.length) { CacheService.getScriptCache().remove('raw'); Logger.log(log.join('\n')); }
   } finally {
     lock.releaseLock();
@@ -435,3 +438,100 @@ function saveMailFiles_(folder, m, name) {
   }
   return n + '개 저장' + (failed.length ? ', 링크 ' + failed.length + '개' : '');
 }
+
+
+/* ---------- 새 지원자 → 지원자_목록 시트 자동 등록 ---------- */
+
+/** 시트에 없는 지원자(메일 ID·연락처 둘 다 없음)를 한 줄 추가해요. 이미 있는 사람이 다른 항목으로 또 지원하면 지원 항목을 재활+발톱으로 바꿔요. */
+function registerApplicants_(threads, parent, aliases, me) {
+  const sh = SpreadsheetApp.openById(CONFIG.APPLICANT_SHEET_ID).getSheets()[0];
+  const values = sh.getDataRange().getValues();
+  const header = values[0].map(function (x) { return String(x).trim(); });
+  const col = function (name) { return header.indexOf(name); };
+  const digits = function (v) { return String(v || '').replace(/\D/g, ''); };
+  const rows = values.slice(1);
+  const out = [];
+  threads.slice().reverse().forEach(function (t) {
+    const msgs = t.getMessages().filter(function (m) { return m.getFrom().indexOf(me) < 0; });
+    if (!msgs.length) return;
+    const m = msgs[0];
+    const info = parseApplicant_(m);
+    if (!info) return;
+    const type = typeOfThread_(t);
+    const tid = t.getId();
+    const iMail = col('지원 메일'), iPhone = col('연락처'), iType = col('지원 항목');
+    const at = rows.findIndex(function (r) {
+      return (iMail >= 0 && String(r[iMail]).indexOf(tid) >= 0) ||
+        (info.phone && iPhone >= 0 && digits(r[iPhone]) === info.phone);
+    });
+    if (at >= 0) {
+      const cur = iType >= 0 ? String(rows[at][iType] || '') : '';
+      const both = /재활/.test(cur + type) && /발톱/.test(cur + type);
+      if (iType >= 0 && both && cur !== '재활+발톱') {
+        sh.getRange(at + 2, iType + 1).setValue('재활+발톱');
+        rows[at][iType] = '재활+발톱';
+        out.push(info.name + ': 지원 항목을 재활+발톱으로 바꿨어요');
+      }
+      return;
+    }
+    const folder = findOrCreateFolder_(parent, info, aliases);
+    const body = m.getPlainBody() || '';
+    const files = m.getAttachments({ includeInlineImages: false }).map(function (a) { return a.getName(); }).filter(String);
+    const big = (m.getBody().match(/title="([^"]+?)\s*다운로드"/g) || [])
+      .map(function (s) { return s.replace(/^title="|\s*다운로드"$/g, ''); });
+    const d = m.getDate();
+    const rec = {
+      '지원 항목': type, '이름': info.name, '성별': info.gender, '나이': info.age,
+      '연락처': info.phone.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3'),
+      '촬영 가능 일자': pickLine_(body, /(촬영\s*가능|가능\s*(한\s*)?(일자|날짜|일정|요일|시간))/) || '[미기재]',
+      'SNS': pickSns_(body),
+      '거주지': pickLine_(body, /(거주지|사는\s*곳|거주\s*지역|주소)/) || '[미기재]',
+      '통증·체형 고민': pickLine_(body, /(통증|체형|고민|불편)/) || '[미기재]',
+      '키/몸무게': pickBody_(body),
+      '지원일': Utilities.formatDate(d, 'Asia/Seoul', 'yyyy-MM-dd'),
+      '폴더 링크': folder.getUrl(),
+      '지원 메일': 'https:' + '//mail.google.com/mail/#all/' + tid,
+      '메일 첨부파일': files.join(', ') || '없음',
+      '대용량 첨부(만료일)': big.join(', ') || '없음',
+      '비고': '자동 등록 · 내용 확인 필요',
+    };
+    const row = header.map(function (hd) { return hd in rec ? rec[hd] : ''; });
+    sh.appendRow(row);
+    const last = sh.getLastRow();
+    if (iPhone >= 0) sh.getRange(last, iPhone + 1).setNumberFormat('@').setValue(rec['연락처']);
+    rows.push(row);
+    out.push(info.name + ': 지원자_목록에 추가했어요');
+  });
+  return out;
+}
+
+/** 본문에서 "항목: 값" 형태의 줄을 찾아 값만 돌려줘요 (최대 80자) */
+function pickLine_(body, re) {
+  const lines = body.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+    if (!re.test(l) || !/[:：]/.test(l)) continue;
+    let v = l.split(/[:：]/).slice(1).join(':').trim();
+    if (!v && /[:：]\s*$/.test(l) && lines[i + 1]) v = lines[i + 1].trim();
+    v = v.replace(/^[-–·•\s]+/, '');
+    if (v) return v.slice(0, 80);
+  }
+  return '';
+}
+
+function pickSns_(body) {
+  const url = /https?:\/\/(?:www\.)?(?:instagram\.com|instagr\.am)\/[^\s)>\]"'<]+/i.exec(body);
+  if (url) return url[0];
+  const handle = /(?:인스타(?:그램)?|instagram|insta)[^\n@]{0,15}@?\s*([A-Za-z0-9._]{3,30})/i.exec(body);
+  if (handle && !/^(com|www|http)/i.test(handle[1])) return 'https:' + '//www.instagram.com/' + handle[1] + '/';
+  const other = /https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|tiktok\.com|blog\.naver\.com)\/[^\s)>\]"'<]+/i.exec(body);
+  return other ? other[0] : '';
+}
+
+function pickBody_(body) {
+  const m = /(1[4-9]\d)(?:\.\d)?\s*(?:cm)?\s*[\/,·\s]+\s*(\d{2})(?:\.\d)?\s*kg/i.exec(body);
+  return m ? m[1] + '/' + m[2] : '';
+}
+
+/** 지금 바로 한 번 등록해 보고 싶을 때 실행하세요 (자동 정리와 같은 일을 해요) */
+function registerNow() { autoFolder(); }
