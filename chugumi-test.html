@@ -160,6 +160,7 @@ p{margin:0}
 .lead select.filled{color:var(--fg)}
 .lead input:focus,.lead select:focus,.lead textarea:focus{outline:2px solid var(--t);outline-offset:1px;background:#fff}
 .lead input.bad{border-color:#c0392b;background:#fff6f5}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:8px}
 .err{font-size:.84rem;color:#c0392b;margin-top:-2px}
 .agree{display:grid;gap:10px;margin-top:4px}
 .ck{display:flex;align-items:flex-start;gap:10px;font-size:.88rem;line-height:1.45}
@@ -280,7 +281,10 @@ p{margin:0}
     <form class="lead" id="lead" novalidate>
       <h3>내 추구미 맞춤 상담 신청</h3>
       <p class="lsub">남겨주신 연락처로 상담 담당자가 연락드려요.</p>
-      <input type="text" id="f-name" name="name" placeholder="이름" autocomplete="name" maxlength="20" aria-label="이름">
+      <div class="row2">
+        <input type="text" id="f-name" name="name" placeholder="이름" autocomplete="name" maxlength="20" aria-label="이름">
+        <input type="text" id="f-age" name="age" placeholder="나이" inputmode="numeric" maxlength="2" aria-label="나이 (만 나이)">
+      </div>
       <input type="tel" id="f-phone" name="phone" placeholder="연락처 ('-' 없이 입력)" inputmode="numeric" autocomplete="tel" maxlength="11" aria-label="연락처">
       <div class="msg">
         <textarea id="f-msg" name="message" rows="3" maxlength="200" placeholder="상담 메시지 (선택)&#10;예: 턱선 리프팅이 궁금해요 / 주말 상담 원해요" aria-label="상담 메시지"></textarea>
@@ -550,13 +554,13 @@ const DOCS = {
   collect: { title:"개인정보 수집·이용 동의 (필수)", html:`
     <p>본 상담 신청으로 입력하신 정보는 본 상담 신청 페이지를 운영하는 회사(이하 "회사")가 수집·이용하며, 상담 결과에 따라 제휴 의료기관에 제3자 제공될 수 있습니다.</p>
     <dl><dt>수집·이용 목적</dt><dd>상담 신청 접수, 전화·문자·카카오톡을 통한 시술 상담 및 제휴 의료기관 진료 예약 안내, 상담 이력 관리</dd>
-    <dt>수집 항목</dt><dd>(필수) 성명, 휴대전화번호<br>(선택) 상담 메시지, 상담 희망 시간대</dd>
+    <dt>수집 항목</dt><dd>(필수) 성명, 나이, 휴대전화번호<br>(선택) 상담 메시지, 상담 희망 시간대</dd>
     <dt>보유·이용 기간</dt><dd>수집일부터 1년<br>(목적 달성 또는 동의 철회 시 지체 없이 파기)</dd></dl>
     <p class="note">동의를 거부할 수 있습니다. 다만 필수 항목에 동의하지 않으면 상담 신청이 접수되지 않습니다. 선택 항목은 입력하지 않아도 신청할 수 있습니다.</p>` },
   third: { title:"개인정보 제3자 제공 동의 (필수)", html:`
     <dl><dt>제공받는 자</dt><dd>상담하신 시술을 진료하는 제휴 의료기관</dd>
     <dt>이용 목적</dt><dd>진료 예약·접수 및 진료 상담</dd>
-    <dt>제공 항목</dt><dd>성명, 휴대전화번호, 상담 메시지, 상담 희망 시간대</dd>
+    <dt>제공 항목</dt><dd>성명, 나이, 휴대전화번호, 상담 메시지, 상담 희망 시간대</dd>
     <dt>보유·이용 기간</dt><dd>제공일부터 1년<br>(내원하여 진료가 이루어진 경우 진료 정보는 「의료법」에 따른 기간)</dd></dl>
     <p class="note">동의를 거부할 수 있으나, 거부 시 제휴 의료기관으로의 예약·상담 연결이 되지 않습니다.</p>` },
   ad: { title:"광고성 정보 수신 동의 (선택)", html:`
@@ -584,6 +588,7 @@ const boxes = ["#c-collect","#c-third","#c-ad"].map(s=>$(s));
 $("#c-all").onchange = e=>{ boxes.forEach(b=>b.checked=e.target.checked); clearErr(); };
 boxes.forEach(b=>b.onchange=()=>{ $("#c-all").checked = boxes.every(x=>x.checked); clearErr(); });
 $("#f-phone").oninput = e=>{ e.target.value = e.target.value.replace(/\D/g,"").slice(0,11); e.target.classList.remove("bad"); clearErr(); };
+$("#f-age").oninput = e=>{ e.target.value = e.target.value.replace(/\D/g,"").slice(0,2); e.target.classList.remove("bad"); clearErr(); };
 $("#f-name").oninput = e=>{ e.target.classList.remove("bad"); clearErr(); };
 $("#f-msg").oninput = e=>{ $("#f-msg-cnt").textContent = e.target.value.length + "/200"; };
 $("#f-time").onchange = e=>e.target.classList.toggle("filled", !!e.target.value);
@@ -617,14 +622,16 @@ async function send(payload){
 $("#lead").onsubmit = async e=>{
   e.preventDefault();
   if(sending) return;
-  const name = $("#f-name").value.trim(), phone = $("#f-phone").value;
+  const name = $("#f-name").value.trim(), phone = $("#f-phone").value, age = $("#f-age").value;
   if(!name) return fail("이름을 입력해 주세요.", $("#f-name"));
+  if(!/^\d{1,2}$/.test(age)) return fail("나이를 숫자로 입력해 주세요.", $("#f-age"));
+  if(+age < 14) return fail("만 14세 미만은 상담 신청이 어려워요. 보호자가 직접 문의해 주세요.", $("#f-age"));
   if(!/^01[016789]\d{7,8}$/.test(phone)) return fail("연락처를 '-' 없이 숫자로 정확히 입력해 주세요. (예: 01012345678)", $("#f-phone"));
   if(!$("#c-collect").checked || !$("#c-third").checked) return fail("필수 동의 항목에 체크해 주세요.", !$("#c-collect").checked ? $("#c-collect") : $("#c-third"));
 
   const t = TYPES[currentKey] || {};
   const payload = Object.assign({
-    name, phone, message: $("#f-msg").value.trim(), time: $("#f-time").value,
+    name, age, phone, message: $("#f-msg").value.trim(), time: $("#f-time").value,
     resultKey: currentKey || "", resultName: t.name || "", gender: t.g==="m" ? "남" : t.g==="f" ? "여" : "",
     answers: answers.join(","),
     consentCollect: true, consentThird: true, consentAd: $("#c-ad").checked, consentVersion: CONFIG.consentVersion,

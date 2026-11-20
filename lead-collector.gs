@@ -18,7 +18,7 @@ const SHEET_NAME = '상담신청';
 const NOTIFY_EMAIL = '';
 
 const HEADERS = [
-  '접수일시', '이름', '연락처', '상담 메시지', '희망 시간대', '추구미 유형', '성별',
+  '접수일시', '이름', '나이', '연락처', '상담 메시지', '희망 시간대', '추구미 유형', '성별',
   '개인정보 수집·이용(필수)', '제3자 제공(필수)', '광고 수신(선택)', '동의서 버전',
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
   '유입 경로', '페이지', '답변', '기기', '상담 상태', '메모'
@@ -34,12 +34,14 @@ function doPost(e) {
     const name = String(d.name || '').trim().slice(0, 20);
     const phone = String(d.phone || '').replace(/\D/g, '');
     if (!name) return json({ ok: false, error: 'name' });
+    const age = parseInt(String(d.age || '').replace(/\D/g, ''), 10);
+    if (!(age >= 14 && age <= 99)) return json({ ok: false, error: 'age' });
     if (!/^01[016789]\d{7,8}$/.test(phone)) return json({ ok: false, error: 'phone' });
     if (d.consentCollect !== true || d.consentThird !== true) return json({ ok: false, error: 'consent' });
 
     const sheet = getSheet();
     sheet.appendRow([
-      new Date(), safe(name), "'" + phone, safe(String(d.message || '').slice(0, 200)), safe(d.time), safe(d.resultName), safe(d.gender),
+      new Date(), safe(name), age, "'" + phone, safe(String(d.message || '').slice(0, 200)), safe(d.time), safe(d.resultName), safe(d.gender),
       'Y', 'Y', d.consentAd === true ? 'Y' : 'N', safe(d.consentVersion),
       safe(d.utm_source), safe(d.utm_medium), safe(d.utm_campaign), safe(d.utm_content), safe(d.utm_term),
       safe(d.referrer), safe(d.page), safe(d.answers), safe(d.userAgent), '신규', ''
@@ -47,7 +49,7 @@ function doPost(e) {
 
     if (NOTIFY_EMAIL) {
       MailApp.sendEmail(NOTIFY_EMAIL, '[추구미 테스트] 새 상담 신청 - ' + name,
-        '이름: ' + name + '\n연락처: ' + phone + '\n상담 메시지: ' + (d.message || '-') + '\n희망 시간대: ' + (d.time || '-') +
+        '이름: ' + name + ' (' + age + '세)\n연락처: ' + phone + '\n상담 메시지: ' + (d.message || '-') + '\n희망 시간대: ' + (d.time || '-') +
         '\n추구미 유형: ' + (d.resultName || '-') + '\n광고 수신 동의: ' + (d.consentAd ? 'Y' : 'N'));
     }
     return json({ ok: true });
@@ -62,10 +64,11 @@ function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) sh = ss.insertSheet(SHEET_NAME);
-  if (sh.getLastRow() === 0) {
-    sh.appendRow(HEADERS);
+  // 첫 줄 항목명이 없거나 바뀌었으면 최신 항목명으로 맞춤
+  const head = sh.getRange(1, 1, 1, HEADERS.length);
+  if (head.getValues()[0].join('|') !== HEADERS.join('|')) {
+    head.setValues([HEADERS]).setFontWeight('bold').setBackground('#f3ece9');
     sh.setFrozenRows(1);
-    sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#f3ece9');
   }
   return sh;
 }
