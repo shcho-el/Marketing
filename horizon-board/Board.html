@@ -217,10 +217,13 @@ body.can-edit .hz-viewer-only { display: none !important; }
   <section class="hz-sec hz-edit-only" id="edit">
     <div class="hz-sec-head">
       <h2>상태·촬영일 입력</h2>
-      <p class="hz-note">모델이 원하는 날짜는 희망 일정으로 저장하고, 원내 확인이 끝나면 일정 확정으로 바꿔 주세요. 편집 링크로 연 사람만 저장할 수 있고, 저장한 내용은 이 현황판을 여는 모든 사람에게 보여요.</p>
+      <p class="hz-note">메일로 오지 않은 인플루언서 등은 지원자에서 <b>+ 새로 직접 입력</b>을 골라 이름·연락처·SNS를 넣고 저장하면 목록·캘린더에 함께 보여요. 모델이 원하는 날짜는 희망 일정으로 저장하고, 원내 확인이 끝나면 일정 확정으로 바꿔 주세요. 편집 링크로 연 사람만 저장할 수 있고, 저장한 내용은 이 현황판을 여는 모든 사람에게 보여요.</p>
     </div>
     <form class="hz-form" id="hz-form">
       <label class="hz-field" for="f-who"><span>지원자</span><select class="dash-select" id="f-who" name="who" data-draw="who" data-source="board" aria-label="지원자"></select></label>
+      <label class="hz-field hz-manual" for="f-name" style="display:none"><span>이름 (직접 입력)</span><input id="f-name" name="name" maxlength="30" placeholder="예: 홍길동"></label>
+      <label class="hz-field hz-manual" for="f-phone" style="display:none"><span>연락처</span><input id="f-phone" name="phone" type="tel" maxlength="20" placeholder="010-0000-0000"></label>
+      <label class="hz-field hz-manual hz-wide" for="f-sns" style="display:none"><span>SNS 링크</span><input id="f-sns" name="sns" type="url" maxlength="300" placeholder="https://www.instagram.com/…"></label>
       <label class="hz-field" for="f-source"><span>구분</span>
         <select class="dash-select" id="f-source" name="source" aria-label="구분">
           <option>자체 지원</option><option>인플루언서</option>
@@ -239,6 +242,7 @@ body.can-edit .hz-viewer-only { display: none !important; }
       <div class="hz-actions">
         <button type="submit" class="hz-btn">저장</button>
         <p class="hz-msg" id="hz-nopick" hidden>지원자를 먼저 골라 주세요.</p>
+        <p class="hz-msg bad" id="hz-noname" hidden>직접 입력할 때는 이름을 꼭 넣어 주세요.</p>
         <p class="hz-msg bad" id="hz-baddate" hidden>촬영일을 다시 확인해 주세요.</p>
         <p class="hz-msg ok" id="hz-saved" hidden>저장했어요.</p>
         <p class="hz-msg bad" id="hz-unsaved" hidden>저장하지 못했어요. 편집 링크로 열어야 저장할 수 있어요.</p>
@@ -504,6 +508,14 @@ dash.calc('board', {
       }
       return build(key, base, a, findReq(base));
     });
+    // 현황판에서 직접 입력한 사람(인플루언서 등): 메일·시트 없이 현황 탭에만 있어요
+    const have = new Set(out.map((r) => r.key));
+    (schedule || []).forEach((s) => {
+      if (!/^manual/.test(s.id || '') || have.has(s.id)) return;
+      const base = {'이름': s.name || '(이름 없음)', '연락처': s.phone || '', 'SNS': s.sns || '', '지원 항목': s.type || '재활',
+        '구분': s.source || '인플루언서', '성별': '', '나이': null, '촬영 가능 일자': '', '폴더 링크': '', '자료 만료': '', '비고': '', '지원 메일': ''};
+      out.push({...build(s.id, base, null, findReq(base)), '시트 등록': '수기'});
+    });
     reqs.forEach((q, j) => {
       if (used.has(j)) return;
       const base = {'이름': q['본명'], '연락처': q['전화번호'], '지원 항목': q['지원 항목'] || '재활', '성별': '', '나이': null,
@@ -601,7 +613,14 @@ window.HZ = (() => {
     document.querySelectorAll('#f-date').forEach((el) => { el.value = r ? r['촬영일'] : ''; });
     document.querySelectorAll('#f-time').forEach((el) => { el.value = r ? r['촬영시간'] : ''; });
     document.querySelectorAll('#f-memo').forEach((el) => { el.value = r ? r['메모'] : ''; });
-    document.querySelectorAll('#hz-saved, #hz-unsaved, #hz-nopick, #hz-baddate').forEach((p) => { p.hidden = true; });
+    const isNew = key === '__new__';
+    const manual = isNew || (r && r['시트 등록'] === '수기');
+    document.querySelectorAll('.hz-manual').forEach((el) => { el.style.display = manual ? '' : 'none'; });
+    document.querySelectorAll('#f-name').forEach((el) => { el.value = r && !isNew ? r['이름'] : ''; });
+    document.querySelectorAll('#f-phone').forEach((el) => { el.value = r && !isNew ? (r['연락처'] || '') : ''; });
+    document.querySelectorAll('#f-sns').forEach((el) => { el.value = r && !isNew ? (r['SNS'] || '') : ''; });
+    if (isNew) document.querySelectorAll('#f-source').forEach((el) => { el.value = '인플루언서'; });
+    document.querySelectorAll('#hz-saved, #hz-unsaved, #hz-nopick, #hz-baddate, #hz-noname').forEach((p) => { p.hidden = true; });
   }
   function pickAndGo(key) {
     pick(key);
@@ -636,9 +655,17 @@ document.querySelectorAll('#hz-form').forEach((form) => {
     const H = window.HZ;
     const msgs = (id, show) => document.querySelectorAll(id).forEach((p) => { p.hidden = !show; });
     ['#hz-saved', '#hz-unsaved', '#hz-nopick', '#hz-baddate'].forEach((id) => msgs(id, false));
+    msgs('#hz-noname', false);
     const who = form.querySelector('#f-who');
-    const key = who ? who.value : '';
+    let key = who ? who.value : '';
     if (!key) { msgs('#hz-nopick', true); return; }
+    const isNew = key === '__new__';
+    const cur = (H.rows() || []).find((r) => r.key === key);
+    const manual = isNew || (cur && cur['시트 등록'] === '수기');
+    const val = (sel, n) => (((form.querySelector(sel) || {}).value) || '').trim().slice(0, n);
+    const mName = val('#f-name', 30), mPhone = val('#f-phone', 20), mSns = val('#f-sns', 300);
+    if (manual && !mName) { msgs('#hz-noname', true); return; }
+    if (isNew) key = 'manual' + Date.now().toString(36);
     const dateEl = form.querySelector('#f-date');
     const date = dateEl && dateEl.value && dateEl.validity.valid ? dateEl.value : '';
     if (dateEl && dateEl.value && !date) { msgs('#hz-baddate', true); return; }
@@ -653,7 +680,9 @@ document.querySelectorAll('#hz-form').forEach((form) => {
       const type = typeEl && ['재활', '발톱', '재활+발톱'].includes(typeEl.value) ? typeEl.value : '재활';
       const srcEl = form.querySelector('#f-source');
       const source = srcEl && ['자체 지원', '인플루언서'].includes(srcEl.value) ? srcEl.value : '자체 지원';
-      await db.doc(`data/team/schedule/${key}`).set({type, source, status, date, time, memo, updatedAt: new Date().toISOString()});
+      const extra = manual ? {name: mName, phone: mPhone, sns: mSns} : {};
+      await db.doc(`data/team/schedule/${key}`).set({...extra, type, source, status, date, time, memo, updatedAt: new Date().toISOString()});
+      if (isNew) H.state.selected = key;
     } catch { ok = false; }
     msgs(ok ? '#hz-saved' : '#hz-unsaved', true);
   });
@@ -807,8 +836,9 @@ document.querySelectorAll('#hz-form').forEach((form) => {
 
   dash.draw('who', (sel) => {
     const rows = H.rows() || [];
-    sel.replaceChildren(new Option('지원자 선택', ''), ...rows.map((r) => new Option(`${r['이름']} (${r['상태']})`, r.key)));
-    sel.value = rows.some((r) => r.key === H.state.selected) ? H.state.selected : '';
+    sel.replaceChildren(new Option('지원자 선택', ''), new Option('+ 새로 직접 입력 (인플루언서 등)', '__new__'),
+      ...rows.map((r) => new Option(`${r['이름']}${r['지원 항목'] ? ' · ' + r['지원 항목'] : ''} (${r['상태']})`, r.key)));
+    sel.value = H.state.selected === '__new__' || rows.some((r) => r.key === H.state.selected) ? H.state.selected : '';
     sel.onchange = () => H.pick(sel.value);
   });
 

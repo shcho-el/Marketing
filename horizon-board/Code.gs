@@ -23,7 +23,7 @@ const CONFIG = {
   MASK_PHONE_FOR_VIEWERS: false, // true로 바꾸면 보기 링크에서 연락처를 010-****-1234처럼 가려요
 };
 
-const STATUS_HEADER = ['key', '이름', '구분', '지원 항목', '상태', '촬영일', '시간', '메모', '저장 시각'];
+const STATUS_HEADER = ['key', '이름', '구분', '지원 항목', '상태', '촬영일', '시간', '메모', '저장 시각', '연락처', 'SNS'];
 
 /* 기존 상태 옮기기용 데이터는 Seed.gs(저장소에 올리지 않는 파일)의 SEED_ROWS예요. setup()에서 읽어요. */
 
@@ -46,7 +46,7 @@ function saveFromLink_(key, p) {
   try {
     saveStatus(key, p.id, {
       name: p.name, source: p.source, type: p.type, status: p.status,
-      date: p.date, time: p.time, memo: p.memo,
+      date: p.date, time: p.time, memo: p.memo, phone: p.phone, sns: p.sns,
     });
   } catch (err) { ok = false; msg = err.message; }
   const esc = function (s) { return String(s || '').replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
@@ -158,7 +158,7 @@ function readRequests_() {
 function readStatus_() {
   return table_(statusSheet_()).map(function (r) {
     return {
-      id: fmt_(r.key), source: fmt_(r['구분']), type: fmt_(r['지원 항목']), status: fmt_(r['상태']),
+      id: fmt_(r.key), name: fmt_(r['이름']), phone: fmt_(r['연락처']), sns: fmt_(r['SNS']), source: fmt_(r['구분']), type: fmt_(r['지원 항목']), status: fmt_(r['상태']),
       date: fmt_(r['촬영일'], 'yyyy-MM-dd'), time: fmt_(r['시간'], 'HH:mm'), memo: fmt_(r['메모']),
       updatedAt: fmt_(r['저장 시각']),
     };
@@ -225,11 +225,18 @@ function saveStatus(key, id, obj) {
     /^\d{2}:\d{2}$/.test(obj.time || '') ? obj.time : '',
     clean(obj.memo, 500),
     new Date().toISOString(),
+    clean(obj.phone, 20),
+    /^https:\/\//.test(String(obj.sns || '').trim()) ? clean(obj.sns, 300) : '',
   ];
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
     const sh = statusSheet_();
+    // 예전에 만든 현황 탭에는 연락처·SNS 칸이 없어서 머리줄을 늘려요
+    if (sh.getLastColumn() < STATUS_HEADER.length) {
+      sh.getRange(1, 1, 1, STATUS_HEADER.length).setValues([STATUS_HEADER]).setFontWeight('bold');
+      sh.getRange(1, STATUS_HEADER.indexOf('연락처') + 1, sh.getMaxRows(), 1).setNumberFormat('@');
+    }
     const last = sh.getLastRow();
     const ids = last > 1 ? sh.getRange(2, 1, last - 1, 1).getValues().map(function (r) { return String(r[0]); }) : [];
     const i = ids.indexOf(id);
