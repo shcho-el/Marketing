@@ -95,11 +95,17 @@ function doGet(e) {
   const param = (e && e.parameter) || {};
   const role = role_(param.view);
   if (role === 'none') {
+    let who = '';
+    try { who = Session.getActiveUser().getEmail(); } catch (err) { /* 무시 */ }
+    const companyUrl = companyUrl_();
     return HtmlService.createHtmlOutput(
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<div style="font-family:sans-serif;max-width:420px;margin:80px auto;padding:0 16px;text-align:center;color:#333">' +
       '<h2 style="font-size:18px">접근 권한이 없습니다</h2>' +
-      '<p style="font-size:14px;line-height:1.6">회사 계정으로 로그인했는지 확인하거나, 담당자에게 보기 전용 링크를 요청하세요.</p></div>'
+      '<p style="font-size:14px;line-height:1.6">확인된 계정: <b>' + (who || '확인 불가 (회사 밖 계정이거나 다른 계정으로 열림)') + '</b></p>' +
+      '<p style="font-size:14px;line-height:1.6">회사 직원은 아래 <b>회사 계정 전용 주소</b>로 열어 주세요.<br>' +
+      (companyUrl ? '<a href="' + companyUrl + '" target="_top">회사 계정으로 열기</a>' : '') + '</p>' +
+      '<p style="font-size:13px;color:#777;line-height:1.6">회사 밖 분은 담당자에게 보기 전용 링크를 요청하세요.</p></div>'
     ).setTitle(CONFIG.APP_TITLE);
   }
   // 첫 화면 데이터는 페이지에 바로 넣어서 보냄 (브라우저→서버 호출 없이 즉시 표시)
@@ -107,7 +113,8 @@ function doGet(e) {
   try { initial = getDataFor_(role); } catch (err) { initialError = String(err && err.message || err); }
   const boot = JSON.stringify({
     shootId: param.shoot || '',
-    baseUrl: appUrl_(),
+    // 회사 계정은 회사 전용 주소(/a/macros/도메인/)로, 보기 전용은 일반 주소로 링크를 만듦
+    baseUrl: role === 'view' ? appUrl_() : (companyUrl_() || appUrl_()),
     role: role,
     viewKey: role === 'view' ? param.view : '',
     initial: initial,
@@ -152,6 +159,13 @@ function getViewKey_() {
 function appUrl_() {
   const url = ScriptApp.getService().getUrl() || '';
   return url.replace(/\/a\/macros\/[^/]+\//, '/macros/').replace(/\/a\/[^/]+\/macros\//, '/macros/');
+}
+
+/** 회사 계정 전용 주소: 여러 계정이 로그인돼 있어도 회사 계정으로 열림 */
+function companyUrl_() {
+  const url = appUrl_();
+  const domain = CONFIG.EDITOR_DOMAINS[0];
+  return url && domain ? url.replace('/macros/s/', '/a/macros/' + domain + '/s/') : '';
 }
 
 /**
