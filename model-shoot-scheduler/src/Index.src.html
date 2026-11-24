@@ -226,6 +226,12 @@ body.viewonly .edit-only{display:none!important}
   </div>
 </form></dialog>
 
+<dialog id="dlgViewer"><form method="dialog">
+  <div class="dlg-h"><h3>보기 전용 링크</h3><button class="btn ghost sm" value="cancel">닫기</button></div>
+  <div class="dlg-b" id="viewerBox"></div>
+  <div class="dlg-f"><span class="sp"></span><button type="button" class="btn primary" onclick="copyViewerLink()">링크 복사</button></div>
+</form></dialog>
+
 <datalist id="modelNames"></datalist>
 <datalist id="assigneeNames"></datalist>
 <div id="toast" role="status"></div>
@@ -361,7 +367,8 @@ function renderMain() {
   };
   const statuses = ['미배정', '배정', ...DATA.options.statuses];
 
-  $('#app').innerHTML = header(`<button class="btn ghost sm edit-only" onclick="openModels()">모델 정보</button>
+  $('#app').innerHTML = header(`<button class="btn ghost sm edit-only" onclick="showViewerLink()">보기 전용 링크</button>
+      <button class="btn ghost sm edit-only" onclick="openModels()">모델 정보</button>
       <button class="btn primary sm edit-only" style="background:#fff;color:var(--brand);border-color:#fff" onclick="openShoot(null)">+ 촬영 일정</button>`) +
   `<main class="wrap">
     <div class="stats">
@@ -657,6 +664,25 @@ async function removeShoot() {
   } catch (e) { toast('삭제 실패: ' + errMsg(e), true); }
 }
 
+/* ── 보기 전용 링크 ── */
+async function showViewerLink() {
+  const box = $('#viewerBox');
+  box.innerHTML = '<p class="muted">링크를 만드는 중…</p>';
+  $('#dlgViewer').showModal();
+  try {
+    const link = await api('getViewerLink');
+    box.innerHTML = `<p>이 링크를 받은 사람은 <b>조회만</b> 할 수 있어요. (추가·수정 불가, 모델 연락처 숨김)</p>
+      <input id="viewerLinkInput" readonly value="${esc(link)}" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--surface-2);color:var(--fg)">
+      <p class="hint">링크가 다른 곳에 퍼졌다면 Apps Script에서 resetViewerLink 를 실행하면 예전 링크가 막혀요.</p>`;
+    const inp = $('#viewerLinkInput'); inp.focus(); inp.select();
+  } catch (e) { box.innerHTML = `<p style="color:#b91c1c">${esc(errMsg(e))}</p>`; }
+}
+async function copyViewerLink() {
+  const inp = $('#viewerLinkInput'); if (!inp) return;
+  try { await navigator.clipboard.writeText(inp.value); toast('링크를 복사했어요'); }
+  catch (e) { inp.select(); document.execCommand('copy'); toast('링크를 복사했어요'); }
+}
+
 /* ── 모델 정보 ── */
 let editingModel = null;
 function openModels(prefillName) {
@@ -727,7 +753,7 @@ $('#btnModelSave').onclick = saveModelForm;
 $('#btnModelReset').onclick = () => resetModelForm();
 
 // 1분마다, 탭에 돌아올 때 시트 변경사항 반영 (편집 중이면 건너뜀)
-function canAutoRefresh() { return !busy && !$('#dlgShoot').open && !$('#dlgModels').open && document.visibilityState === 'visible'; }
+function canAutoRefresh() { return !busy && !$('#dlgShoot').open && !$('#dlgModels').open && !$('#dlgViewer').open && document.visibilityState === 'visible'; }
 setInterval(() => { if (canAutoRefresh()) refresh(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (canAutoRefresh()) refresh(); });
 

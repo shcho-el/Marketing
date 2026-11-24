@@ -166,6 +166,12 @@ function viewerLink() {
   return link;
 }
 
+/** 웹앱 화면의 [보기 전용 링크] 버튼용 (회사 계정만) */
+function getViewerLink() {
+  requireEditor_();
+  return appUrl_() + '?view=' + getViewKey_();
+}
+
 /** 보기 전용 링크를 바꿈 (예전 링크는 더 이상 열리지 않음) */
 function resetViewerLink() {
   PropertiesService.getScriptProperties().deleteProperty('VIEW_KEY');
