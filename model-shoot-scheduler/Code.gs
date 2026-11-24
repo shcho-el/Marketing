@@ -17,6 +17,8 @@ const CONFIG = {
   HEADER_ROW: 1,
   FOLDER_NAME: '촬영 콘티',
   APP_TITLE: '모델 촬영 스케줄',
+  // 이 도메인 계정은 수정 가능. 그 밖의 사람은 '보기 전용 링크'(viewerLink 함수로 확인)로만 조회 가능
+  EDITOR_DOMAINS: ['medibuilder.com'],
 };
 
 /** 화면 필드 → 시트 헤더 이름 */
@@ -90,12 +92,24 @@ function onOpen() {
 }
 
 function doGet(e) {
+  const param = (e && e.parameter) || {};
+  const role = role_(param.view);
+  if (role === 'none') {
+    return HtmlService.createHtmlOutput(
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<div style="font-family:sans-serif;max-width:420px;margin:80px auto;padding:0 16px;text-align:center;color:#333">' +
+      '<h2 style="font-size:18px">접근 권한이 없습니다</h2>' +
+      '<p style="font-size:14px;line-height:1.6">회사 계정으로 로그인했는지 확인하거나, 담당자에게 보기 전용 링크를 요청하세요.</p></div>'
+    ).setTitle(CONFIG.APP_TITLE);
+  }
   // 첫 화면 데이터는 페이지에 바로 넣어서 보냄 (브라우저→서버 호출 없이 즉시 표시)
   let initial = null, initialError = '';
-  try { initial = getData(); } catch (err) { initialError = String(err && err.message || err); }
+  try { initial = getDataFor_(role); } catch (err) { initialError = String(err && err.message || err); }
   const boot = JSON.stringify({
-    shootId: (e && e.parameter && e.parameter.shoot) || '',
-    baseUrl: ScriptApp.getService().getUrl() || '',
+    shootId: param.shoot || '',
+    baseUrl: appUrl_(),
+    role: role,
+    viewKey: role === 'view' ? param.view : '',
     initial: initial,
     initialError: initialError,
   });
@@ -106,6 +120,56 @@ function doGet(e) {
   return HtmlService.createHtmlOutput(html)
     .setTitle(CONFIG.APP_TITLE)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/* ───────────────────────── 권한 ───────────────────────── */
+
+/** 'edit' = 회사 계정, 'view' = 보기 전용 링크, 'none' = 권한 없음 */
+function role_(viewKey) {
+  let email = '';
+  try { email = String(Session.getActiveUser().getEmail() || '').toLowerCase(); } catch (err) { /* 외부 계정은 빈 값 */ }
+  const domain = email.split('@')[1] || '';
+  if (domain && CONFIG.EDITOR_DOMAINS.indexOf(domain) >= 0) return 'edit';
+  if (viewKey && viewKey === getViewKey_()) return 'view';
+  return 'none';
+}
+
+function requireEditor_() {
+  if (role_('') !== 'edit') throw new Error('보기 전용 권한입니다. 수정은 회사 계정으로만 할 수 있어요.');
+}
+
+function getViewKey_() {
+  const props = PropertiesService.getScriptProperties();
+  let key = props.getProperty('VIEW_KEY');
+  if (!key) {
+    key = Utilities.getUuid().replace(/-/g, '');
+    props.setProperty('VIEW_KEY', key);
+  }
+  return key;
+}
+
+/** 외부 계정도 열 수 있는 일반 주소 (/a/macros/도메인/ 형태를 /macros/ 로) */
+function appUrl_() {
+  const url = ScriptApp.getService().getUrl() || '';
+  return url.replace(/\/a\/macros\/[^/]+\//, '/macros/').replace(/\/a\/[^/]+\/macros\//, '/macros/');
+}
+
+/**
+ * 보기 전용 링크 확인: Apps Script 편집기에서 이 함수를 실행하면 실행 로그에 링크가 나옵니다.
+ * 이 링크를 받은 사람은 (Google 계정으로 로그인 후) 조회만 할 수 있습니다.
+ */
+function viewerLink() {
+  const url = appUrl_();
+  if (!url) throw new Error('아직 배포되지 않았습니다.');
+  const link = url + '?view=' + getViewKey_();
+  Logger.log('보기 전용 링크: ' + link);
+  return link;
+}
+
+/** 보기 전용 링크를 바꿈 (예전 링크는 더 이상 열리지 않음) */
+function resetViewerLink() {
+  PropertiesService.getScriptProperties().deleteProperty('VIEW_KEY');
+  return viewerLink();
 }
 
 /**
@@ -136,19 +200,31 @@ function showWebAppUrl() {
 
 /* ───────────────────────── 클라이언트 API ───────────────────────── */
 
-/** 전체 데이터 */
-function getData() {
+/** 전체 데이터 (화면 새로고침용) */
+function getData(viewKey) {
+  const role = role_(viewKey);
+  if (role === 'none') throw new Error('접근 권한이 없습니다.');
+  return getDataFor_(role);
+}
+
+function getDataFor_(role) {
   const sh = getSheet_();
   const shoots = readShoots_();
   let folderUrl = '';
   try { folderUrl = getFolder_().getUrl(); } catch (err) { /* 권한 없음 */ }
   let user = '';
   try { user = Session.getActiveUser().getEmail(); } catch (err) { /* 무시 */ }
+  let models = readModels_();
+  if (role !== 'edit') {
+    // 보기 전용: 모델 연락처·메모는 숨김
+    models = models.map(function (m) { return { name: m.name, gender: m.gender, age: m.age, part: m.part, contact: m.contact, phone: '', memo: '' }; });
+    folderUrl = '';
+  }
   return {
     shoots: shoots,
-    models: readModels_(),
+    models: models,
     options: readOptions_(sh, shoots),
-    sheetUrl: getSpreadsheet_().getUrl() + '#gid=' + sh.getSheetId(),
+    sheetUrl: role === 'edit' ? getSpreadsheet_().getUrl() + '#gid=' + sh.getSheetId() : '',
     folderUrl: folderUrl,
     user: user,
     fetchedAt: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm:ss'),
@@ -157,6 +233,7 @@ function getData() {
 
 /** 촬영 일정 저장 (id 없으면 새 행 생성). 저장된 행을 반환. */
 function saveShoot(input) {
+  requireEditor_();
   return withLock_(function () {
     const sh = getSheet_();
     const map = ensureColumns_(sh);
@@ -175,6 +252,7 @@ function saveShoot(input) {
 
 /** 촬영 일정 삭제 (시트 행 삭제) */
 function deleteShoot(id) {
+  requireEditor_();
   return withLock_(function () {
     const sh = getSheet_();
     const map = ensureColumns_(sh);
@@ -187,6 +265,7 @@ function deleteShoot(id) {
 
 /** 콘티 파일 업로드 → Drive 저장 후 시트에 링크 기록 */
 function uploadConti(id, name, mimeType, base64) {
+  requireEditor_();
   const sh = getSheet_();
   const map = ensureColumns_(sh);
   const before = readShootAt_(sh, map, findRowById_(sh, map, id));
@@ -208,6 +287,7 @@ function uploadConti(id, name, mimeType, base64) {
 
 /** 콘티 파일 연결 해제 (trash=true면 Drive 휴지통으로 이동) */
 function removeConti(id, url, trash) {
+  requireEditor_();
   return withLock_(function () {
     const sh = getSheet_();
     const map = ensureColumns_(sh);
@@ -227,6 +307,7 @@ function removeConti(id, url, trash) {
 
 /** 모델 정보 저장 (originalName이 있으면 해당 모델 수정) */
 function saveModel(model, originalName) {
+  requireEditor_();
   return withLock_(function () {
     const sh = ensureModelSheet_();
     const map = headerMap_(sh);
@@ -247,6 +328,7 @@ function saveModel(model, originalName) {
 }
 
 function deleteModel(name) {
+  requireEditor_();
   return withLock_(function () {
     const sh = ensureModelSheet_();
     const row = findModelRow_(sh, headerMap_(sh), name);

@@ -151,6 +151,7 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;word-break:break-word}
 #toast.show{opacity:1}
 #toast.err{background:#7f1d1d}
 .sync{font-size:12px;opacity:.8}
+body.viewonly .edit-only{display:none!important}
 </style>
 </head>
 <body>
@@ -263,7 +264,10 @@ function toast(msg, err) {
   clearTimeout(toast._t); toast._t = setTimeout(() => t.className = '', err ? 5000 : 2400);
 }
 function errMsg(e) { return (e && (e.message || e)) + ''; }
-function shootUrl(id) { return (BOOT.baseUrl || '') + '?shoot=' + encodeURIComponent(id); }
+const VIEW_ONLY = BOOT.role === 'view';
+function viewParam() { return BOOT.viewKey ? 'view=' + encodeURIComponent(BOOT.viewKey) : ''; }
+function homeUrl() { return (BOOT.baseUrl || '') + (viewParam() ? '?' + viewParam() : ''); }
+function shootUrl(id) { return (BOOT.baseUrl || '') + '?shoot=' + encodeURIComponent(id) + (viewParam() ? '&' + viewParam() : ''); }
 function normUrl(u) { u = String(u || '').trim(); if (!u) return ''; return /^[a-z][a-z0-9+.-]*:/i.test(u) ? u : 'https://' + u; }
 function safeHref(u) { u = normUrl(u); return /^(https?|mailto|tel):/i.test(u) ? u : '#'; }
 
@@ -297,7 +301,7 @@ async function load(silent) {
     $('#loading').innerHTML = '<div style="max-width:480px;padding:16px;text-align:center"><div class="spinner"></div><b>시트 응답이 늦어지고 있습니다</b><p class="small">구글 계정이 여러 개 로그인돼 있으면 멈출 수 있어요. 시크릿 창에서 회사 계정 하나로만 로그인해 다시 열어 보세요.</p></div>';
   }, 20000);
   try {
-    const d = await api('getData');
+    const d = await api('getData', BOOT.viewKey || '');
     if (!d || !d.shoots) throw new Error('시트 데이터를 받지 못했습니다. Apps Script에서 getData 함수를 실행해 실행 로그의 오류를 확인하세요.');
     DATA = d;
     clearTimeout(slow);
@@ -328,7 +332,7 @@ function header(extra) {
     <span class="sync" id="sync">동기화 ${esc((DATA.fetchedAt || '').slice(11, 16))}</span>
     <button class="btn ghost sm" onclick="refresh()">새로고침</button>
     ${extra || ''}
-    <a class="btn ghost sm" href="${esc(DATA.sheetUrl)}" target="_blank" rel="noopener">시트 열기</a>
+    ${VIEW_ONLY ? '<span class="badge none" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)">보기 전용</span>' : `<a class="btn ghost sm" href="${esc(DATA.sheetUrl)}" target="_blank" rel="noopener">시트 열기</a>`}
   </div></header>`;
 }
 
@@ -357,8 +361,8 @@ function renderMain() {
   };
   const statuses = ['미배정', '배정', ...DATA.options.statuses];
 
-  $('#app').innerHTML = header(`<button class="btn ghost sm" onclick="openModels()">모델 정보</button>
-      <button class="btn primary sm" style="background:#fff;color:var(--brand);border-color:#fff" onclick="openShoot(null)">+ 촬영 일정</button>`) +
+  $('#app').innerHTML = header(`<button class="btn ghost sm edit-only" onclick="openModels()">모델 정보</button>
+      <button class="btn primary sm edit-only" style="background:#fff;color:var(--brand);border-color:#fff" onclick="openShoot(null)">+ 촬영 일정</button>`) +
   `<main class="wrap">
     <div class="stats">
       <div class="stat"><b>${st.month}</b><span>${VIEW.m + 1}월 촬영 슬롯</span></div>
@@ -407,7 +411,7 @@ function calendarHtml(list) {
     const items = byDate[ds] || [];
     const cls = ['day', d.getMonth() !== VIEW.m ? 'out' : '', ds === today ? 'today' : '', d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''].join(' ');
     h += `<div class="${cls}">
-      <div class="head"><span class="num">${d.getDate()}</span><button class="add" title="${ds} 촬영 추가" onclick="openShoot(null,'${ds}')">+</button></div>
+      <div class="head"><span class="num">${d.getDate()}</span><button class="add edit-only" title="${ds} 촬영 추가" onclick="openShoot(null,'${ds}')">+</button></div>
       ${items.map(chipHtml).join('')}
     </div>`;
   }
@@ -445,7 +449,7 @@ function tableHtml(list) {
       <td>${s.calendar ? '✓' : ''}</td>
       <td>${esc(s.use)}</td>
       <td class="wrap-cell small">${esc([s.memo, s.note].filter(Boolean).join(' · '))}</td>
-      <td><button class="btn sm" onclick="openShoot('${esc(s.id)}')">수정</button> <a class="btn sm" href="${esc(shootUrl(s.id))}" target="_blank" rel="noopener">열기</a></td>
+      <td><button class="btn sm edit-only" onclick="openShoot('${esc(s.id)}')">수정</button> <a class="btn sm" href="${esc(shootUrl(s.id))}" target="_blank" rel="noopener">열기</a></td>
     </tr>`;
   }).join('')}</tbody></table>`;
 }
@@ -453,19 +457,19 @@ function tableHtml(list) {
 function renderDetail() {
   const s = DATA.shoots.find(x => x.id === BOOT.shootId);
   if (!s) {
-    $('#app').innerHTML = header() + `<main class="wrap"><div class="empty">일정을 찾을 수 없습니다. 시트에서 삭제되었을 수 있어요.<br><br><a class="btn" href="${esc(BOOT.baseUrl)}">캘린더로</a></div></main>`;
+    $('#app').innerHTML = header() + `<main class="wrap"><div class="empty">일정을 찾을 수 없습니다. 시트에서 삭제되었을 수 있어요.<br><br><a class="btn" href="${esc(homeUrl())}">캘린더로</a></div></main>`;
     return;
   }
   document.title = `${s.date} ${s.center} ${s.model || ''} · 콘티`;
   const k = statusKind(s);
   const m = DATA.models.find(x => x.name === s.model);
   const links = s.links || [], files = s.files || [];
-  $('#app').innerHTML = header(`<a class="btn ghost sm" href="${esc(BOOT.baseUrl)}">← 캘린더</a>`) +
+  $('#app').innerHTML = header(`<a class="btn ghost sm" href="${esc(homeUrl())}">← 캘린더</a>`) +
   `<main class="wrap">
     <div class="detail-head">
       <div class="kicker"><span class="ctag" style="--cc:${centerColor(s.center)}">${esc(s.center)}</span><span class="badge ${k}">${esc(statusLabel(s))}</span>${s.test ? '<span class="badge none">테스트</span>' : ''}${s.use === 'N' ? '<span class="badge none">사용 N</span>' : ''}<span class="muted">시트 ${s.row}행</span></div>
       <h1>${esc(fmtKDate(s.date))} ${esc(s.time)} · ${esc(s.model || '모델 미배정')}</h1>
-      <div><button class="btn primary" onclick="openShoot('${esc(s.id)}')">수정 · 콘티 업로드</button></div>
+      <div class="edit-only"><button class="btn primary" onclick="openShoot('${esc(s.id)}')">수정 · 콘티 업로드</button></div>
     </div>
     <div class="grid2">
       <div class="card"><div class="ch">촬영 일정</div><div class="cb"><dl class="kv">
@@ -491,7 +495,7 @@ function renderDetail() {
     <section class="block card">
       <div class="ch">콘티 기획안 <span class="muted small">링크 ${links.length} · 파일 ${files.length}</span></div>
       <div class="cb conti-list">
-        ${!links.length && !files.length ? `<div class="empty">등록된 콘티 기획안이 없습니다.<br><br><button class="btn primary" onclick="openShoot('${esc(s.id)}')">콘티 업로드</button></div>` : ''}
+        ${!links.length && !files.length ? `<div class="empty">등록된 콘티 기획안이 없습니다.<br><br><button class="btn primary edit-only" onclick="openShoot('${esc(s.id)}')">콘티 업로드</button></div>` : ''}
         ${files.map(f => contiBlock(f.name, f.url, '파일')).join('')}
         ${links.map(l => contiBlock(l.label || l.url, l.url, '링크')).join('')}
       </div>
@@ -550,6 +554,7 @@ function fillStaticOptions() {
 }
 
 function openShoot(id, date) {
+  if (VIEW_ONLY) return;
   const s = id ? DATA.shoots.find(x => x.id === id) : null;
   editing = s;
   pendingFiles = []; removedFiles = [];
@@ -655,6 +660,7 @@ async function removeShoot() {
 /* ── 모델 정보 ── */
 let editingModel = null;
 function openModels(prefillName) {
+  if (VIEW_ONLY) return;
   renderModels();
   resetModelForm(prefillName);
   if (!$('#dlgModels').open) $('#dlgModels').showModal();
@@ -725,6 +731,7 @@ function canAutoRefresh() { return !busy && !$('#dlgShoot').open && !$('#dlgMode
 setInterval(() => { if (canAutoRefresh()) refresh(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (canAutoRefresh()) refresh(); });
 
+if (VIEW_ONLY) document.body.classList.add('viewonly');
 loadView();
 if (BOOT.initial && BOOT.initial.shoots) {
   DATA = BOOT.initial;
