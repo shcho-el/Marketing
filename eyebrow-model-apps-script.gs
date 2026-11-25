@@ -11,7 +11,8 @@
  *       - 액세스 권한: 모든 사용자
  *  4) 발급된 웹 앱 URL 을 eyebrow-model.html 의 FORM_ENDPOINT 에 입력
  */
-const FOLDER_ID = '여기에_드라이브_폴더_ID';
+const FOLDER_ID = '여기에_드라이브_폴더_ID';   // 폴더 주소 전체를 붙여넣어도 됩니다
+const FALLBACK_FOLDER_NAME = '눈썹모델 지원 사진';  // ID가 잘못되면 내 드라이브에 이 이름으로 자동 생성
 const SHEET_NAME = '눈썹모델_지원';
 
 const HEADERS = ['접수일시', '이름', '생년월일', '연락처', '이메일', '인스타그램', '희망지역', '지원경로',
@@ -29,7 +30,7 @@ function doPost(e) {
     if (sh.getLastRow() === 0) sh.appendRow(HEADERS).setFrozenRows(1);
 
     const stamp = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd_HHmmss');
-    const folder = DriveApp.getFolderById(FOLDER_ID).createFolder(`${stamp}_${d.name}_@${d.instagram}`);
+    const folder = getPhotoRoot().createFolder(`${stamp}_${d.name}_@${d.instagram}`);
 
     const links = PHOTO_KEYS.map((k, i) => {
       const dataUrl = d.photos && d.photos[k];
@@ -58,7 +59,7 @@ function json(o) {
 
 /** 최초 1회 실행: 권한 승인 + 폴더/시트 확인 */
 function setup() {
-  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const folder = getPhotoRoot();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
   if (sh.getLastRow() === 0) sh.appendRow(HEADERS).setFrozenRows(1);
@@ -68,4 +69,14 @@ function setup() {
 /** 배포 확인용: 웹 앱 주소를 브라우저로 열면 {"ok":true,...} 가 보이면 정상 */
 function doGet() {
   return json({ ok: true, service: '눈썹모델 지원서 접수' });
+}
+
+/** 사진 저장 폴더: FOLDER_ID(또는 폴더 주소)로 찾고, 실패하면 이름으로 찾거나 새로 만듦 */
+function getPhotoRoot() {
+  const m = String(FOLDER_ID).match(/[-\w]{25,}/);
+  if (m) {
+    try { return DriveApp.getFolderById(m[0]); } catch (e) { Logger.log('FOLDER_ID 로 폴더를 열 수 없음: ' + e); }
+  }
+  const it = DriveApp.getFoldersByName(FALLBACK_FOLDER_NAME);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(FALLBACK_FOLDER_NAME);
 }
