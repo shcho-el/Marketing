@@ -4,6 +4,8 @@
  * 설치 방법
  *  1) 접수용 Google 스프레드시트 생성 → 확장 프로그램 > Apps Script
  *  2) 이 코드를 붙여넣고 FOLDER_ID 에 사진 저장용 드라이브 폴더 ID 입력
+ *     (폴더 주소 drive.google.com/drive/folders/XXXX 의 XXXX 부분)
+ *  2-1) 상단 함수 선택에서 setup 선택 → 실행 → 권한 승인 (최초 1회)
  *  3) 배포 > 새 배포 > 유형: 웹 앱
  *       - 실행 사용자: 나
  *       - 액세스 권한: 모든 사용자
@@ -52,4 +54,18 @@ function doPost(e) {
 
 function json(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** 최초 1회 실행: 권한 승인 + 폴더/시트 확인 */
+function setup() {
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+  if (sh.getLastRow() === 0) sh.appendRow(HEADERS).setFrozenRows(1);
+  Logger.log('준비 완료 - 사진 폴더: ' + folder.getName() + ' / 시트: ' + SHEET_NAME);
+}
+
+/** 배포 확인용: 웹 앱 주소를 브라우저로 열면 {"ok":true,...} 가 보이면 정상 */
+function doGet() {
+  return json({ ok: true, service: '눈썹모델 지원서 접수' });
 }
