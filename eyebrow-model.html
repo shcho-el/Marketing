@@ -198,6 +198,8 @@ textarea{min-height:110px;resize:vertical}
 .check span small{display:block;color:var(--sub);font-size:.82rem;margin-top:2px}
 
 .terms{border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;padding:16px 18px;height:170px;overflow:auto;font-size:.84rem;color:var(--sub);line-height:1.7;margin-bottom:12px}
+.all-agree{margin-top:18px;border-color:var(--ink)!important;background:#fff!important}
+.all-agree b{font-size:1rem}
 .terms h5{margin:0 0 4px;font-size:.86rem;color:var(--ink)}
 .terms p{margin:0 0 12px}
 
@@ -525,7 +527,6 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_makeup" value="Y"><span><b>촬영 당일 헤어 &amp; 메이크업 완성 후 방문</b>합니다. <span class="req">*</span><small>영상에 잘 나오는 헤어·메이크업은 필수입니다.</small></span></label>
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_time" value="Y"><span><b>촬영 소요 시간(약 1시간 내외)</b>을 확인했습니다. <span class="req">*</span><small>시술 장소는 선정 시 개별 안내됩니다.</small></span></label>
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_photo" value="Y"><span>실제 진행 시 <b>사진 및 동영상을 추가로 요청</b>할 수 있음을 확인했습니다. <span class="req">*</span></span></label>
-            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_media" value="Y"><span><b>영상 촬영물 활용</b>에 동의합니다. <span class="req">*</span><small>시술 및 촬영 과정에서 제작된 사진·영상은 SNS, 광고 등 마케팅 콘텐츠로 활용됩니다.</small></span></label>
 
             <div class="field" style="margin-top:22px">
               <span class="label">개인정보 수집 및 이용 동의 <span class="req">*</span></span>
@@ -541,6 +542,25 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
               </div>
             </div>
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_privacy" value="Y"><span><b>개인정보 수집 및 이용에 동의합니다.</b> <span class="req">*</span></span></label>
+
+            <div class="field" style="margin-top:26px">
+              <span class="label">촬영물 광고·마케팅 활용 동의 <span class="req">*</span></span>
+              <div class="terms" tabindex="0">
+                <h5>1. 활용 항목</h5>
+                <p>시술 및 촬영 과정에서 촬영된 사진·영상(얼굴, 음성 포함) 및 시술 전·후 사진</p>
+                <h5>2. 활용 목적</h5>
+                <p>광고 및 마케팅 콘텐츠 제작·게시 — SNS(인스타그램, 유튜브, 틱톡 등), 홈페이지, 블로그, 온라인 광고, 인쇄물 및 옥외 광고 등</p>
+                <h5>3. 활용 기간</h5>
+                <p>촬영일로부터 2년간 활용하며, 기간 내 게시된 콘텐츠는 기간 종료 후에도 게시 상태가 유지될 수 있습니다.</p>
+                <h5>4. 편집 및 가공</h5>
+                <p>촬영물은 콘텐츠 목적에 맞게 편집·보정·자막 삽입 등 가공될 수 있습니다.</p>
+                <h5>5. 동의 거부 권리</h5>
+                <p>귀하는 촬영물 활용에 대한 동의를 거부할 권리가 있습니다. 다만 본 모집은 촬영물 활용을 전제로 진행되므로, 동의하지 않으실 경우 모델 지원이 제한됩니다.</p>
+              </div>
+            </div>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_media" value="Y"><span><b>촬영물의 광고·마케팅 활용에 동의합니다.</b> <span class="req">*</span></span></label>
+
+            <label class="check all-agree"><input type="checkbox" id="agreeAll"><span><b>위 확인 및 동의 사항에 모두 동의합니다.</b></span></label>
           </fieldset>
 
           <div class="submit-wrap">
@@ -625,6 +645,12 @@ document.querySelectorAll('.up').forEach(up => {
     box.querySelector('img')?.remove(); up.classList.remove('has');
   });
 });
+
+/* --- 전체 동의 --- */
+const allBox = document.getElementById('agreeAll');
+const agreeBoxes = [...form.querySelectorAll('fieldset:last-of-type [data-rule="check"] input')];
+allBox.addEventListener('change', () => { const v = allBox.checked; agreeBoxes.forEach(b => { b.checked = v; b.closest('[data-req]')?.classList.toggle('invalid', !v && b.closest('[data-req]').classList.contains('invalid')); }); });
+form.addEventListener('change', e => { if (agreeBoxes.includes(e.target)) allBox.checked = agreeBoxes.every(b => b.checked); });
 
 /* --- 검증 --- */
 const rules = {
