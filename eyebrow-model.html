@@ -55,6 +55,9 @@ a{color:inherit}
 @keyframes shine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
 @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
 @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,224,61,0)}50%{box-shadow:0 0 18px 2px rgba(255,224,61,.35)}}
+.period .dd{font-weight:800;font-size:1.2em;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--pop)}
+.period .dd-date{margin-left:10px;font-size:.78em;font-weight:600;color:rgba(255,255,255,.75)}
+.period.closed{animation:none}.period.closed .dd{color:#fff}
 .period span{align-self:stretch;display:flex;align-items:center;background:var(--pop);color:var(--ink);font-size:.8rem;letter-spacing:.06em;padding:12px 14px;margin-right:16px}
 .hero .lede{font-size:clamp(1rem,1.6vw,1.15rem);color:#b9b9c2;max-width:34em;margin:0 0 32px}
 .hero .lede b{color:#fff;font-weight:700}
@@ -336,7 +339,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
     <div>
       <span class="eyebrow">Short-form Model Casting</span>
       <h1>숏폼 촬영<br><em>눈썹</em> 리얼모델 캐스팅</h1>
-      <p class="period"><span>모집 기간</span>12월 마감!<i class="spark s1" aria-hidden="true">✦</i><i class="spark s2" aria-hidden="true">✦</i></p>
+      <p class="period" id="period"><span>모집 마감</span><b class="dd" id="dday">12월 31일 마감!</b><small class="dd-date" id="ddate" hidden>12.31 (목)</small><i class="spark s1" aria-hidden="true">✦</i><i class="spark s2" aria-hidden="true">✦</i></p>
       <p class="lede">카메라 앞에서 <b>나다운 매력</b>을<br class="mbr"> 자연스럽게 보여주실 분을 찾습니다.<br>
         눈썹 리얼모델로 <b>숏폼 영상 촬영</b>에 함께해 주세요.</p>
       <a class="cta cta-hero" href="#apply">지금 바로 지원하기
@@ -665,6 +668,17 @@ const MAX_SIDE = 1600, JPEG_Q = 0.85;
 const form = document.getElementById('applyForm');
 const shell = document.getElementById('shell');
 const files = {};
+
+/* --- 모집 마감 D-DAY (한국 시간 2026-12-31 기준) --- */
+(() => {
+  const DEADLINE = Date.UTC(2026, 11, 31);
+  const k = new Date(Date.now() + 9 * 3600e3);
+  const n = Math.round((DEADLINE - Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate())) / 864e5);
+  const dd = document.getElementById('dday'), dt = document.getElementById('ddate');
+  if (n > 0) { dd.textContent = 'D-' + n; dt.hidden = false; }
+  else if (n === 0) { dd.textContent = 'D-DAY'; dt.textContent = '오늘 마감!'; dt.hidden = false; }
+  else { dd.textContent = '모집이 마감되었습니다'; document.getElementById('period').classList.add('closed'); }
+})();
 
 /* --- 입력 포맷 --- */
 const birth = document.getElementById('birth');
