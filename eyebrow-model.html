@@ -49,8 +49,12 @@ a{color:inherit}
 .cta svg{width:18px;height:18px}
 .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
 .hero-tags span{font-size:.85rem;font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#e4e4e7}
-.hero-art{justify-self:center;width:min(100%,380px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 40%,#1d1d21,#0f0f11 70%);border:1px solid #2a2a30;display:grid;place-items:center;box-shadow:0 0 0 14px rgba(255,46,110,.08),0 40px 80px -30px rgba(255,46,110,.55)}
-.hero-art svg{width:72%}
+.hero-photos{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:min(520px,64vw);position:relative}
+.hero-photos::before{content:"";position:absolute;inset:12% -6% -6% 10%;background:radial-gradient(closest-side,rgba(255,46,110,.55),transparent);filter:blur(30px);z-index:0}
+.ph{margin:0;position:relative;z-index:1;border-radius:20px;overflow:hidden;background:#1b1b1f;box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
+.ph img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.ph-main{grid-row:span 2;outline:3px solid var(--brow);outline-offset:-3px}
+.ph figcaption{position:absolute;left:14px;bottom:14px;font-size:.72rem;font-weight:700;letter-spacing:.14em;color:#fff;background:var(--brow);padding:6px 10px;border-radius:6px}
 
 /* ---------- KEY INFO ---------- */
 .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-44px;position:relative;z-index:2}
@@ -101,6 +105,8 @@ section.block{padding-block:88px 0}
 .angle{text-align:center}
 .angle .frame{aspect-ratio:1;border-radius:12px;background:#f4f4f6;border:1px solid var(--line);display:grid;place-items:center}
 .angle .frame svg{width:66%}
+.angle .frame.photo{overflow:hidden;border:0}
+.angle .frame.photo img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
 .angle span{display:block;margin-top:8px;font-size:.86rem;font-weight:600}
 .warn-note{margin-top:14px;font-size:.84rem;color:var(--sub);background:var(--bg);border-radius:8px;padding:10px 12px}
 
@@ -206,7 +212,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
 
 @media (max-width:900px){
   .hero-inner{grid-template-columns:1fr;padding-block:64px 80px;gap:36px}
-  .hero-art{width:min(70%,260px);order:-1;justify-self:start}
+  .hero-photos{height:min(460px,80vw)}
   .keys{grid-template-columns:1fr 1fr}
   .must,.guide{grid-template-columns:1fr}
   .steps{grid-template-columns:1fr 1fr;gap:28px 0}
@@ -216,7 +222,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
   body{font-size:15px}
   .wrap{padding-inline:16px}
   .hero-inner{padding-block:44px 72px}
-  .hero-art{display:none}
+  .hero-photos{height:auto;grid-template-columns:repeat(3,1fr);grid-template-rows:auto;gap:8px}
+  .hero-photos .ph{aspect-ratio:3/4;border-radius:14px}
+  .ph-main{grid-row:auto}
+  .ph figcaption{left:8px;bottom:8px;font-size:.6rem;padding:4px 6px}
   .keys{gap:10px}
   .key{padding:18px 16px}
   section.block{padding-block:64px 0}
@@ -258,18 +267,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       <div class="hero-tags"><span>#눈썹모델</span><span>#리얼모델</span><span>#숏폼촬영</span><span>#인천</span><span>#서울</span></div>
     </div>
-    <div class="hero-art" aria-hidden="true">
-      <svg viewBox="0 0 200 200" fill="none" stroke="#ff2e6e" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M100 26c-36 0-58 28-58 66 0 44 26 82 58 82s58-38 58-82c0-38-22-66-58-66z" stroke-width="1.6" stroke="#55555e"/>
-        <path d="M58 86c8-9 22-12 36-6" stroke-width="5"/>
-        <path d="M142 86c-8-9-22-12-36-6" stroke-width="5"/>
-        <path d="M64 102c6-5 16-5 22 0" stroke-width="2" stroke="#fff"/>
-        <path d="M114 102c6-5 16-5 22 0" stroke-width="2" stroke="#fff"/>
-        <path d="M100 108v22c-3 3-7 4-9 3" stroke-width="1.6" stroke="#55555e"/>
-        <path d="M86 148c8 5 20 5 28 0" stroke-width="2.4" stroke="#ff2e6e"/>
-        <circle cx="150" cy="52" r="3" fill="#ffe03d" stroke="none"/>
-        <circle cx="160" cy="66" r="2" fill="#ff2e6e" stroke="none"/>
-      </svg>
+    <div class="hero-photos" aria-hidden="true">
+      <figure class="ph ph-main"><img src="img/model-1.webp" alt="" width="900" height="1200" fetchpriority="high"><figcaption>REAL MODEL</figcaption></figure>
+      <figure class="ph"><img src="img/model-2.webp" alt="" width="900" height="900"></figure>
+      <figure class="ph"><img src="img/model-3.webp" alt="" width="900" height="1109"></figure>
     </div>
   </div>
 </header>
@@ -375,9 +376,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
             <li>평소 분위기와 매력이 드러나는 사진 추천</li>
           </ol>
           <div class="angles">
-            <div class="angle"><div class="frame" style="background:#ffe6ee"><svg viewBox="0 0 80 80" fill="none" stroke="#ff2e6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="22" y="14" width="36" height="52" rx="7"/><circle cx="40" cy="36" r="8"/><path d="M28 58c3-7 21-7 24 0"/></svg></div><span>자연스러운</span></div>
-            <div class="angle"><div class="frame" style="background:#ffe6ee"><svg viewBox="0 0 80 80" fill="none" stroke="#ff2e6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 62s-18-11-18-24a10 10 0 0 1 18-6 10 10 0 0 1 18 6c0 13-18 24-18 24z"/></svg></div><span>매력 어필</span></div>
-            <div class="angle"><div class="frame" style="background:#ffe6ee"><svg viewBox="0 0 80 80" fill="none" stroke="#ff2e6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 18l5.5 12 13 1.5-9.7 8.8 2.7 12.9L40 46.6l-11.5 6.6 2.7-12.9-9.7-8.8 13-1.5z"/></svg></div><span>베스트 컷</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/model-1.webp" alt="셀카 예시 1" loading="lazy"></div><span>청순</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/model-2.webp" alt="셀카 예시 2" loading="lazy"></div><span>시크</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/model-3.webp" alt="셀카 예시 3" loading="lazy"></div><span>내추럴</span></div>
           </div>
           <p class="warn-note">* 안내된 사항에 부합하지 않는 경우 모델 선정에서 제외될 수 있습니다.</p>
         </div>
