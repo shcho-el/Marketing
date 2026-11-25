@@ -674,7 +674,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
    Google Apps Script 웹앱 URL을 넣으면 시트 + 드라이브로 접수됩니다.
    (eyebrow-model-apps-script.gs 참고) 비워 두면 화면상 완료 처리만 됩니다. */
 const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOQcu3Nnn6HEqegGFMJD7vJmuE6uu_I6sy9kmKbLY9ZdIGMfak0IVqnLjPu3PnPiFW/exec";
-const MAX_SIDE = 1600, JPEG_Q = 0.85;
+const MAX_SIDE = 1200, JPEG_Q = 0.8;   // 얼굴 확인에 충분한 크기로 줄여 업로드 속도 개선
 
 const form = document.getElementById('applyForm');
 const shell = document.getElementById('shell');
@@ -820,19 +820,25 @@ form.addEventListener('submit', async e => {
     photos: files,
   };
   const btn = form.querySelector('.submit');
-  btn.disabled = true; btn.querySelector('.lbl').textContent = '제출 중...';
+  btn.disabled = true;
+  const lbl = btn.querySelector('.lbl');
+  lbl.textContent = '사진 올리는 중...';
+  const steps = [[3000, '지원서 저장 중...'], [7000, '거의 다 됐어요! 잠시만요']];
+  const timers = steps.map(([ms, t]) => setTimeout(() => { if (btn.disabled) lbl.textContent = t; }, ms));
   try {
     if (FORM_ENDPOINT) {
       const r = await fetch(FORM_ENDPOINT, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)});
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.ok === false) throw new Error(j.error || '제출 실패');
     }
+    timers.forEach(clearTimeout);
     clearDraft();
     shell.classList.add('sent');
     openDone();
   } catch(err) {
     alert('제출 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.\n(' + err.message + ')');
-    btn.disabled = false; btn.querySelector('.lbl').textContent = '지원서 제출하기';
+    timers.forEach(clearTimeout);
+    btn.disabled = false; lbl.textContent = '지원서 제출하기';
   }
 });
 
