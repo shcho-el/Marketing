@@ -31,6 +31,10 @@
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;word-break:keep-all}
 img,svg{display:block;max-width:100%}
+h1,h2,h3,h4,legend,.label{text-wrap:balance}
+.mbr{display:none}
+.field>label .help,.field>.label .help{display:block;margin-top:2px}
+p,li,dd,small,.help,.check span{text-wrap:pretty}
 a{color:inherit}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px))}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;letter-spacing:.14em;color:var(--brow);text-transform:uppercase}
@@ -240,6 +244,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
   .step:nth-child(2)::after{display:none}
 }
 @media (max-width:640px){
+  .mbr{display:inline}
+  .must-card{padding-bottom:64px!important}
+  .must-card svg.deco{width:140px}
   .must,.guide,.terms-row{grid-template-columns:1fr}
   body{font-size:15px}
   .wrap{padding-inline:16px}
@@ -264,7 +271,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
   .step .num{grid-row:span 2}
   .step::after{display:none}
   .must-card,.perks,.guide-card{padding:22px 20px}
-  .cond{padding:22px 20px;grid-template-columns:44px 1fr;gap:14px}
+  .cond{padding:22px 20px;grid-template-columns:1fr;gap:14px}
   .cond .ci{width:44px;height:44px}
   .form-section{padding-block:64px 110px}
   .form-shell{border-radius:18px}
@@ -291,7 +298,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
     <div>
       <span class="eyebrow">Short-form Model Casting</span>
       <h1>숏폼 촬영<br><em>눈썹</em> 리얼모델 모집</h1>
-      <p class="lede">카메라 앞에서 <b>나다운 매력</b>을 자연스럽게 보여주실 분을 찾습니다.<br>
+      <p class="lede">카메라 앞에서 <b>나다운 매력</b>을<br class="mbr"> 자연스럽게 보여주실 분을 찾습니다.<br>
         눈썹 리얼모델로 <b>숏폼 영상 촬영</b>에 함께해 주세요.</p>
       <a class="cta" href="#apply">지금 지원하기
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -310,11 +317,11 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
     <dl class="keys">
       <div class="key">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
-        <dt>촬영 형태</dt><dd>숏폼 영상 촬영<small>릴스 · 쇼츠 등 세로형 영상</small></dd>
+        <dt>촬영 형태</dt><dd>숏폼 영상 촬영<small>릴스·쇼츠 세로 영상</small></dd>
       </div>
       <div class="key">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></div>
-        <dt>시술 지역</dt><dd>인천 · 서울<small>상세 위치는 선정 시 개별 안내</small></dd>
+        <dt>시술 지역</dt><dd>인천 · 서울<small>위치는 선정 후 개별 안내</small></dd>
       </div>
       <div class="key">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
@@ -322,7 +329,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
       </div>
       <div class="key">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10.5 3 7.5 3a2.5 2.5 0 0 0 0 5M12 8s1.5-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div>
-        <dt>참여 혜택</dt><dd>자연눈썹 시술 지원<small>모델 선정 시 제공</small></dd>
+        <dt>참여 혜택</dt><dd>자연눈썹 시술<small>모델 선정 시 지원</small></dd>
       </div>
     </dl>
   </div>
@@ -339,16 +346,16 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
         <div class="must-card">
           <span class="badge">방문 안내</span>
           <h3>헤어 &amp; 기본 메이크업<br>정돈 후 방문</h3>
-          <p>촬영 당일 헤어와 기본 메이크업을 정돈한 상태로 방문해 주세요. 과한 메이크업은 필요 없으며, 눈썹 부위는 자연 상태 그대로 유지해 주시면 됩니다.</p>
+          <p>촬영 당일 헤어와 기본 메이크업을<br class="mbr"> 정돈한 상태로 방문해 주세요.<br>과한 메이크업은 필요 없으며,<br>눈썹은 자연 상태 그대로 와주시면 됩니다.</p>
           <svg class="deco" viewBox="0 0 100 40" fill="none" stroke="#ff2e6e" stroke-width="8" stroke-linecap="round"><path d="M6 32C26 8 62 4 94 18"/></svg>
         </div>
         <div class="perks">
           <h3><span class="star">★</span> 우대 조건</h3>
           <ul>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span><b>이목구비가 뚜렷한 분</b></span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>카메라 앞에서 어색하지 않고 <b>자신을 잘 드러내는 표정 연기</b>가 좋은 분</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>카메라 앞에서 어색하지 않고<br class="mbr"> <b>자신을 잘 드러내는 표정 연기</b>가 좋은 분</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span><b>인플루언서 환영</b>, SNS 중독자 환영</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>주변에서 <b>외모 칭찬을 많이 듣는 편</b>이라면 더더욱 환영!</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>주변에서 <b>외모 칭찬을 많이 듣는 편</b>이라면<br class="mbr"> 더더욱 환영!</span></li>
           </ul>
           <div class="mood"><span>#청순</span><span>#큐티</span><span>이미지 환영</span></div>
         </div>
@@ -356,14 +363,14 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
       <div class="terms-row">
         <div class="cond benefit">
           <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10.5 3 7.5 3a2.5 2.5 0 0 0 0 5M12 8s1.5-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div>
-          <div><span class="tagline">참여 혜택</span><h3>자연눈썹 시술 지원</h3><p>모델로 선정되신 분께 자연눈썹 시술을 지원해 드립니다.</p></div>
+          <div><span class="tagline">참여 혜택</span><h3>자연눈썹 시술 지원</h3><p>모델로 선정되신 분께<br class="mbr"> 자연눈썹 시술을 지원해 드립니다.</p></div>
         </div>
         <div class="cond consent">
           <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
-          <div><span class="tagline">참여 조건</span><h3>영상 촬영물 활용 동의</h3><p>시술 및 촬영 과정에서 제작된 사진·영상은 SNS, 광고 등 마케팅 콘텐츠로 활용됩니다. 동의하신 분에 한해 참여 가능합니다.</p></div>
+          <div><span class="tagline">참여 조건</span><h3>영상 촬영물 활용 동의</h3><p>시술 및 촬영 과정의 사진·영상은<br>SNS, 광고 등 마케팅 콘텐츠로 활용됩니다.<br>동의하신 분에 한해 참여 가능합니다.</p></div>
         </div>
       </div>
-      <p class="fine">※ 모집 조건 및 혜택은 변경될 수 있으며, 자세한 사항은 상담 시 안내드립니다.</p>
+      <p class="fine">※ 모집 조건 및 혜택은 변경될 수 있으며,<br class="mbr"> 자세한 사항은 상담 시 안내드립니다.</p>
     </div>
   </section>
 
@@ -389,7 +396,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
       <div class="sec-head">
         <span class="eyebrow">Photo Guide</span>
         <h2>사진 첨부 가이드</h2>
-        <p>모델 선정은 첨부해 주신 사진으로 진행됩니다. 가이드를 꼭 확인해 주세요.</p>
+        <p>모델 선정은 첨부해 주신 사진으로 진행됩니다.<br class="mbr"> 가이드를 꼭 확인해 주세요.</p>
       </div>
       <div class="guide">
         <div class="guide-card">
@@ -566,7 +573,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
 
           <div class="submit-wrap">
             <button class="submit" type="submit"><span class="spin"></span><span class="lbl">지원서 제출하기</span></button>
-            <p>제출 후에는 수정이 어려우니 입력 내용을 한 번 더 확인해 주세요.</p>
+            <p>제출 후에는 수정이 어려우니<br class="mbr"> 입력 내용을 한 번 더 확인해 주세요.</p>
           </div>
         </form>
 
