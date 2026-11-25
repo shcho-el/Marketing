@@ -242,6 +242,15 @@ textarea{min-height:110px;resize:vertical}
 .submit .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;display:none}
 .submit[disabled] .spin{display:block}
 @keyframes sp{to{transform:rotate(360deg)}}
+.draft-note{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 12px;padding:12px 16px;border-radius:12px;background:#fff8d6;border:1px solid #f1dc7a;font-size:.9rem;font-weight:600}
+.draft-note[hidden]{display:none}
+.draft-note button{flex:none;border:0;background:none;color:var(--sub);text-decoration:underline;font:inherit;font-size:.85rem;cursor:pointer}
+.draft-bar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.draft-btn{border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:.92rem;padding:10px 18px;border-radius:10px;cursor:pointer}
+.draft-btn:hover{background:var(--ink);color:#fff}
+.draft-btn:focus-visible{outline:3px solid var(--brow);outline-offset:2px}
+#draftStatus{font-size:.82rem;color:var(--faint)}
+#draftStatus.saved{color:var(--ok);font-weight:600}
 .submit-wrap p{margin:0;font-size:.84rem;color:var(--faint)}
 
 .modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px max(20px,env(safe-area-inset-left,0px));background:rgba(11,11,12,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fade .2s ease-out}
@@ -490,6 +499,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
         </div>
 
         <form id="applyForm" novalidate>
+          <div class="draft-note" id="draftNote" hidden><span>이전에 작성하던 내용을 불러왔어요.</span><button type="button" id="draftReset">새로 작성</button></div>
           <!-- 1. 기본 정보 -->
           <fieldset>
             <legend><span class="n">01</span>기본 정보</legend>
@@ -630,6 +640,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
 
           <div class="submit-wrap">
             <button class="submit" type="submit"><span class="spin"></span><span class="lbl">지원서 제출하기</span></button>
+            <div class="draft-bar"><button type="button" class="draft-btn" id="draftSave">임시저장</button><span id="draftStatus" aria-live="polite">작성 내용은 이 기기에 자동으로 임시저장돼요</span></div>
             <p>제출 후에는 수정이 어려우니<br class="mbr"> 입력 내용을 한 번 더 확인해 주세요.</p>
           </div>
         </form>
@@ -711,6 +722,12 @@ function resize(file){
     img.src = url;
   });
 }
+function showPhoto(up, data){
+  const box = up.querySelector('.box');
+  box.querySelector('img')?.remove();
+  const img = new Image(); img.src = data; img.alt = ''; box.appendChild(img);
+  up.classList.add('has'); up.classList.remove('invalid');
+}
 document.querySelectorAll('.up').forEach(up => {
   const input = up.querySelector('input'), box = up.querySelector('.box');
   input.addEventListener('change', async () => {
@@ -720,14 +737,14 @@ document.querySelectorAll('.up').forEach(up => {
     try {
       const data = await resize(f);
       files[input.name] = data;
-      box.querySelector('img')?.remove();
-      const img = new Image(); img.src = data; img.alt = ''; box.appendChild(img);
-      up.classList.add('has'); up.classList.remove('invalid');
+      showPhoto(up, data);
+      saveDraft();
     } catch(e) { alert(e.message); input.value=''; }
   });
   up.querySelector('.rm').addEventListener('click', () => {
     delete files[input.name]; input.value = '';
     box.querySelector('img')?.remove(); up.classList.remove('has');
+    saveDraft();
   });
 });
 
@@ -810,6 +827,7 @@ form.addEventListener('submit', async e => {
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.ok === false) throw new Error(j.error || '제출 실패');
     }
+    clearDraft();
     shell.classList.add('sent');
     openDone();
   } catch(err) {
@@ -817,6 +835,66 @@ form.addEventListener('submit', async e => {
     btn.disabled = false; btn.querySelector('.lbl').textContent = '지원서 제출하기';
   }
 });
+
+/* --- 임시저장 (이 기기 브라우저에만 저장) --- */
+const DRAFT_KEY = 'eyebrow-model-draft-v1';
+const draftStatus = document.getElementById('draftStatus');
+const draftNote = document.getElementById('draftNote');
+let draftTimer;
+function draftData(withPhotos){
+  const v = {};
+  form.querySelectorAll('input[id], textarea[id]').forEach(el => {
+    if (el.type === 'file' || el.id === 'agreeAll') return;
+    v[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+  });
+  return { v, photos: withPhotos ? files : {}, t: Date.now() };
+}
+function stamp(t){ const d = new Date(t); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function saveDraft(manual){
+  let ok = false, note = '';
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData(true))); ok = true; }
+  catch(e){
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData(false))); ok = true; note = ' (사진 제외)'; } catch(e2){}
+  }
+  draftStatus.textContent = ok ? `임시저장됨 ${stamp(Date.now())}${note}` : '이 브라우저에서는 임시저장을 쓸 수 없어요';
+  draftStatus.classList.toggle('saved', ok);
+  if (manual && ok) { const b = document.getElementById('draftSave'); b.textContent = '저장됐어요 ✓'; setTimeout(() => b.textContent = '임시저장', 1500); }
+}
+function clearDraft(){ try { localStorage.removeItem(DRAFT_KEY); } catch(e){} }
+const queueSave = () => { clearTimeout(draftTimer); draftTimer = setTimeout(() => saveDraft(), 600); };
+form.addEventListener('input', queueSave);
+form.addEventListener('change', queueSave);
+document.getElementById('draftSave').addEventListener('click', () => { clearTimeout(draftTimer); saveDraft(true); });
+document.getElementById('draftReset').addEventListener('click', () => {
+  clearDraft(); form.reset();
+  Object.keys(files).forEach(k => delete files[k]);
+  document.querySelectorAll('.up').forEach(up => { up.querySelector('.box img')?.remove(); up.classList.remove('has'); });
+  form.querySelectorAll('.invalid').forEach(f => f.classList.remove('invalid'));
+  etc.hidden = true; draftNote.hidden = true;
+  draftStatus.textContent = '작성 내용은 이 기기에 자동으로 임시저장돼요'; draftStatus.classList.remove('saved');
+});
+(function restoreDraft(){
+  let d;
+  try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch(e){ return; }
+  if (!d || !d.v) return;
+  Object.entries(d.v).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!val; else el.value = val;
+  });
+  Object.entries(d.photos || {}).forEach(([name, data]) => {
+    const input = form.querySelector(`input[type=file][name="${name}"]`);
+    if (!input) return;
+    files[name] = data; showPhoto(input.closest('.up'), data);
+  });
+  etc.hidden = !document.getElementById('c5').checked;
+  allBox.checked = agreeBoxes.every(b => b.checked);
+  const filled = Object.values(d.v).some(x => x === true || (typeof x === 'string' && x.trim())) || Object.keys(d.photos || {}).length;
+  if (filled) {
+    draftNote.hidden = false;
+    draftStatus.textContent = `임시저장됨 ${stamp(d.t)}`; draftStatus.classList.add('saved');
+  }
+})();
 
 /* --- 모바일 하단 CTA: 폼 영역에서는 숨김 --- */
 const mcta = document.getElementById('mcta');
