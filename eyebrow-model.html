@@ -74,6 +74,7 @@ section.block{padding-block:88px 0}
 .sec-head p{margin:0;color:var(--sub)}
 
 .must{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}
+.fine{margin:14px 2px 0;font-size:.8rem;color:var(--faint)}
 .terms-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
 .cond{display:grid;grid-template-columns:52px 1fr;gap:18px;align-items:start;border-radius:var(--radius);padding:26px 28px}
 .cond .ci{width:52px;height:52px;border-radius:14px;display:grid;place-items:center}
@@ -238,11 +239,17 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
 @media (max-width:640px){
   body{font-size:15px}
   .wrap{padding-inline:16px}
-  .hero-inner{padding-block:44px 72px}
-  .hero-photo{width:min(80%,320px);justify-self:center}
-  .ph{border-radius:22px;outline-offset:6px}
-  .f1{left:-6px;top:18px;font-size:.7rem;padding:7px 12px}
-  .f2{right:-6px;bottom:22px;font-size:.8rem;padding:8px 14px}
+  /* 모바일: 모델 사진을 히어로 전체 배경으로 */
+  .hero-inner{padding-block:min(108vw,430px) 84px;gap:0}
+  .hero-inner>div:first-child{position:relative;z-index:2}
+  .hero-photo{position:absolute;inset:0 0 auto 0;height:min(140vw,560px);width:auto;z-index:0;justify-self:stretch;align-self:stretch}
+  .hero-photo::before{display:none}
+  .hero-photo::after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(11,11,12,.25) 0%,rgba(11,11,12,0) 18%,rgba(11,11,12,0) 50%,rgba(11,11,12,.75) 76%,#0b0b0c 100%)}
+  .ph{position:absolute;inset:0;aspect-ratio:auto;border-radius:0;outline:0;box-shadow:none}
+  .ph img{object-position:50% 20%}
+  .f1{left:auto;right:16px;top:20px;z-index:3;font-size:.68rem;padding:7px 12px}
+  .f2{display:none}
+  .hero .lede{color:#d4d4da}
   .keys{gap:10px}
   .key{padding:18px 16px}
   section.block{padding-block:64px 0}
@@ -353,6 +360,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
           <div><span class="tagline">참여 조건</span><h3>영상 촬영물 활용 동의</h3><p>시술 및 촬영 과정에서 제작된 사진·영상은 SNS, 광고 등 마케팅 콘텐츠로 활용됩니다. 동의하신 분에 한해 참여 가능합니다.</p></div>
         </div>
       </div>
+      <p class="fine">※ 모집 조건 및 혜택은 변경될 수 있으며, 자세한 사항은 상담 시 안내드립니다.</p>
     </div>
   </section>
 
@@ -678,8 +686,12 @@ form.addEventListener('submit', async e => {
 
 /* --- 모바일 하단 CTA: 폼 영역에서는 숨김 --- */
 const mcta = document.getElementById('mcta');
-new IntersectionObserver(([en]) => mcta.classList.toggle('hide', en.isIntersecting), {rootMargin:'0px 0px -30% 0px'})
-  .observe(document.getElementById('apply'));
+/* 히어로의 지원 버튼이 보이는 동안 + 폼 영역에서는 숨김 */
+const vis = {hero:true, form:false};
+const sync = () => mcta.classList.toggle('hide', vis.hero || vis.form);
+new IntersectionObserver(([en]) => { vis.hero = en.isIntersecting; sync(); }).observe(document.querySelector('.hero .cta'));
+new IntersectionObserver(([en]) => { vis.form = en.isIntersecting; sync(); }, {rootMargin:'0px 0px -30% 0px'}).observe(document.getElementById('apply'));
+sync();
 </script>
 </body>
 </html>
