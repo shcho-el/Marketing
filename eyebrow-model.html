@@ -7,7 +7,7 @@
 <meta name="description" content="숏폼 촬영을 위한 눈썹 리얼모델을 모집합니다. 인천 · 서울 / 촬영 약 1시간">
 <meta property="og:type" content="website">
 <meta property="og:title" content="눈썹 리얼모델 캐스팅 · 숏폼 촬영">
-<meta property="og:description" content="2026년 12월까지 모집 | 인천 · 서울 | 촬영 약 1시간">
+<meta property="og:description" content="12월 마감! | 인천 · 서울 | 촬영 약 1시간">
 <meta property="og:url" content="https://shcho-el.github.io/Marketing/eyebrow-model.html">
 <link rel="preload" href="fonts/Pretendard-Bold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -47,6 +47,14 @@ a{color:inherit}
 .hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.15;letter-spacing:-.045em;margin:18px 0 20px}
 .hero h1 em{font-style:normal;color:var(--brow);position:relative;white-space:nowrap}
 .period{display:inline-flex;align-items:center;gap:10px;margin:0 0 22px;padding:6px 16px 6px 6px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);font-weight:700;font-size:1rem;color:#fff}
+.period{position:relative;overflow:hidden;padding-right:30px;animation:glow 2.4s ease-in-out infinite}
+.period::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 48%,transparent 66%);transform:translateX(-120%);animation:shine 2.8s ease-in-out infinite;pointer-events:none}
+.period .spark{position:absolute;font-style:normal;color:var(--pop);line-height:1;animation:twinkle 1.6s ease-in-out infinite}
+.period .s1{right:11px;top:5px;font-size:.8rem}
+.period .s2{right:20px;bottom:5px;font-size:.5rem;animation-delay:.8s}
+@keyframes shine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,224,61,0)}50%{box-shadow:0 0 18px 2px rgba(255,224,61,.35)}}
 .period span{background:var(--pop);color:var(--ink);font-size:.8rem;padding:5px 11px;border-radius:999px}
 .hero .lede{font-size:clamp(1rem,1.6vw,1.15rem);color:#b9b9c2;max-width:34em;margin:0 0 32px}
 .hero .lede b{color:#fff;font-weight:700}
@@ -319,7 +327,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
     <div>
       <span class="eyebrow">Short-form Model Casting</span>
       <h1>숏폼 촬영<br><em>눈썹</em> 리얼모델 캐스팅</h1>
-      <p class="period"><span>모집 기간</span>2026년 12월까지</p>
+      <p class="period"><span>모집 기간</span>12월 마감!<i class="spark s1" aria-hidden="true">✦</i><i class="spark s2" aria-hidden="true">✦</i></p>
       <p class="lede">카메라 앞에서 <b>나다운 매력</b>을<br class="mbr"> 자연스럽게 보여주실 분을 찾습니다.<br>
         눈썹 리얼모델로 <b>숏폼 영상 촬영</b>에 함께해 주세요.</p>
       <a class="cta" href="#apply">지금 지원하기
