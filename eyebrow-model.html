@@ -570,6 +570,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_makeup" value="Y"><span>촬영 당일 <b>헤어 &amp; 기본 메이크업을 정돈한 상태로 방문</b>합니다. <span class="req">*</span><small>과한 메이크업은 필요 없어요.</small></span></label>
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_time" value="Y"><span><b>촬영 소요 시간(약 1시간 내외)</b>을 확인했습니다. <span class="req">*</span><small>시술 장소는 선정 시 개별 안내됩니다.</small></span></label>
             <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_photo" value="Y"><span>실제 진행 시 <b>사진 및 동영상을 추가로 요청</b>할 수 있음을 확인했습니다. <span class="req">*</span></span></label>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_coop" value="Y"><span>모델로 <b>선정 시, 촬영 일정 및 진행에 성실히 협조</b>할 것을 약속합니다. <span class="req">*</span><small>촬영 당일 지각·불참 시 다른 분께 기회가 넘어갈 수 있어요.</small></span></label>
 
             <div class="field" style="margin-top:22px">
               <span class="label">개인정보 수집 및 이용 동의 <span class="req">*</span></span>
@@ -766,7 +767,7 @@ form.addEventListener('submit', async e => {
     email: fd.get('email').trim(), instagram: fd.get('instagram').trim(),
     region: fd.getAll('region').join(', '),
     channel: fd.get('channel') === '기타' ? `기타: ${(fd.get('channel_etc')||'').trim()}` : fd.get('channel'), brow_history: fd.get('brow_history'), appeal: (fd.get('appeal')||'').trim(),
-    agree_makeup: 'Y', agree_time: 'Y', agree_photo: 'Y', agree_media: 'Y', agree_privacy: 'Y',
+    agree_makeup: 'Y', agree_time: 'Y', agree_photo: 'Y', agree_coop: 'Y', agree_media: 'Y', agree_privacy: 'Y',
     photos: files,
   };
   const btn = form.querySelector('.submit');
