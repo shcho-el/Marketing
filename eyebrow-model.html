@@ -171,6 +171,7 @@ textarea{min-height:110px;resize:vertical}
 .choice input:checked+label b::before{border-color:var(--brow);background:var(--brow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat}
 .choice input:focus-visible+label{box-shadow:0 0 0 4px rgba(255,46,110,.2)}
 .choice-row.two{grid-template-columns:repeat(2,1fr)}
+.choice-row.compact label{padding:14px 16px}
 
 .uploads{display:grid;grid-template-columns:repeat(3,minmax(0,190px));gap:14px}
 .up{position:relative}
@@ -283,6 +284,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
   .up .box .t{font-size:.8rem}
   .choice-row{grid-template-columns:1fr}
   .choice-row.two{grid-template-columns:1fr 1fr}
+  .choice-row.compact{grid-template-columns:repeat(3,1fr);gap:8px}
+  .choice-row.compact label{padding:13px 10px}
+  .choice-row.compact label b{font-size:.92rem;gap:6px;white-space:nowrap}
   .m-cta{display:block;position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:50;transition:transform .25s,opacity .25s}
   .m-cta a{display:flex;justify-content:center;width:100%}
   .m-cta.hide{transform:translateY(140%);opacity:0;pointer-events:none}
@@ -515,6 +519,15 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
           <!-- 4. 추가 정보 -->
           <fieldset>
             <legend><span class="n">04</span>추가 정보</legend>
+            <div class="field" data-req data-rule="group" data-group="channel">
+              <span class="label">지원 경로 <span class="req">*</span> <span class="help">모집 공고를 어디서 보셨나요?</span></span>
+              <div class="choice-row compact">
+                <div class="choice"><input type="radio" id="c1" name="channel" value="카페"><label for="c1"><b>카페</b></label></div>
+                <div class="choice"><input type="radio" id="c2" name="channel" value="광고"><label for="c2"><b>광고</b></label></div>
+                <div class="choice"><input type="radio" id="c3" name="channel" value="대행사 연계"><label for="c3"><b>대행사 연계</b></label></div>
+              </div>
+              <span class="err">지원 경로를 선택해 주세요.</span>
+            </div>
             <div class="field" data-req data-rule="group" data-group="brow_history">
               <span class="label">눈썹 반영구 / 문신 이력 <span class="req">*</span> <span class="help">잔흔 여부 확인용</span></span>
               <div class="choice-row">
@@ -541,7 +554,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
               <span class="label">개인정보 수집 및 이용 동의 <span class="req">*</span></span>
               <div class="terms" tabindex="0">
                 <h5>1. 수집 항목</h5>
-                <p>필수: 이름, 생년월일, 연락처, 이메일, 인스타그램 아이디, 희망 시술 지역, 얼굴 사진(정면·45도·90도), 셀카, 눈썹 시술 이력<br>선택: 추가 셀카, 자기소개(어필 내용)</p>
+                <p>필수: 이름, 생년월일, 연락처, 이메일, 인스타그램 아이디, 희망 시술 지역, 지원 경로, 얼굴 사진(정면·45도·90도), 셀카, 눈썹 시술 이력<br>선택: 추가 셀카, 자기소개(어필 내용)</p>
                 <h5>2. 수집 및 이용 목적</h5>
                 <p>눈썹 리얼모델 선정 및 개별 연락, 자연눈썹 시술 및 숏폼 촬영 일정 안내, 본인 확인</p>
                 <h5>3. 보유 및 이용 기간</h5>
@@ -699,7 +712,7 @@ form.addEventListener('submit', async e => {
     name: fd.get('name').trim(), birth: fd.get('birth'), phone: fd.get('phone'),
     email: fd.get('email').trim(), instagram: fd.get('instagram').trim(),
     region: fd.getAll('region').join(', '),
-    brow_history: fd.get('brow_history'), appeal: (fd.get('appeal')||'').trim(),
+    channel: fd.get('channel'), brow_history: fd.get('brow_history'), appeal: (fd.get('appeal')||'').trim(),
     agree_makeup: 'Y', agree_time: 'Y', agree_photo: 'Y', agree_media: 'Y', agree_privacy: 'Y',
     photos: files,
   };

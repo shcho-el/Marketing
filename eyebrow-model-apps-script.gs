@@ -12,7 +12,7 @@
 const FOLDER_ID = '여기에_드라이브_폴더_ID';
 const SHEET_NAME = '눈썹모델_지원';
 
-const HEADERS = ['접수일시', '이름', '생년월일', '연락처', '이메일', '인스타그램', '희망지역',
+const HEADERS = ['접수일시', '이름', '생년월일', '연락처', '이메일', '인스타그램', '희망지역', '지원경로',
   '눈썹시술이력', '어필', '촬영물활용동의', '정면', '45도', '90도', '셀카1', '셀카2', '셀카3', '사진폴더'];
 const PHOTO_KEYS = ['photo_front', 'photo_45', 'photo_90', 'selfie_1', 'selfie_2', 'selfie_3'];
 const PHOTO_LABELS = ['정면', '45도', '90도', '셀카1', '셀카2', '셀카3'];
@@ -39,7 +39,7 @@ function doPost(e) {
 
     sh.appendRow([
       Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'),
-      d.name, "'" + d.birth, "'" + d.phone, d.email, '@' + d.instagram, d.region,
+      d.name, "'" + d.birth, "'" + d.phone, d.email, '@' + d.instagram, d.region, d.channel,
       d.brow_history, d.appeal, d.agree_media === 'Y' ? '동의' : '', ...links, folder.getUrl(),
     ]);
     return json({ ok: true });
