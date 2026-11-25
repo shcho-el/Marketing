@@ -46,16 +46,16 @@ a{color:inherit}
 .hero-inner{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-block:88px 80px}
 .hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.15;letter-spacing:-.045em;margin:18px 0 20px}
 .hero h1 em{font-style:normal;color:var(--brow);position:relative;white-space:nowrap}
-.period{display:inline-flex;align-items:center;gap:10px;margin:0 0 22px;padding:6px 16px 6px 6px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);font-weight:700;font-size:1rem;color:#fff}
-.period{position:relative;overflow:hidden;padding-right:30px;animation:glow 2.4s ease-in-out infinite}
+.period{display:inline-flex;align-items:center;margin:0 0 22px;padding:0 36px 0 0;border-radius:3px;background:rgba(255,224,61,.07);border:1.5px solid var(--pop);font-weight:700;font-size:1.15rem;letter-spacing:-.01em;color:#fff;line-height:1}
+.period{position:relative;overflow:hidden;animation:glow 2.4s ease-in-out infinite}
 .period::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 48%,transparent 66%);transform:translateX(-120%);animation:shine 2.8s ease-in-out infinite;pointer-events:none}
 .period .spark{position:absolute;font-style:normal;color:var(--pop);line-height:1;animation:twinkle 1.6s ease-in-out infinite}
-.period .s1{right:11px;top:5px;font-size:.8rem}
-.period .s2{right:20px;bottom:5px;font-size:.5rem;animation-delay:.8s}
+.period .s1{right:12px;top:4px;font-size:.8rem}
+.period .s2{right:23px;bottom:4px;font-size:.5rem;animation-delay:.8s}
 @keyframes shine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
 @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
 @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,224,61,0)}50%{box-shadow:0 0 18px 2px rgba(255,224,61,.35)}}
-.period span{background:var(--pop);color:var(--ink);font-size:.8rem;padding:5px 11px;border-radius:999px}
+.period span{align-self:stretch;display:flex;align-items:center;background:var(--pop);color:var(--ink);font-size:.8rem;letter-spacing:.06em;padding:12px 14px;margin-right:16px}
 .hero .lede{font-size:clamp(1rem,1.6vw,1.15rem);color:#b9b9c2;max-width:34em;margin:0 0 32px}
 .hero .lede b{color:#fff;font-weight:700}
 .cta{display:inline-flex;align-items:center;gap:10px;background:var(--brow);color:#fff;text-decoration:none;font-weight:700;font-size:1.05rem;padding:18px 32px;border-radius:999px;box-shadow:0 14px 30px -10px rgba(255,46,110,.75);transition:transform .2s,box-shadow .2s}
