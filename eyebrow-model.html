@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>눈썹 리얼모델 캐스팅 | 숏폼 촬영</title>
+<meta name="description" content="숏폼 촬영을 위한 눈썹 리얼모델을 모집합니다. 인천 · 서울 / 촬영 약 1시간">
+<meta property="og:type" content="website">
+<meta property="og:title" content="눈썹 리얼모델 캐스팅 · 숏폼 촬영">
+<meta property="og:description" content="12월 마감! | 인천 · 서울 | 촬영 약 1시간">
+<meta property="og:url" content="https://shcho-el.github.io/Marketing/eyebrow-model.html">
+<link rel="preload" href="fonts/Pretendard-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Pretendard";font-weight:200;font-display:swap;src:url(fonts/Pretendard-ExtraLight.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:300;font-display:swap;src:url(fonts/Pretendard-Light.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:400;font-display:swap;src:url(fonts/Pretendard-Regular.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:500;font-display:swap;src:url(fonts/Pretendard-Medium.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:600 900;font-display:swap;src:url(fonts/Pretendard-Bold.woff2) format("woff2")}
+:root{
+  --bg:#f4f4f6; --surface:#ffffff; --ink:#0b0b0c; --sub:#3f3f46; --faint:#8b8b94;
+  --line:#e4e4e7; --line-strong:#c9c9cf;
+  --brow:#ff2e6e; --brow-deep:#0b0b0c; --brow-soft:#ffe6ee; --blush:#ffe6ee; --pop:#ffe03d;
+  --danger:#e5262b; --ok:#16a34a;
+  --radius:16px; --radius-sm:10px;
+  --f-display:"Pretendard",-apple-system,"Apple SD Gothic Neo",sans-serif;
+  --f-body:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;word-break:keep-all}
+img,svg{display:block;max-width:100%}
+h1,h2,h3,h4,legend,.label{text-wrap:balance}
+.mbr{display:none}
+.field>label .help,.field>.label .help{display:block;margin-top:2px}
+p,li,dd,small,.help,.check span{text-wrap:pretty}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px))}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;letter-spacing:.14em;color:var(--brow);text-transform:uppercase}
+.hero .eyebrow{color:var(--brow)}
+.eyebrow::before{content:"";width:22px;height:2px;border-radius:2px;background:currentColor}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(70% 90% at 90% 10%,rgba(255,46,110,.38) 0%,transparent 60%),radial-gradient(60% 70% at 0% 100%,rgba(255,46,110,.14) 0%,transparent 60%),#0b0b0c}
+.hero-inner{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-block:88px 80px}
+.hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.15;letter-spacing:-.045em;margin:18px 0 20px}
+.hero h1 em{font-style:normal;color:var(--brow);position:relative;white-space:nowrap}
+.period{display:inline-flex;align-items:center;margin:0 0 22px;padding:0 36px 0 0;border-radius:3px;background:rgba(255,224,61,.07);border:1.5px solid var(--pop);font-weight:700;font-size:1.15rem;letter-spacing:-.01em;color:#fff;line-height:1}
+.period{position:relative;overflow:hidden;animation:glow 2.4s ease-in-out infinite}
+.period::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 48%,transparent 66%);transform:translateX(-120%);animation:shine 2.8s ease-in-out infinite;pointer-events:none}
+.period .spark{position:absolute;font-style:normal;color:var(--pop);line-height:1;animation:twinkle 1.6s ease-in-out infinite}
+.period .s1{right:12px;top:4px;font-size:.8rem}
+.period .s2{right:23px;bottom:4px;font-size:.5rem;animation-delay:.8s}
+@keyframes shine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(255,224,61,0)}50%{box-shadow:0 0 18px 2px rgba(255,224,61,.35)}}
+.period .dd{font-weight:800;font-size:1.2em;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--pop)}
+.period .dd-date{margin-left:10px;font-size:.78em;font-weight:600;color:rgba(255,255,255,.75)}
+.period.closed{animation:none}.period.closed .dd{color:#fff}
+.period span{align-self:stretch;display:flex;align-items:center;background:var(--pop);color:var(--ink);font-size:.8rem;letter-spacing:.06em;padding:12px 14px;margin-right:16px}
+.hero .lede{font-size:clamp(1rem,1.6vw,1.15rem);color:#b9b9c2;max-width:34em;margin:0 0 32px}
+.hero .lede b{color:#fff;font-weight:700}
+.cta{display:inline-flex;align-items:center;gap:10px;background:var(--brow);color:#fff;text-decoration:none;font-weight:700;font-size:1.05rem;padding:18px 32px;border-radius:999px;box-shadow:0 14px 30px -10px rgba(255,46,110,.75);transition:transform .2s,box-shadow .2s}
+.cta:hover{transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(255,46,110,.85)}
+.cta svg{width:18px;height:18px}
+.cta-hero{position:relative;font-size:1.2rem;padding:22px 40px;gap:12px;background:linear-gradient(135deg,#ff4d84,#ff2e6e 45%,#e8135a);box-shadow:0 16px 36px -10px rgba(255,46,110,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+.cta-hero::before{content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--brow);animation:ring 2s ease-out infinite;pointer-events:none}
+.cta-hero svg{width:22px;height:22px;animation:nudge 1.2s ease-in-out infinite}
+.cta-hero:hover{transform:translateY(-3px) scale(1.02)}
+@keyframes ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.18,1.45);opacity:0}}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.hero-photo{position:relative;justify-self:end;width:min(100%,420px)}
+.hero-photo::before{content:"";position:absolute;inset:8% -10% -8% -10%;background:radial-gradient(closest-side,rgba(255,46,110,.6),transparent);filter:blur(36px);z-index:0}
+.ph{margin:0;position:relative;z-index:1;aspect-ratio:4/5;border-radius:28px;overflow:hidden;background:#1b1b1f;outline:3px solid var(--brow);outline-offset:8px;box-shadow:0 30px 60px -24px rgba(0,0,0,.9)}
+.ph img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.float{position:absolute;z-index:2;font-weight:700;white-space:nowrap;border-radius:999px;box-shadow:0 12px 24px -10px rgba(0,0,0,.6)}
+.f1{left:-22px;top:28px;font-size:.78rem;letter-spacing:.14em;color:#fff;background:var(--brow);padding:9px 16px}
+.f2{right:-18px;bottom:36px;font-size:.88rem;color:var(--ink);background:#fff;padding:10px 18px}
+.f2 b{color:var(--brow);font-size:.7rem;margin-right:4px;vertical-align:1px}
+
+/* ---------- KEY INFO ---------- */
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-44px;position:relative;z-index:2}
+.key{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 20px;box-shadow:0 12px 30px -22px rgba(11,11,12,.18)}
+.key .ic{width:40px;height:40px;border-radius:12px;background:var(--brow);color:#fff;display:grid;place-items:center;margin-bottom:14px}
+.key .ic svg{width:20px;height:20px}
+.key dt{font-size:.82rem;color:var(--faint);font-weight:500}
+.key dd{margin:2px 0 0;font-weight:700;font-size:1.15rem;letter-spacing:-.02em;line-height:1.4}
+.key dd small{display:block;font-weight:400;font-size:.82rem;color:var(--sub);margin-top:4px}
+
+/* ---------- SECTIONS ---------- */
+section.block{padding-block:88px 0}
+.sec-head{margin-bottom:32px}
+.sec-head h2{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.25;letter-spacing:-.04em;margin:12px 0 8px}
+.target{display:inline-flex;align-items:center;margin-top:16px!important;border:1.5px solid var(--ink);border-radius:3px;background:var(--surface);color:var(--ink)!important;font-weight:700;font-size:1.05rem;line-height:1;padding-right:16px}
+.target span{align-self:stretch;display:flex;align-items:center;background:var(--ink);color:#fff;font-size:.8rem;letter-spacing:.06em;padding:11px 13px;margin-right:14px}
+.sec-head p{margin:0;color:var(--sub)}
+
+.must{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}
+.fine{margin:14px 2px 0;font-size:.8rem;color:var(--faint)}
+.terms-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.cond{display:grid;grid-template-columns:52px 1fr;gap:18px;align-items:start;border-radius:var(--radius);padding:26px 28px}
+.cond .ci{width:52px;height:52px;border-radius:14px;display:grid;place-items:center}
+.cond .ci svg{width:26px;height:26px}
+.cond .tagline{font-size:.76rem;font-weight:700;letter-spacing:.06em}
+.cond h3{margin:4px 0 6px;font-size:1.3rem;letter-spacing:-.03em;line-height:1.35}
+.cond p{margin:0;font-size:.92rem}
+.cond.benefit{background:var(--brow);color:#fff}
+.cond.benefit .ci{background:#fff;color:var(--brow)}
+.cond.benefit .tagline{color:#0b0b0c}
+.cond.benefit p{color:rgba(255,255,255,.88)}
+.cond.benefit p b{color:#fff;font-weight:700}
+.cond.consent{background:var(--surface);border:2px solid var(--ink)}
+.cond.consent .ci{background:var(--ink);color:#fff}
+.cond.consent .tagline{color:var(--brow)}
+.cond.consent p{color:var(--sub)}
+.must-card{border-radius:var(--radius);padding:32px;background:var(--brow-deep);color:#fff;position:relative;overflow:hidden}
+.must-card .badge{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:6px;background:var(--brow);color:#fff}
+.must-card h3{font-family:var(--f-display);font-size:1.7rem;letter-spacing:-.03em;margin:16px 0 10px;line-height:1.35}
+.must-card p{margin:0;color:#b9b9c2;font-size:.95rem}
+.must-card svg.deco{position:absolute;right:-24px;bottom:-24px;width:190px;opacity:.9}
+.perks{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px 30px}
+.perks h3{margin:0 0 16px;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+.perks h3 .star{color:var(--brow)}
+.perks ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.perks li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start}
+.perks li svg{width:20px;height:20px;color:var(--brow);margin-top:3px}
+.perks li b{font-weight:600}
+.mood{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.mood span{font-size:.9rem;font-weight:700;padding:8px 16px;border-radius:999px;background:var(--brow);color:#fff}
+
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:s;position:relative}
+.step{position:relative;padding:0 18px 0 0}
+.step .num{width:44px;height:44px;border-radius:50%;background:var(--ink);border:0;color:#fff;font-weight:700;display:grid;place-items:center;position:relative;z-index:1}
+.step:not(:last-child)::after{content:"";position:absolute;top:22px;left:44px;right:0;height:1.5px;background:repeating-linear-gradient(90deg,var(--line-strong) 0 6px,transparent 6px 11px)}
+.step h4{margin:16px 0 6px;font-size:1.02rem}
+.step p{margin:0;color:var(--sub);font-size:.9rem}
+
+.guide{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.guide-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px}
+.guide-card h3{margin:0 0 4px;font-size:1.15rem}
+.guide-card .hint{margin:0 0 18px;color:var(--faint);font-size:.88rem}
+.guide-card ol{margin:0 0 22px;padding:0;list-style:none;display:grid;gap:8px;counter-reset:g}
+.guide-card ol li{counter-increment:g;position:relative;padding-left:32px;font-size:.95rem}
+.guide-card ol li::before{content:counter(g,decimal-leading-zero);position:absolute;left:0;color:var(--faint);font-weight:600}
+.angles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.angle{text-align:center}
+.angle .frame{aspect-ratio:1;border-radius:12px;background:#f4f4f6;border:1px solid var(--line);display:grid;place-items:center}
+.angle .frame svg{width:66%}
+.angle .frame.photo{overflow:hidden;border:0;aspect-ratio:3/4}
+.angle .frame.photo img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.angle span{display:block;margin-top:8px;font-size:.86rem;font-weight:600}
+.warn-note{margin-top:14px;font-size:.84rem;color:var(--sub);background:var(--bg);border-radius:8px;padding:10px 12px}
+
+/* ---------- FORM ---------- */
+.form-section{padding-block:96px 120px}
+.form-shell{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 60px -40px rgba(11,11,12,.18);overflow:hidden}
+.form-top{padding:44px 44px 36px;background:var(--ink);color:#fff}
+.form-top p{color:#b9b9c2!important}.form-top p b{color:#fff!important}.form-top .eyebrow{color:var(--brow)}
+.form-top h2{font-family:var(--f-display);font-size:clamp(1.8rem,3.4vw,2.4rem);margin:10px 0 8px;letter-spacing:-.04em}
+.form-top p{margin:0;color:var(--sub);font-size:.95rem}
+.form-top p b{color:var(--ink)}
+.req-legend{margin-top:14px;font-size:.82rem;color:var(--faint)}
+.req-legend i,.req{color:var(--danger);font-style:normal}
+form{padding:12px 44px 44px}
+fieldset{border:0;margin:0;padding:32px 0 8px;border-bottom:1px dashed var(--line)}
+fieldset:last-of-type{border-bottom:0}
+legend{padding:0;font-size:1.08rem;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:18px}
+legend .n{width:28px;height:28px;border-radius:8px;background:var(--brow);color:#fff;font-size:.78rem;display:grid;place-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 20px}
+.field{display:grid;gap:8px;margin-bottom:20px;min-width:0}
+.grid2 .field{margin-bottom:0}
+.grid2{margin-bottom:20px}
+.field>label,.field .label{font-size:.92rem;font-weight:600}
+.field .help{font-size:.82rem;color:var(--faint);font-weight:400}
+input[type=text],input[type=tel],input[type=email],textarea{width:100%;font:inherit;font-size:1rem;color:var(--ink);background:#f7f7f9;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px;transition:border-color .15s,background .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:#c2b8af}
+input:focus,textarea:focus{outline:none;border-color:var(--brow);background:#fff;box-shadow:0 0 0 4px rgba(255,46,110,.15)}
+textarea{min-height:110px;resize:vertical}
+.prefix{position:relative}
+.prefix>span{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--faint);font-weight:600}
+.prefix input{padding-left:34px}
+
+.choice-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.choice{position:relative}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice label{display:flex;flex-direction:column;gap:2px;height:100%;padding:16px 16px 14px;border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;cursor:pointer;transition:all .15s}
+.choice label b{font-size:1rem;display:flex;align-items:center;gap:8px}
+.choice label small{color:var(--faint);font-size:.8rem}
+.choice label b::before{content:"";flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line-strong);background:#fff;transition:all .15s}
+.choice input[type=checkbox]+label b::before{border-radius:5px}
+.choice input:checked+label{border-color:var(--brow);background:var(--brow-soft)}
+.choice input:checked+label b::before{border-color:var(--brow);background:var(--brow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat}
+.choice input:focus-visible+label{box-shadow:0 0 0 4px rgba(255,46,110,.2)}
+.choice-row.two{grid-template-columns:repeat(2,1fr)}
+.choice-row.compact{grid-template-columns:repeat(4,1fr)}
+.choice-row.compact label{padding:14px 16px}
+#channelEtc{margin-top:2px}
+
+.uploads{display:grid;grid-template-columns:repeat(3,minmax(0,190px));gap:14px}
+.up{position:relative}
+.up input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;width:100%}
+.up .box{aspect-ratio:3/4;border:1.5px dashed var(--line-strong);border-radius:14px;background:#f7f7f9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:12px;transition:all .15s;overflow:hidden;position:relative}
+.up:hover .box{border-color:var(--brow);background:#fff}
+.up .box svg{width:28px;height:28px;color:var(--faint)}
+.up .box .t{font-weight:700;font-size:.92rem}
+.up .box .s{font-size:.76rem;color:var(--faint)}
+.up .box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.up.has .box{border-style:solid;border-color:var(--brow)}
+.up .chip{position:absolute;left:8px;top:8px;z-index:1;font-size:.72rem;font-weight:700;background:rgba(31,26,23,.78);color:#fff;padding:4px 8px;border-radius:6px;display:none}
+.up.has .chip{display:block}
+.up .rm{position:absolute;right:8px;top:8px;z-index:3;width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:var(--ink);display:none;place-items:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.up.has .rm{display:grid}
+.up-group-title{font-size:.88rem;font-weight:600;color:var(--sub);margin:4px 0 10px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.up-group-title span{font-weight:400;color:var(--faint);font-size:.8rem}
+.up-group+.up-group{margin-top:26px}
+
+.check{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;cursor:pointer;margin-bottom:10px;transition:all .15s}
+.check input{appearance:none;flex:none;width:20px;height:20px;margin:2px 0 0;border:1.5px solid var(--line-strong);border-radius:6px;background:#fff;cursor:pointer;transition:all .15s}
+.check input:checked{background:var(--brow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/13px no-repeat;border-color:var(--brow)}
+.check:has(input:checked){border-color:var(--brow);background:var(--brow-soft)}
+.check input:focus-visible{box-shadow:0 0 0 4px rgba(255,46,110,.2);outline:none}
+.check span{font-size:.94rem}
+.check span b{font-weight:600}
+.check span small{display:block;color:var(--sub);font-size:.82rem;margin-top:2px}
+
+.terms{border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;padding:16px 18px;height:170px;overflow:auto;font-size:.84rem;color:var(--sub);line-height:1.7;margin-bottom:12px}
+.all-agree{margin-top:18px;border-color:var(--ink)!important;background:#fff!important}
+.all-agree b{font-size:1rem}
+.terms h5{margin:0 0 4px;font-size:.86rem;color:var(--ink)}
+.terms p{margin:0 0 12px}
+
+.err{display:none;color:var(--danger);font-size:.82rem;font-weight:500}
+.invalid .err{display:block}
+.invalid input[type=text],.invalid input[type=tel],.invalid input[type=email]{border-color:var(--danger);background:#fff5f5}
+.invalid .box,.invalid .choice label,.invalid.check{border-color:var(--danger)}
+
+.submit-wrap{margin-top:32px;display:grid;gap:12px;justify-items:center;text-align:center}
+.submit{width:100%;max-width:420px;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:1.08rem;color:#fff;background:var(--brow);padding:20px 24px;border-radius:14px;box-shadow:0 16px 30px -12px rgba(255,46,110,.7);transition:transform .15s,opacity .15s;display:inline-flex;justify-content:center;align-items:center;gap:10px}
+.submit:hover{transform:translateY(-1px)}
+.submit[disabled]{opacity:.6;cursor:progress;transform:none}
+.submit .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;display:none}
+.submit[disabled] .spin{display:block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.submit-wrap p{margin:0;font-size:.84rem;color:var(--faint)}
+
+.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px max(20px,env(safe-area-inset-left,0px));background:rgba(11,11,12,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fade .2s ease-out}
+.modal[hidden]{display:none}
+.modal-card{width:min(100%,400px);background:var(--surface);border-radius:24px;padding:40px 28px 28px;text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);animation:pop .28s cubic-bezier(.2,.9,.3,1.2)}
+.modal-card .ok{width:68px;height:68px;margin:0 auto 20px;border-radius:50%;background:var(--brow);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 10px var(--brow-soft)}
+.modal-card .ok svg{width:32px;height:32px}
+.modal-card h3{margin:0 0 10px;font-size:1.45rem;letter-spacing:-.03em}
+.modal-card p{margin:0 0 28px;color:var(--sub);font-size:.98rem;line-height:1.6}
+.modal-btn{width:100%;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:1.02rem;color:#fff;background:var(--ink);padding:16px;border-radius:14px}
+.modal-btn:focus-visible{outline:3px solid var(--brow);outline-offset:3px}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.96)}}
+.done{display:none;padding:72px 32px 80px;text-align:center}
+.done .ok{width:72px;height:72px;margin:0 auto 22px;border-radius:50%;background:var(--brow-soft);color:var(--brow);display:grid;place-items:center}
+.done .ok svg{width:34px;height:34px}
+.done h3{font-family:var(--f-display);font-size:1.7rem;margin:0 0 10px}
+.done p{margin:0;color:var(--sub)}
+.form-shell.sent form{display:none}
+.form-shell.sent .done{display:block}
+
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);font-size:.82rem;text-align:center}
+
+/* sticky mobile CTA */
+.m-cta{display:none}
+
+@media (max-width:900px){
+  .hero-inner{grid-template-columns:1.1fr .9fr;padding-block:64px 84px;gap:28px}
+  .hero-photo{width:100%}
+  .f1{left:-10px;top:20px;font-size:.7rem;padding:7px 12px}
+  .f2{right:-8px;bottom:24px;font-size:.8rem;padding:8px 14px}
+  .keys{grid-template-columns:1fr 1fr}
+  .must{grid-template-columns:1fr 1fr}
+  .must-card,.perks,.guide-card,.cond{padding:24px}
+  .steps{grid-template-columns:repeat(3,1fr);gap:28px 0}
+  .step:nth-child(3)::after{display:none}
+}
+@media (max-width:640px){
+  .mbr{display:inline}
+  .cta-hero{display:flex;justify-content:center;width:100%;font-size:1.15rem;padding:20px 24px}
+  .d-only{display:none}
+  .must-card{padding-bottom:64px!important}
+  .must-card svg.deco{width:140px}
+  .must,.guide,.terms-row{grid-template-columns:1fr}
+  body{font-size:15px}
+  .wrap{padding-inline:16px}
+  /* 모바일: 모델 사진을 히어로 전체 배경으로 */
+  .hero-inner{grid-template-columns:1fr;padding-block:min(120vw,480px) 84px;gap:0}
+  .hero-inner>div:first-child{position:relative;z-index:2}
+  .hero-photo{position:absolute;inset:0 0 auto 0;height:min(140vw,560px);width:auto;z-index:0;justify-self:stretch;align-self:stretch}
+  .hero-photo::before{display:none}
+  .hero-photo::after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(11,11,12,.25) 0%,rgba(11,11,12,0) 18%,rgba(11,11,12,0) 68%,rgba(11,11,12,.75) 84%,#0b0b0c 95%)}
+  .ph{position:absolute;inset:0;aspect-ratio:auto;border-radius:0;outline:0;box-shadow:none}
+  .ph img{object-position:50% 20%}
+  .f1{left:auto;right:16px;top:20px;z-index:3;font-size:.68rem;padding:7px 12px}
+  .f2{display:none}
+  .hero .lede{color:#d4d4da}
+  .keys{gap:10px}
+  .key{padding:18px 16px}
+  section.block{padding-block:64px 0}
+  .steps{grid-template-columns:1fr;gap:22px}
+  .step{display:grid;grid-template-columns:44px 1fr;column-gap:16px;padding:0}
+  .step h4{margin:0 0 2px;align-self:end}
+  .step p{grid-column:2}
+  .step .num{grid-row:span 2}
+  .step::after{display:none}
+  .must-card,.perks,.guide-card{padding:22px 20px}
+  .cond{padding:22px 20px;grid-template-columns:1fr;gap:14px}
+  .cond .ci{width:44px;height:44px}
+  .form-section{padding-block:64px 110px}
+  .form-shell{border-radius:18px}
+  .form-top{padding:28px 20px 22px}
+  form{padding:4px 20px 32px}
+  .grid2{grid-template-columns:1fr}
+  .uploads{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .up .box .s{display:none}
+  .up .box .t{font-size:.8rem}
+  .choice-row{grid-template-columns:1fr}
+  .choice-row.two{grid-template-columns:1fr 1fr}
+  .choice-row.compact{grid-template-columns:repeat(2,1fr);gap:8px}
+  .choice-row.compact label{padding:13px 10px}
+  .choice-row.compact label b{font-size:.92rem;gap:6px;white-space:nowrap}
+  .m-cta{display:block;position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:50;transition:transform .25s,opacity .25s}
+  .m-cta a{display:flex;justify-content:center;width:100%}
+  .m-cta.hide{transform:translateY(140%);opacity:0;pointer-events:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div>
+      <span class="eyebrow">Short-form Model Casting</span>
+      <h1>숏폼 촬영<br><em>눈썹</em> 리얼모델 캐스팅</h1>
+      <p class="period" id="period"><span>모집 마감</span><b class="dd" id="dday">12월 31일 마감!</b><small class="dd-date" id="ddate" hidden></small><i class="spark s1" aria-hidden="true">✦</i><i class="spark s2" aria-hidden="true">✦</i></p>
+      <p class="lede">카메라 앞에서 <b>나다운 매력</b>을<br class="mbr"> 자연스럽게 보여주실 분을 찾습니다.<br>
+        눈썹 리얼모델로 <b>숏폼 영상 촬영</b>에 함께해 주세요.</p>
+      <a class="cta cta-hero" href="#apply">지금 바로 지원하기
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+    <div class="hero-photo" aria-hidden="true">
+      <figure class="ph"><img src="img/model-1.webp" alt="" width="900" height="1200" fetchpriority="high"></figure>
+      <span class="float f1">REAL MODEL</span>
+      <span class="float f2"><b>●</b> 숏폼 촬영 · 약 1시간</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= KEY INFO ================= -->
+  <div class="wrap">
+    <dl class="keys">
+      <div class="key">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
+        <dt>촬영 형태</dt><dd>숏폼 영상 촬영<small>릴스·쇼츠 세로 영상</small></dd>
+      </div>
+      <div class="key">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></div>
+        <dt>시술 지역</dt><dd>인천 · 서울<small>위치는 선정 후 개별 안내</small></dd>
+      </div>
+      <div class="key">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <dt>소요 시간</dt><dd>약 1시간 내외<small>촬영 기준</small></dd>
+      </div>
+      <div class="key">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10.5 3 7.5 3a2.5 2.5 0 0 0 0 5M12 8s1.5-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div>
+        <dt>참여 혜택</dt><dd>자연눈썹 시술<br class="mbr"> + 모델료<small>모델 선정 시 지원</small></dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- ================= REQUIREMENTS ================= -->
+  <section class="block">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Who we're looking for</span>
+        <h2>이런 분을 찾고 있어요</h2>
+        <p>아래 조건에 해당한다면 망설이지 말고 지원해 주세요.</p>
+        <p class="target"><span>모집 대상</span>20대 중반 ~ 30대 중반 여성</p>
+      </div>
+      <div class="must">
+        <div class="must-card">
+          <span class="badge">방문 안내</span>
+          <h3>헤어 &amp; 기본 메이크업<br>정돈 후 방문</h3>
+          <p>촬영 당일 헤어와 기본 메이크업을<br class="mbr"> 정돈한 상태로 방문해 주세요.<br>과한 메이크업은 필요 없으며,<br>눈썹은 자연 상태 그대로 와주시거나,<br>메이크업 후 현장에서 지우셔도 됩니다.</p>
+          <svg class="deco" viewBox="0 0 100 40" fill="none" stroke="#ff2e6e" stroke-width="8" stroke-linecap="round"><path d="M6 32C26 8 62 4 94 18"/></svg>
+        </div>
+        <div class="perks">
+          <h3><span class="star">★</span> 우대 조건</h3>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span><b>이목구비가 뚜렷한 분</b></span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span><b>카메라빨 잘~ 받으시는 분</b></span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>카메라 앞에서 어색하지 않고<br class="mbr"> <b>자신을 잘 드러내는 표정 연기</b>가 좋은 분</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span><b>인플루언서 환영</b>, SNS 중독자 환영</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>주변에서 <b>외모 칭찬을 많이 듣는 편</b>이라면<br class="mbr"> 더더욱 환영!</span></li>
+          </ul>
+          <div class="mood"><span>#청순</span><span>#큐티</span><span>이미지 환영</span></div>
+        </div>
+      </div>
+      <div class="terms-row">
+        <div class="cond benefit">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10.5 3 7.5 3a2.5 2.5 0 0 0 0 5M12 8s1.5-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div>
+          <div><span class="tagline">참여 혜택</span><h3>자연눈썹 시술 + 모델료 지원</h3><p>한 올 한 올 월 3,000건 이상 시술하는<br class="mbr"> <b>자연눈썹 시술 맛집!</b><br><b>커스터마이징 디자인 가능!</b><span class="d-only"><br>모델로 선정되신 분께 자연눈썹 시술과 모델료를 지원해 드립니다.</span></p></div>
+        </div>
+        <div class="cond consent">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
+          <div><span class="tagline">참여 조건</span><h3>영상 촬영물 활용 동의</h3><p>시술 및 촬영 과정의 사진·영상은<br>SNS, 광고 등 마케팅 콘텐츠로 활용됩니다.<br>동의하신 분에 한해 참여 가능합니다.</p></div>
+        </div>
+      </div>
+      <p class="fine">※ 모집 조건 및 혜택은 변경될 수 있으며,<br class="mbr"> 자세한 사항은 상담 시 안내드립니다.</p>
+    </div>
+  </section>
+
+  <!-- ================= PROCESS ================= -->
+  <section class="block">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Process</span>
+        <h2>진행 절차</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="num">1</div><h4>온라인 지원</h4><p>아래 양식 작성 및 사진 첨부</p></div>
+        <div class="step"><div class="num">2</div><h4>서류 검토</h4><p>사진 및 SNS 기반 모델 선정</p></div>
+        <div class="step"><div class="num">3</div><h4>개별 연락</h4><p>적합자에 한해 연락 · 위치 개별 안내</p></div>
+        <div class="step"><div class="num">4</div><h4>시술 &amp; 숏폼 촬영</h4><p>인천 또는 서울 / 약 1시간</p></div>
+        <div class="step"><div class="num">5</div><h4>촬영 정산</h4><p>캐스팅 조건에 따른 정산</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PHOTO GUIDE ================= -->
+  <section class="block">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Photo Guide</span>
+        <h2>사진 첨부 가이드</h2>
+        <p>모델 선정은 첨부해 주신 사진으로 진행됩니다.<br class="mbr"> 가이드를 꼭 확인해 주세요.</p>
+      </div>
+      <div class="guide">
+        <div class="guide-card">
+          <h3>무보정 얼굴 사진</h3>
+          <p class="hint">정면 · 45도 · 측면 각 1장</p>
+          <ol>
+            <li>최근 3개월 이내 촬영된 사진</li>
+            <li>고화질의 선명한 사진</li>
+            <li><b>눈썹이 잘 보이도록</b> 앞머리를 넘겨 촬영</li>
+            <li>보정 어플 또는 과보정된 사진 사용 불가</li>
+          </ol>
+          <div class="angles">
+            <div class="angle"><div class="frame photo"><img src="img/face-front.webp" alt="얼굴 정면 예시" loading="lazy"></div><span>얼굴 정면</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/face-45.webp" alt="얼굴 45도 예시" loading="lazy"></div><span>얼굴 45도</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/face-90.webp" alt="얼굴 측면 예시" loading="lazy"></div><span>얼굴 측면</span></div>
+          </div>
+        </div>
+        <div class="guide-card">
+          <h3>셀카</h3>
+          <p class="hint">최소 1장 필수 · 최대 3장</p>
+          <ol>
+            <li>셀카는 보정 및 메이크업 허용</li>
+            <li>셀카 3장 업로드 시 선정 확률 UP</li>
+            <li>평소 분위기와 매력이 드러나는 사진 추천</li>
+          </ol>
+          <div class="angles">
+            <div class="angle"><div class="frame photo"><img src="img/model-1.webp" alt="셀카 예시 1" loading="lazy"></div><span>청순</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/model-2.webp" alt="셀카 예시 2" loading="lazy"></div><span>시크</span></div>
+            <div class="angle"><div class="frame photo"><img src="img/model-3.webp" alt="셀카 예시 3" loading="lazy"></div><span>내추럴</span></div>
+          </div>
+          <p class="warn-note">* 안내된 사항에 부합하지 않는 경우 모델 선정에서 제외될 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FORM ================= -->
+  <section class="form-section" id="apply">
+    <div class="wrap">
+      <div class="form-shell" id="shell">
+        <div class="form-top">
+          <span class="eyebrow">Application</span>
+          <h2>모델 지원서</h2>
+          <p>원활한 모델 선정을 위해 <b>정확한 정보</b>를 입력해 주세요.<br>적합자에 한해 <b>개별 연락</b>드릴 예정입니다.</p>
+          <p class="req-legend"><i>*</i> 표시는 필수 항목입니다.</p>
+        </div>
+
+        <form id="applyForm" novalidate>
+          <!-- 1. 기본 정보 -->
+          <fieldset>
+            <legend><span class="n">01</span>기본 정보</legend>
+            <div class="grid2">
+              <div class="field" data-req>
+                <label for="name">이름 <span class="req">*</span></label>
+                <input id="name" name="name" type="text" autocomplete="name" placeholder="홍길동">
+                <span class="err">이름을 입력해 주세요.</span>
+              </div>
+              <div class="field" data-req data-rule="birth">
+                <label for="birth">생년월일 <span class="req">*</span></label>
+                <input id="birth" name="birth" type="text" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD">
+                <span class="err">생년월일을 YYYY-MM-DD 형식으로 입력해 주세요.</span>
+              </div>
+              <div class="field" data-req data-rule="phone">
+                <label for="phone">연락처 <span class="req">*</span></label>
+                <input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="13" autocomplete="tel" placeholder="010-0000-0000">
+                <span class="err">연락 가능한 휴대폰 번호를 입력해 주세요.</span>
+              </div>
+              <div class="field" data-req data-rule="email">
+                <label for="email">이메일 <span class="req">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" placeholder="example@email.com">
+                <span class="err">올바른 이메일 주소를 입력해 주세요.</span>
+              </div>
+            </div>
+            <div class="field" data-req>
+              <label for="insta">인스타그램 아이디 <span class="req">*</span> <span class="help">미기재 / 오기입 시 진행 불가</span></label>
+              <div class="prefix"><span>@</span><input id="insta" name="instagram" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="instagram_id"></div>
+              <span class="err">인스타그램 아이디를 입력해 주세요.</span>
+            </div>
+          </fieldset>
+
+          <!-- 2. 지역 -->
+          <fieldset>
+            <legend><span class="n">02</span>희망 시술 지역</legend>
+            <div class="field" data-req data-rule="group" data-group="region">
+              <span class="label">시술 가능한 지역을 선택해 주세요 <span class="req">*</span> <span class="help">중복 선택 가능 · 상세 위치는 선정 시 개별 안내</span></span>
+              <div class="choice-row two">
+                <div class="choice"><input type="checkbox" id="r1" name="region" value="인천"><label for="r1"><b>인천</b><small>인천 지점</small></label></div>
+                <div class="choice"><input type="checkbox" id="r2" name="region" value="서울"><label for="r2"><b>서울</b><small>서울 지점</small></label></div>
+              </div>
+              <span class="err">지역을 1곳 이상 선택해 주세요.</span>
+            </div>
+          </fieldset>
+
+          <!-- 3. 사진 -->
+          <fieldset>
+            <legend><span class="n">03</span>사진 첨부</legend>
+            <div class="up-group">
+              <div class="up-group-title">무보정 얼굴 사진 <span>최근 3개월 이내 · 눈썹이 잘 보이게 · 보정 불가</span></div>
+              <div class="uploads">
+                <div class="field up" data-req data-rule="file"><input type="file" accept="image/*" name="photo_front" aria-label="정면 사진"><span class="chip">정면</span><button type="button" class="rm" aria-label="삭제">✕</button><div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="t">정면 <span class="req">*</span></span><span class="s">무보정</span></div><span class="err">필수</span></div>
+                <div class="field up" data-req data-rule="file"><input type="file" accept="image/*" name="photo_45" aria-label="45도 사진"><span class="chip">45도</span><button type="button" class="rm" aria-label="삭제">✕</button><div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="t">45도 측면 <span class="req">*</span></span><span class="s">무보정</span></div><span class="err">필수</span></div>
+                <div class="field up" data-req data-rule="file"><input type="file" accept="image/*" name="photo_90" aria-label="90도 측면 사진"><span class="chip">90도</span><button type="button" class="rm" aria-label="삭제">✕</button><div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="t">90도 측면 <span class="req">*</span></span><span class="s">무보정</span></div><span class="err">필수</span></div>
+              </div>
+            </div>
+            <div class="up-group">
+              <div class="up-group-title">셀카 <span>최소 1장 필수 · 3장 업로드 시 선정 확률 UP</span></div>
+              <div class="uploads">
+                <div class="field up" data-req data-rule="file"><input type="file" accept="image/*" name="selfie_1" aria-label="셀카 1"><span class="chip">셀카 1</span><button type="button" class="rm" aria-label="삭제">✕</button><div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="t">셀카 1 <span class="req">*</span></span><span class="s">보정 허용</span></div><span class="err">필수</span></div>
+                <div class="field up"><input type="file" accept="image/*" name="selfie_2" aria-label="셀카 2"><span class="chip">셀카 2</span><button type="button" class="rm" aria-label="삭제">✕</button><div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="t">셀카 2</span><span class="s">선택</span></div></div>
+                <div class="field up"><input type="file" accept="image/*" name="selfie_3" aria-label="셀카 3"><span class="chip">셀카 3</span><button type="button" class="rm" aria-label="삭제">✕</button><div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="t">셀카 3</span><span class="s">선택</span></div></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 4. 추가 정보 -->
+          <fieldset>
+            <legend><span class="n">04</span>추가 정보</legend>
+            <div class="field" data-req data-rule="group" data-group="channel">
+              <span class="label">지원 경로 <span class="req">*</span> <span class="help">모집 공고를 어디서 보셨나요?</span></span>
+              <div class="choice-row compact">
+                <div class="choice"><input type="radio" id="c1" name="channel" value="뷰티 카페"><label for="c1"><b>뷰티 카페</b></label></div>
+                <div class="choice"><input type="radio" id="c2" name="channel" value="인스타그램"><label for="c2"><b>인스타그램</b></label></div>
+                <div class="choice"><input type="radio" id="c4" name="channel" value="지인 소개"><label for="c4"><b>지인 소개</b></label></div>
+                <div class="choice"><input type="radio" id="c5" name="channel" value="기타"><label for="c5"><b>기타</b></label></div>
+              </div>
+              <input type="text" id="channelEtc" name="channel_etc" maxlength="30" placeholder="어디서 보셨는지 짧게 적어주세요 (예: 블로그)" hidden>
+              <span class="err">지원 경로를 선택해 주세요. 기타를 고른 경우 내용을 적어주세요.</span>
+            </div>
+            <div class="field" data-req data-rule="group" data-group="brow_history">
+              <span class="label">눈썹 반영구 / 문신 이력 <span class="req">*</span> <span class="help">잔흔 여부 확인용</span></span>
+              <div class="choice-row">
+                <div class="choice"><input type="radio" id="h1" name="brow_history" value="없음"><label for="h1"><b>없음</b><small>자연 눈썹 그대로</small></label></div>
+                <div class="choice"><input type="radio" id="h2" name="brow_history" value="1년 이상 전"><label for="h2"><b>있음</b><small>1년 이상 전</small></label></div>
+                <div class="choice"><input type="radio" id="h3" name="brow_history" value="1년 이내"><label for="h3"><b>있음</b><small>1년 이내</small></label></div>
+              </div>
+              <span class="err">해당 항목을 선택해 주세요.</span>
+            </div>
+            <div class="field">
+              <label for="appeal">나를 어필해 주세요 <span class="help">선택 · 팔로워 수, 촬영 경험, 매력 포인트 등</span></label>
+              <textarea id="appeal" name="appeal" maxlength="500" placeholder="예) 팔로워 1.2만 뷰티 계정 운영 중 / 릴스 촬영 경험 다수 / 웃는 얼굴이 예쁘다는 말을 자주 들어요!"></textarea>
+            </div>
+          </fieldset>
+
+          <!-- 5. 확인 및 동의 -->
+          <fieldset>
+            <legend><span class="n">05</span>확인 및 동의</legend>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_makeup" value="Y"><span>촬영 당일 <b>헤어 &amp; 기본 메이크업을 정돈한 상태로 방문</b>합니다. <span class="req">*</span><small>과한 메이크업은 필요 없어요.</small></span></label>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_time" value="Y"><span><b>촬영 소요 시간(약 1시간 내외)</b>을 확인했습니다. <span class="req">*</span><small>시술 장소는 선정 시 개별 안내됩니다.</small></span></label>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_photo" value="Y"><span>실제 진행 시 <b>사진 및 동영상을 추가로 요청</b>할 수 있음을 확인했습니다. <span class="req">*</span></span></label>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_coop" value="Y"><span>모델로 <b>선정 시, 촬영 일정 및 진행에 성실히 협조</b>할 것을 약속합니다. <span class="req">*</span><small>촬영 당일 지각·불참 시 다른 분께 기회가 넘어갈 수 있어요.</small></span></label>
+
+            <div class="field" style="margin-top:22px">
+              <span class="label">개인정보 수집 및 이용 동의 <span class="req">*</span></span>
+              <div class="terms" tabindex="0">
+                <h5>1. 수집 항목</h5>
+                <p>필수: 이름, 생년월일, 연락처, 이메일, 인스타그램 아이디, 희망 시술 지역, 지원 경로, 얼굴 사진(정면·45도·90도), 셀카, 눈썹 시술 이력<br>선택: 추가 셀카, 자기소개(어필 내용)</p>
+                <h5>2. 수집 및 이용 목적</h5>
+                <p>눈썹 리얼모델 선정 및 개별 연락, 자연눈썹 시술 및 숏폼 촬영 일정 안내, 본인 확인</p>
+                <h5>3. 보유 및 이용 기간</h5>
+                <p>모델 선정 절차 종료 후 6개월간 보관 후 지체 없이 파기합니다. 단, 모델로 선정되어 촬영을 진행하는 경우 별도 촬영 동의서에 따릅니다.</p>
+                <h5>4. 동의 거부 권리</h5>
+                <p>귀하는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다. 다만 동의를 거부하실 경우 모델 지원이 제한됩니다.</p>
+              </div>
+            </div>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_privacy" value="Y"><span><b>개인정보 수집 및 이용에 동의합니다.</b> <span class="req">*</span></span></label>
+
+            <div class="field" style="margin-top:26px">
+              <span class="label">촬영물 광고·마케팅 활용 동의 <span class="req">*</span></span>
+              <div class="terms" tabindex="0">
+                <h5>1. 활용 항목</h5>
+                <p>시술 및 촬영 과정에서 촬영된 사진·영상(얼굴, 음성 포함) 및 시술 전·후 사진</p>
+                <h5>2. 활용 목적</h5>
+                <p>광고 및 마케팅 콘텐츠 제작·게시 — SNS(인스타그램, 유튜브, 틱톡 등), 홈페이지, 블로그, 온라인 광고 등</p>
+                <h5>3. 활용 기간</h5>
+                <p>촬영일로부터 3년간 활용합니다.</p>
+                <h5>4. 편집 및 가공</h5>
+                <p>촬영물은 콘텐츠 목적에 맞게 편집·보정·자막 삽입 등 가공될 수 있습니다.</p>
+                <h5>5. 동의 거부 권리</h5>
+                <p>귀하는 촬영물 활용에 대한 동의를 거부할 권리가 있습니다. 다만 본 모집은 촬영물 활용을 전제로 진행되므로, 동의하지 않으실 경우 모델 지원이 제한됩니다.</p>
+              </div>
+            </div>
+            <label class="check field" data-req data-rule="check"><input type="checkbox" name="agree_media" value="Y"><span><b>촬영물의 광고·마케팅 활용에 동의합니다.</b> <span class="req">*</span></span></label>
+
+            <label class="check all-agree"><input type="checkbox" id="agreeAll"><span><b>위 확인 및 동의 사항에 모두 동의합니다.</b></span></label>
+          </fieldset>
+
+          <div class="submit-wrap">
+            <button class="submit" type="submit"><span class="spin"></span><span class="lbl">지원서 제출하기</span></button>
+            <p>제출 후에는 수정이 어려우니<br class="mbr"> 입력 내용을 한 번 더 확인해 주세요.</p>
+          </div>
+        </form>
+
+        <div class="done" role="status" aria-live="polite">
+          <div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h3>지원해주셔서 감사합니다!</h3>
+          <p>적합한 대상자로 확인 시<br class="mbr"> 빠른 시일 내에 연락드리겠습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="doneModal" role="dialog" aria-modal="true" aria-labelledby="doneTitle" hidden>
+  <div class="modal-card">
+    <div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h3 id="doneTitle">지원해주셔서 감사합니다!</h3>
+    <p>적합한 대상자로 확인 시<br>빠른 시일 내에 연락드리겠습니다.</p>
+    <button type="button" class="modal-btn" id="doneClose">확인</button>
+  </div>
+</div>
+
+<footer><div class="wrap">눈썹 리얼모델 캐스팅 · 숏폼 촬영</div></footer>
+
+<div class="m-cta" id="mcta"><a class="cta" href="#apply">지원서 작성하기
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+
+<script>
+/* ===== 제출 설정 =====
+   Google Apps Script 웹앱 URL을 넣으면 시트 + 드라이브로 접수됩니다.
+   (eyebrow-model-apps-script.gs 참고) 비워 두면 화면상 완료 처리만 됩니다. */
+const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOQcu3Nnn6HEqegGFMJD7vJmuE6uu_I6sy9kmKbLY9ZdIGMfak0IVqnLjPu3PnPiFW/exec";
+const MAX_SIDE = 1600, JPEG_Q = 0.85;
+
+const form = document.getElementById('applyForm');
+const shell = document.getElementById('shell');
+const files = {};
+
+/* --- 모집 마감 D-DAY (한국 시간 2026-12-31 기준) --- */
+(() => {
+  const DEADLINE = Date.UTC(2026, 11, 31);
+  const k = new Date(Date.now() + 9 * 3600e3);
+  const n = Math.round((DEADLINE - Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate())) / 864e5);
+  const dd = document.getElementById('dday'), dt = document.getElementById('ddate');
+  if (n > 0) { dd.textContent = 'D-' + n; }
+  else if (n === 0) { dd.textContent = 'D-DAY'; dt.textContent = '오늘 마감!'; dt.hidden = false; }
+  else { dd.textContent = '모집이 마감되었습니다'; document.getElementById('period').classList.add('closed'); }
+})();
+
+/* --- 입력 포맷 --- */
+const birth = document.getElementById('birth');
+birth.addEventListener('input', () => {
+  const d = birth.value.replace(/\D/g,'').slice(0,8);
+  birth.value = d.length > 6 ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6)}` : d.length > 4 ? `${d.slice(0,4)}-${d.slice(4)}` : d;
+});
+const phone = document.getElementById('phone');
+phone.addEventListener('input', () => {
+  const d = phone.value.replace(/\D/g,'').slice(0,11);
+  phone.value = d.length > 7 ? `${d.slice(0,3)}-${d.slice(3,d.length-4)}-${d.slice(-4)}` : d.length > 3 ? `${d.slice(0,3)}-${d.slice(3)}` : d;
+});
+const insta = document.getElementById('insta');
+insta.addEventListener('input', () => { insta.value = insta.value.replace(/^@+/,'').replace(/\s/g,''); });
+
+/* --- 사진 업로드 / 미리보기 --- */
+function resize(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, MAX_SIDE / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', JPEG_Q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('이미지를 읽을 수 없습니다.')); };
+    img.src = url;
+  });
+}
+document.querySelectorAll('.up').forEach(up => {
+  const input = up.querySelector('input'), box = up.querySelector('.box');
+  input.addEventListener('change', async () => {
+    const f = input.files[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { alert('이미지 파일만 업로드할 수 있습니다.'); input.value=''; return; }
+    try {
+      const data = await resize(f);
+      files[input.name] = data;
+      box.querySelector('img')?.remove();
+      const img = new Image(); img.src = data; img.alt = ''; box.appendChild(img);
+      up.classList.add('has'); up.classList.remove('invalid');
+    } catch(e) { alert(e.message); input.value=''; }
+  });
+  up.querySelector('.rm').addEventListener('click', () => {
+    delete files[input.name]; input.value = '';
+    box.querySelector('img')?.remove(); up.classList.remove('has');
+  });
+});
+
+/* --- 전체 동의 --- */
+const allBox = document.getElementById('agreeAll');
+const agreeBoxes = [...form.querySelectorAll('fieldset:last-of-type [data-rule="check"] input')];
+allBox.addEventListener('change', () => { const v = allBox.checked; agreeBoxes.forEach(b => { b.checked = v; b.closest('[data-req]')?.classList.toggle('invalid', !v && b.closest('[data-req]').classList.contains('invalid')); }); });
+form.addEventListener('change', e => { if (agreeBoxes.includes(e.target)) allBox.checked = agreeBoxes.every(b => b.checked); });
+
+/* --- 지원 경로: 기타 선택 시 입력칸 --- */
+const etc = document.getElementById('channelEtc');
+form.querySelectorAll('[name="channel"]').forEach(r => r.addEventListener('change', () => {
+  etc.hidden = !document.getElementById('c5').checked;
+  if (!etc.hidden) etc.focus();
+}));
+
+/* --- 검증 --- */
+const rules = {
+  birth: v => /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v),
+  phone: v => /^01[016789]-\d{3,4}-\d{4}$/.test(v),
+  email: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+};
+function validField(f){
+  const rule = f.dataset.rule;
+  if (rule === 'file') return !!files[f.querySelector('input').name];
+  if (rule === 'group') {
+    const c = form.querySelector(`[name="${f.dataset.group}"]:checked`);
+    if (c && c.value === '기타' && f.dataset.group === 'channel') return !!etc.value.trim();
+    return !!c;
+  }
+  if (rule === 'check') return f.querySelector('input').checked;
+  const v = f.querySelector('input,textarea').value.trim();
+  if (!v) return false;
+  return rules[rule] ? rules[rule](v) : true;
+}
+form.addEventListener('input', e => { const f = e.target.closest('[data-req]'); if (f && f.classList.contains('invalid') && validField(f)) f.classList.remove('invalid'); });
+form.addEventListener('change', e => { const f = e.target.closest('[data-req]'); if (f && validField(f)) f.classList.remove('invalid'); });
+
+/* --- 완료 팝업 --- */
+const modal = document.getElementById('doneModal');
+const closeBtn = document.getElementById('doneClose');
+function openDone(){ modal.hidden = false; document.body.style.overflow = 'hidden'; closeBtn.focus(); }
+function closeDone(){
+  modal.hidden = true; document.body.style.overflow = '';
+  shell.scrollIntoView({behavior:'smooth', block:'start'});
+}
+closeBtn.addEventListener('click', closeDone);
+modal.addEventListener('click', e => { if (e.target === modal) closeDone(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeDone(); });
+
+/* --- 제출 --- */
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  let first = null;
+  form.querySelectorAll('[data-req]').forEach(f => {
+    const ok = validField(f);
+    f.classList.toggle('invalid', !ok);
+    if (!ok && !first) first = f;
+  });
+  if (first) {
+    first.scrollIntoView({behavior:'smooth', block:'center'});
+    first.querySelector('input:not([type=file])')?.focus({preventScroll:true});
+    return;
+  }
+  const fd = new FormData(form);
+  const payload = {
+    submittedAt: new Date().toISOString(),
+    name: fd.get('name').trim(), birth: fd.get('birth'), phone: fd.get('phone'),
+    email: fd.get('email').trim(), instagram: fd.get('instagram').trim(),
+    region: fd.getAll('region').join(', '),
+    channel: fd.get('channel') === '기타' ? `기타: ${(fd.get('channel_etc')||'').trim()}` : fd.get('channel'), brow_history: fd.get('brow_history'), appeal: (fd.get('appeal')||'').trim(),
+    agree_makeup: 'Y', agree_time: 'Y', agree_photo: 'Y', agree_coop: 'Y', agree_media: 'Y', agree_privacy: 'Y',
+    photos: files,
+  };
+  const btn = form.querySelector('.submit');
+  btn.disabled = true; btn.querySelector('.lbl').textContent = '제출 중...';
+  try {
+    if (FORM_ENDPOINT) {
+      const r = await fetch(FORM_ENDPOINT, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)});
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.error || '제출 실패');
+    }
+    shell.classList.add('sent');
+    openDone();
+  } catch(err) {
+    alert('제출 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.\n(' + err.message + ')');
+    btn.disabled = false; btn.querySelector('.lbl').textContent = '지원서 제출하기';
+  }
+});
+
+/* --- 모바일 하단 CTA: 폼 영역에서는 숨김 --- */
+const mcta = document.getElementById('mcta');
+/* 히어로의 지원 버튼이 보이는 동안 + 폼 영역에서는 숨김 */
+const vis = {hero:true, form:false};
+const sync = () => mcta.classList.toggle('hide', vis.hero || vis.form);
+new IntersectionObserver(([en]) => { vis.hero = en.isIntersecting; sync(); }).observe(document.querySelector('.hero .cta'));
+new IntersectionObserver(([en]) => { vis.form = en.isIntersecting; sync(); }, {rootMargin:'0px 0px -30% 0px'}).observe(document.getElementById('apply'));
+sync();
+</script>
+</body>
+</html>
