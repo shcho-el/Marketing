@@ -110,7 +110,7 @@ section.block{padding-block:88px 0}
 .mood{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
 .mood span{font-size:.9rem;font-weight:700;padding:8px 16px;border-radius:999px;background:var(--brow);color:#fff}
 
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:s;position:relative}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:s;position:relative}
 .step{position:relative;padding:0 18px 0 0}
 .step .num{width:44px;height:44px;border-radius:50%;background:var(--ink);border:0;color:#fff;font-weight:700;display:grid;place-items:center;position:relative;z-index:1}
 .step:not(:last-child)::after{content:"";position:absolute;top:22px;left:44px;right:0;height:1.5px;background:repeating-linear-gradient(90deg,var(--line-strong) 0 6px,transparent 6px 11px)}
@@ -257,8 +257,8 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
   .keys{grid-template-columns:1fr 1fr}
   .must{grid-template-columns:1fr 1fr}
   .must-card,.perks,.guide-card,.cond{padding:24px}
-  .steps{grid-template-columns:1fr 1fr;gap:28px 0}
-  .step:nth-child(2)::after{display:none}
+  .steps{grid-template-columns:repeat(3,1fr);gap:28px 0}
+  .step:nth-child(3)::after{display:none}
 }
 @media (max-width:640px){
   .mbr{display:inline}
@@ -409,6 +409,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
         <div class="step"><div class="num">2</div><h4>서류 검토</h4><p>사진 및 SNS 기반 모델 선정</p></div>
         <div class="step"><div class="num">3</div><h4>개별 연락</h4><p>적합자에 한해 연락 · 위치 개별 안내</p></div>
         <div class="step"><div class="num">4</div><h4>시술 &amp; 숏폼 촬영</h4><p>인천 또는 서울 / 약 1시간</p></div>
+        <div class="step"><div class="num">5</div><h4>촬영 정산</h4><p>캐스팅 조건에 따른 정산</p></div>
       </div>
     </div>
   </section>
