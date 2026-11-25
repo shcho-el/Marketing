@@ -339,7 +339,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
     <div>
       <span class="eyebrow">Short-form Model Casting</span>
       <h1>숏폼 촬영<br><em>눈썹</em> 리얼모델 캐스팅</h1>
-      <p class="period" id="period"><span>모집 마감</span><b class="dd" id="dday">12월 31일 마감!</b><small class="dd-date" id="ddate" hidden>12.31 (목)</small><i class="spark s1" aria-hidden="true">✦</i><i class="spark s2" aria-hidden="true">✦</i></p>
+      <p class="period" id="period"><span>모집 마감</span><b class="dd" id="dday">12월 31일 마감!</b><small class="dd-date" id="ddate" hidden></small><i class="spark s1" aria-hidden="true">✦</i><i class="spark s2" aria-hidden="true">✦</i></p>
       <p class="lede">카메라 앞에서 <b>나다운 매력</b>을<br class="mbr"> 자연스럽게 보여주실 분을 찾습니다.<br>
         눈썹 리얼모델로 <b>숏폼 영상 촬영</b>에 함께해 주세요.</p>
       <a class="cta cta-hero" href="#apply">지금 바로 지원하기
@@ -675,7 +675,7 @@ const files = {};
   const k = new Date(Date.now() + 9 * 3600e3);
   const n = Math.round((DEADLINE - Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate())) / 864e5);
   const dd = document.getElementById('dday'), dt = document.getElementById('ddate');
-  if (n > 0) { dd.textContent = 'D-' + n; dt.hidden = false; }
+  if (n > 0) { dd.textContent = 'D-' + n; }
   else if (n === 0) { dd.textContent = 'D-DAY'; dt.textContent = '오늘 마감!'; dt.hidden = false; }
   else { dd.textContent = '모집이 마감되었습니다'; document.getElementById('period').classList.add('closed'); }
 })();
