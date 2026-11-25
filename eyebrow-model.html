@@ -9,18 +9,21 @@
 <meta property="og:title" content="자연 눈썹 리얼모델 모집 · 숏폼 촬영">
 <meta property="og:description" content="인천 · 서울 종로 | 촬영 약 1시간 | 적합자 개별 연락">
 <meta property="og:url" content="https://shcho-el.github.io/Marketing/eyebrow-model.html">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&display=swap">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preload" href="fonts/Pretendard-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:"Pretendard";font-weight:200;font-display:swap;src:url(fonts/Pretendard-ExtraLight.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:300;font-display:swap;src:url(fonts/Pretendard-Light.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:400;font-display:swap;src:url(fonts/Pretendard-Regular.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:500;font-display:swap;src:url(fonts/Pretendard-Medium.woff2) format("woff2")}
+@font-face{font-family:"Pretendard";font-weight:600 900;font-display:swap;src:url(fonts/Pretendard-Bold.woff2) format("woff2")}
 :root{
-  --bg:#faf7f3; --surface:#ffffff; --ink:#1f1a17; --sub:#6f655e; --faint:#a89d94;
-  --line:#e8e0d8; --line-strong:#d6cbc0;
-  --brow:#5a3e2b; --brow-deep:#3b281c; --brow-soft:#f1e8df; --blush:#f6e9e4;
-  --danger:#c2412d; --ok:#2f7a55;
+  --bg:#f4f4f6; --surface:#ffffff; --ink:#0b0b0c; --sub:#3f3f46; --faint:#8b8b94;
+  --line:#e4e4e7; --line-strong:#c9c9cf;
+  --brow:#ff2e6e; --brow-deep:#0b0b0c; --brow-soft:#ffe6ee; --blush:#ffe6ee; --pop:#ffe03d;
+  --danger:#e5262b; --ok:#16a34a;
   --radius:16px; --radius-sm:10px;
-  --f-display:"Noto Serif KR",Georgia,serif;
+  --f-display:"Pretendard",-apple-system,"Apple SD Gothic Neo",sans-serif;
   --f-body:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   color-scheme:light;
 }
@@ -31,61 +34,59 @@ img,svg{display:block;max-width:100%}
 a{color:inherit}
 .wrap{max-width:1120px;margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px))}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;letter-spacing:.14em;color:var(--brow);text-transform:uppercase}
+.hero .eyebrow{color:var(--brow)}
 .eyebrow::before{content:"";width:22px;height:2px;border-radius:2px;background:currentColor}
 
 /* ---------- HERO ---------- */
-.hero{position:relative;overflow:hidden;background:
-  radial-gradient(120% 80% at 85% 0%,#f3e4d8 0%,transparent 55%),
-  radial-gradient(90% 70% at 0% 100%,#f7ece7 0%,transparent 60%),var(--bg);
-  border-bottom:1px solid var(--line)}
+.hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(70% 90% at 90% 10%,rgba(255,46,110,.38) 0%,transparent 60%),radial-gradient(60% 70% at 0% 100%,rgba(255,46,110,.14) 0%,transparent 60%),#0b0b0c}
 .hero-inner{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-block:88px 80px}
-.hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.1rem,5.2vw,3.6rem);line-height:1.22;letter-spacing:-.03em;margin:18px 0 20px}
+.hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.15;letter-spacing:-.045em;margin:18px 0 20px}
 .hero h1 em{font-style:normal;color:var(--brow);position:relative;white-space:nowrap}
-.hero h1 em::after{content:"";position:absolute;left:-2%;right:-2%;bottom:.08em;height:.32em;background:#ecd9c9;z-index:-1;border-radius:4px}
-.hero .lede{font-size:clamp(1rem,1.6vw,1.13rem);color:var(--sub);max-width:34em;margin:0 0 32px}
-.hero .lede b{color:var(--ink);font-weight:600}
-.cta{display:inline-flex;align-items:center;gap:10px;background:var(--brow-deep);color:#fff;text-decoration:none;font-weight:600;padding:16px 28px;border-radius:999px;box-shadow:0 10px 24px -10px rgba(59,40,28,.55);transition:transform .2s,box-shadow .2s}
-.cta:hover{transform:translateY(-2px);box-shadow:0 14px 28px -10px rgba(59,40,28,.6)}
+.hero h1 em::after{content:"";position:absolute;left:0;right:0;bottom:-.06em;height:.1em;background:var(--pop);border-radius:4px}
+.hero .lede{font-size:clamp(1rem,1.6vw,1.15rem);color:#b9b9c2;max-width:34em;margin:0 0 32px}
+.hero .lede b{color:#fff;font-weight:700}
+.cta{display:inline-flex;align-items:center;gap:10px;background:var(--brow);color:#fff;text-decoration:none;font-weight:700;font-size:1.05rem;padding:18px 32px;border-radius:999px;box-shadow:0 14px 30px -10px rgba(255,46,110,.75);transition:transform .2s,box-shadow .2s}
+.cta:hover{transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(255,46,110,.85)}
 .cta svg{width:18px;height:18px}
 .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
-.hero-tags span{font-size:.85rem;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid var(--line);color:var(--sub)}
-.hero-art{justify-self:center;width:min(100%,380px);aspect-ratio:1;border-radius:50%;background:linear-gradient(160deg,#fff 0%,#f3e7dd 100%);border:1px solid var(--line);display:grid;place-items:center;box-shadow:0 30px 60px -30px rgba(90,62,43,.35)}
+.hero-tags span{font-size:.85rem;font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#e4e4e7}
+.hero-art{justify-self:center;width:min(100%,380px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 40%,#1d1d21,#0f0f11 70%);border:1px solid #2a2a30;display:grid;place-items:center;box-shadow:0 0 0 14px rgba(255,46,110,.08),0 40px 80px -30px rgba(255,46,110,.55)}
 .hero-art svg{width:72%}
 
 /* ---------- KEY INFO ---------- */
 .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-44px;position:relative;z-index:2}
-.key{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 20px;box-shadow:0 12px 30px -22px rgba(59,40,28,.35)}
-.key .ic{width:40px;height:40px;border-radius:12px;background:var(--brow-soft);color:var(--brow);display:grid;place-items:center;margin-bottom:14px}
+.key{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 20px;box-shadow:0 12px 30px -22px rgba(11,11,12,.18)}
+.key .ic{width:40px;height:40px;border-radius:12px;background:var(--brow);color:#fff;display:grid;place-items:center;margin-bottom:14px}
 .key .ic svg{width:20px;height:20px}
 .key dt{font-size:.82rem;color:var(--faint);font-weight:500}
-.key dd{margin:2px 0 0;font-weight:700;font-size:1.08rem;line-height:1.4}
+.key dd{margin:2px 0 0;font-weight:700;font-size:1.15rem;letter-spacing:-.02em;line-height:1.4}
 .key dd small{display:block;font-weight:400;font-size:.82rem;color:var(--sub);margin-top:4px}
 
 /* ---------- SECTIONS ---------- */
 section.block{padding-block:88px 0}
 .sec-head{margin-bottom:32px}
-.sec-head h2{font-family:var(--f-display);font-size:clamp(1.6rem,3.2vw,2.2rem);line-height:1.3;letter-spacing:-.02em;margin:12px 0 8px}
+.sec-head h2{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,3.6vw,2.6rem);line-height:1.25;letter-spacing:-.04em;margin:12px 0 8px}
 .sec-head p{margin:0;color:var(--sub)}
 
 .must{display:grid;grid-template-columns:1fr 1.4fr;gap:20px}
-.must-card{border-radius:var(--radius);padding:30px;background:var(--brow-deep);color:#f7efe8;position:relative;overflow:hidden}
-.must-card .badge{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.1em;padding:5px 10px;border-radius:6px;background:#f7efe8;color:var(--brow-deep)}
-.must-card h3{font-family:var(--f-display);font-size:1.5rem;margin:16px 0 10px;line-height:1.35}
-.must-card p{margin:0;color:#d9c9bb;font-size:.95rem}
-.must-card svg.deco{position:absolute;right:-30px;bottom:-30px;width:180px;opacity:.12}
+.must-card{border-radius:var(--radius);padding:32px;background:var(--brow-deep);color:#fff;position:relative;overflow:hidden}
+.must-card .badge{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:6px;background:var(--brow);color:#fff}
+.must-card h3{font-family:var(--f-display);font-size:1.7rem;letter-spacing:-.03em;margin:16px 0 10px;line-height:1.35}
+.must-card p{margin:0;color:#b9b9c2;font-size:.95rem}
+.must-card svg.deco{position:absolute;right:-24px;bottom:-24px;width:190px;opacity:.9}
 .perks{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px 30px}
 .perks h3{margin:0 0 16px;font-size:1.05rem;display:flex;align-items:center;gap:8px}
-.perks h3 .star{color:#c98a5a}
+.perks h3 .star{color:var(--brow)}
 .perks ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .perks li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start}
 .perks li svg{width:20px;height:20px;color:var(--brow);margin-top:3px}
 .perks li b{font-weight:600}
 .mood{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
-.mood span{font-size:.88rem;font-weight:600;padding:8px 14px;border-radius:999px;background:var(--blush);color:#9a4f3e}
+.mood span{font-size:.9rem;font-weight:700;padding:8px 16px;border-radius:999px;background:var(--brow);color:#fff}
 
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:s;position:relative}
 .step{position:relative;padding:0 18px 0 0}
-.step .num{width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--brow);color:var(--brow);font-weight:700;display:grid;place-items:center;position:relative;z-index:1}
+.step .num{width:44px;height:44px;border-radius:50%;background:var(--ink);border:0;color:#fff;font-weight:700;display:grid;place-items:center;position:relative;z-index:1}
 .step:not(:last-child)::after{content:"";position:absolute;top:22px;left:44px;right:0;height:1.5px;background:repeating-linear-gradient(90deg,var(--line-strong) 0 6px,transparent 6px 11px)}
 .step h4{margin:16px 0 6px;font-size:1.02rem}
 .step p{margin:0;color:var(--sub);font-size:.9rem}
@@ -99,16 +100,17 @@ section.block{padding-block:88px 0}
 .guide-card ol li::before{content:counter(g,decimal-leading-zero);position:absolute;left:0;color:var(--faint);font-weight:600}
 .angles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .angle{text-align:center}
-.angle .frame{aspect-ratio:1;border-radius:12px;background:linear-gradient(170deg,#fbf8f5,#f1e8df);border:1px solid var(--line);display:grid;place-items:center}
+.angle .frame{aspect-ratio:1;border-radius:12px;background:#f4f4f6;border:1px solid var(--line);display:grid;place-items:center}
 .angle .frame svg{width:66%}
 .angle span{display:block;margin-top:8px;font-size:.86rem;font-weight:600}
 .warn-note{margin-top:14px;font-size:.84rem;color:var(--sub);background:var(--bg);border-radius:8px;padding:10px 12px}
 
 /* ---------- FORM ---------- */
 .form-section{padding-block:96px 120px}
-.form-shell{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 60px -40px rgba(59,40,28,.35);overflow:hidden}
-.form-top{padding:40px 44px 32px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fdfaf7,#fff)}
-.form-top h2{font-family:var(--f-display);font-size:clamp(1.6rem,3vw,2rem);margin:10px 0 8px;letter-spacing:-.02em}
+.form-shell{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 60px -40px rgba(11,11,12,.18);overflow:hidden}
+.form-top{padding:44px 44px 36px;background:var(--ink);color:#fff}
+.form-top p{color:#b9b9c2!important}.form-top p b{color:#fff!important}.form-top .eyebrow{color:var(--brow)}
+.form-top h2{font-family:var(--f-display);font-size:clamp(1.8rem,3.4vw,2.4rem);margin:10px 0 8px;letter-spacing:-.04em}
 .form-top p{margin:0;color:var(--sub);font-size:.95rem}
 .form-top p b{color:var(--ink)}
 .req-legend{margin-top:14px;font-size:.82rem;color:var(--faint)}
@@ -117,16 +119,16 @@ form{padding:12px 44px 44px}
 fieldset{border:0;margin:0;padding:32px 0 8px;border-bottom:1px dashed var(--line)}
 fieldset:last-of-type{border-bottom:0}
 legend{padding:0;font-size:1.08rem;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:18px}
-legend .n{width:26px;height:26px;border-radius:8px;background:var(--brow-deep);color:#fff;font-size:.78rem;display:grid;place-items:center}
+legend .n{width:28px;height:28px;border-radius:8px;background:var(--brow);color:#fff;font-size:.78rem;display:grid;place-items:center}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px 20px}
 .field{display:grid;gap:8px;margin-bottom:20px;min-width:0}
 .grid2 .field{margin-bottom:0}
 .grid2{margin-bottom:20px}
 .field>label,.field .label{font-size:.92rem;font-weight:600}
 .field .help{font-size:.82rem;color:var(--faint);font-weight:400}
-input[type=text],input[type=tel],input[type=email],textarea{width:100%;font:inherit;font-size:1rem;color:var(--ink);background:#fcfaf8;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px;transition:border-color .15s,background .15s,box-shadow .15s}
+input[type=text],input[type=tel],input[type=email],textarea{width:100%;font:inherit;font-size:1rem;color:var(--ink);background:#f7f7f9;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px;transition:border-color .15s,background .15s,box-shadow .15s}
 input::placeholder,textarea::placeholder{color:#c2b8af}
-input:focus,textarea:focus{outline:none;border-color:var(--brow);background:#fff;box-shadow:0 0 0 4px rgba(90,62,43,.1)}
+input:focus,textarea:focus{outline:none;border-color:var(--brow);background:#fff;box-shadow:0 0 0 4px rgba(255,46,110,.15)}
 textarea{min-height:110px;resize:vertical}
 .prefix{position:relative}
 .prefix>span{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--faint);font-weight:600}
@@ -135,20 +137,20 @@ textarea{min-height:110px;resize:vertical}
 .choice-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .choice{position:relative}
 .choice input{position:absolute;opacity:0;pointer-events:none}
-.choice label{display:flex;flex-direction:column;gap:2px;height:100%;padding:16px 16px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fcfaf8;cursor:pointer;transition:all .15s}
+.choice label{display:flex;flex-direction:column;gap:2px;height:100%;padding:16px 16px 14px;border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;cursor:pointer;transition:all .15s}
 .choice label b{font-size:1rem;display:flex;align-items:center;gap:8px}
 .choice label small{color:var(--faint);font-size:.8rem}
 .choice label b::before{content:"";flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line-strong);background:#fff;transition:all .15s}
 .choice input[type=checkbox]+label b::before{border-radius:5px}
 .choice input:checked+label{border-color:var(--brow);background:var(--brow-soft)}
 .choice input:checked+label b::before{border-color:var(--brow);background:var(--brow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat}
-.choice input:focus-visible+label{box-shadow:0 0 0 4px rgba(90,62,43,.15)}
+.choice input:focus-visible+label{box-shadow:0 0 0 4px rgba(255,46,110,.2)}
 .choice-row.two{grid-template-columns:repeat(2,1fr)}
 
 .uploads{display:grid;grid-template-columns:repeat(3,minmax(0,190px));gap:14px}
 .up{position:relative}
 .up input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;width:100%}
-.up .box{aspect-ratio:3/4;border:1.5px dashed var(--line-strong);border-radius:14px;background:#fcfaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:12px;transition:all .15s;overflow:hidden;position:relative}
+.up .box{aspect-ratio:3/4;border:1.5px dashed var(--line-strong);border-radius:14px;background:#f7f7f9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:12px;transition:all .15s;overflow:hidden;position:relative}
 .up:hover .box{border-color:var(--brow);background:#fff}
 .up .box svg{width:28px;height:28px;color:var(--faint)}
 .up .box .t{font-weight:700;font-size:.92rem}
@@ -163,26 +165,26 @@ textarea{min-height:110px;resize:vertical}
 .up-group-title span{font-weight:400;color:var(--faint);font-size:.8rem}
 .up-group+.up-group{margin-top:26px}
 
-.check{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;background:#fcfaf8;cursor:pointer;margin-bottom:10px;transition:all .15s}
+.check{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;cursor:pointer;margin-bottom:10px;transition:all .15s}
 .check input{appearance:none;flex:none;width:20px;height:20px;margin:2px 0 0;border:1.5px solid var(--line-strong);border-radius:6px;background:#fff;cursor:pointer;transition:all .15s}
 .check input:checked{background:var(--brow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/13px no-repeat;border-color:var(--brow)}
 .check:has(input:checked){border-color:var(--brow);background:var(--brow-soft)}
-.check input:focus-visible{box-shadow:0 0 0 4px rgba(90,62,43,.15);outline:none}
+.check input:focus-visible{box-shadow:0 0 0 4px rgba(255,46,110,.2);outline:none}
 .check span{font-size:.94rem}
 .check span b{font-weight:600}
 .check span small{display:block;color:var(--sub);font-size:.82rem;margin-top:2px}
 
-.terms{border:1.5px solid var(--line);border-radius:12px;background:#fcfaf8;padding:16px 18px;height:170px;overflow:auto;font-size:.84rem;color:var(--sub);line-height:1.7;margin-bottom:12px}
+.terms{border:1.5px solid var(--line);border-radius:12px;background:#f7f7f9;padding:16px 18px;height:170px;overflow:auto;font-size:.84rem;color:var(--sub);line-height:1.7;margin-bottom:12px}
 .terms h5{margin:0 0 4px;font-size:.86rem;color:var(--ink)}
 .terms p{margin:0 0 12px}
 
 .err{display:none;color:var(--danger);font-size:.82rem;font-weight:500}
 .invalid .err{display:block}
-.invalid input[type=text],.invalid input[type=tel],.invalid input[type=email]{border-color:var(--danger);background:#fff8f6}
+.invalid input[type=text],.invalid input[type=tel],.invalid input[type=email]{border-color:var(--danger);background:#fff5f5}
 .invalid .box,.invalid .choice label,.invalid.check{border-color:var(--danger)}
 
 .submit-wrap{margin-top:32px;display:grid;gap:12px;justify-items:center;text-align:center}
-.submit{width:100%;max-width:420px;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:1.08rem;color:#fff;background:var(--brow-deep);padding:18px 24px;border-radius:14px;box-shadow:0 14px 28px -14px rgba(59,40,28,.7);transition:transform .15s,opacity .15s;display:inline-flex;justify-content:center;align-items:center;gap:10px}
+.submit{width:100%;max-width:420px;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:1.08rem;color:#fff;background:var(--brow);padding:20px 24px;border-radius:14px;box-shadow:0 16px 30px -12px rgba(255,46,110,.7);transition:transform .15s,opacity .15s;display:inline-flex;justify-content:center;align-items:center;gap:10px}
 .submit:hover{transform:translateY(-1px)}
 .submit[disabled]{opacity:.6;cursor:progress;transform:none}
 .submit .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;display:none}
@@ -258,16 +260,16 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
       <div class="hero-tags"><span>#눈썹모델</span><span>#리얼모델</span><span>#숏폼촬영</span><span>#인천</span><span>#서울종로</span></div>
     </div>
     <div class="hero-art" aria-hidden="true">
-      <svg viewBox="0 0 200 200" fill="none" stroke="#5a3e2b" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M100 26c-36 0-58 28-58 66 0 44 26 82 58 82s58-38 58-82c0-38-22-66-58-66z" stroke-width="1.6" stroke="#c8b3a2"/>
+      <svg viewBox="0 0 200 200" fill="none" stroke="#ff2e6e" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M100 26c-36 0-58 28-58 66 0 44 26 82 58 82s58-38 58-82c0-38-22-66-58-66z" stroke-width="1.6" stroke="#55555e"/>
         <path d="M58 86c8-9 22-12 36-6" stroke-width="5"/>
         <path d="M142 86c-8-9-22-12-36-6" stroke-width="5"/>
-        <path d="M64 102c6-5 16-5 22 0" stroke-width="2"/>
-        <path d="M114 102c6-5 16-5 22 0" stroke-width="2"/>
-        <path d="M100 108v22c-3 3-7 4-9 3" stroke-width="1.6" stroke="#c8b3a2"/>
-        <path d="M86 148c8 5 20 5 28 0" stroke-width="2" stroke="#b5735e"/>
-        <circle cx="150" cy="52" r="3" fill="#d9a88a" stroke="none"/>
-        <circle cx="160" cy="66" r="2" fill="#e8c6b0" stroke="none"/>
+        <path d="M64 102c6-5 16-5 22 0" stroke-width="2" stroke="#fff"/>
+        <path d="M114 102c6-5 16-5 22 0" stroke-width="2" stroke="#fff"/>
+        <path d="M100 108v22c-3 3-7 4-9 3" stroke-width="1.6" stroke="#55555e"/>
+        <path d="M86 148c8 5 20 5 28 0" stroke-width="2.4" stroke="#ff2e6e"/>
+        <circle cx="150" cy="52" r="3" fill="#ffe03d" stroke="none"/>
+        <circle cx="160" cy="66" r="2" fill="#ff2e6e" stroke="none"/>
       </svg>
     </div>
   </div>
@@ -309,7 +311,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
           <span class="badge">필수 조건</span>
           <h3>영상에 잘 나오는<br>헤어 &amp; 메이크업</h3>
           <p>촬영 당일 카메라에 예쁘게 담길 수 있도록 헤어와 메이크업을 완성한 상태로 방문해 주세요. 눈썹 부위는 자연 상태 그대로 유지해 주시면 됩니다.</p>
-          <svg class="deco" viewBox="0 0 100 40" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"><path d="M6 32C26 8 62 4 94 18"/></svg>
+          <svg class="deco" viewBox="0 0 100 40" fill="none" stroke="#ff2e6e" stroke-width="8" stroke-linecap="round"><path d="M6 32C26 8 62 4 94 18"/></svg>
         </div>
         <div class="perks">
           <h3><span class="star">★</span> 우대 조건</h3>
@@ -360,9 +362,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
             <li>보정 어플 또는 과보정된 사진 사용 불가</li>
           </ol>
           <div class="angles">
-            <div class="angle"><div class="frame"><svg viewBox="0 0 80 80" fill="none" stroke="#5a3e2b" stroke-linecap="round"><ellipse cx="40" cy="42" rx="20" ry="26" stroke="#c8b3a2" stroke-width="1.4"/><path d="M26 36c3-3 8-4 12-2M54 36c-3-3-8-4-12-2" stroke-width="2.6"/><path d="M28 42h7M45 42h7" stroke-width="1.6"/><path d="M35 56c3 2 7 2 10 0" stroke="#b5735e" stroke-width="1.6"/></svg></div><span>얼굴 정면</span></div>
-            <div class="angle"><div class="frame"><svg viewBox="0 0 80 80" fill="none" stroke="#5a3e2b" stroke-linecap="round"><path d="M44 16c-14 0-24 11-24 26 0 15 10 26 21 26 8 0 13-6 16-13l2-6-3-2 2-7c-1-14-6-24-14-24z" stroke="#c8b3a2" stroke-width="1.4"/><path d="M34 36c3-3 7-4 10-2M52 35c2-1 4-1 6 1" stroke-width="2.6"/><path d="M36 42h6M51 42h4" stroke-width="1.6"/><path d="M42 56c3 1 6 1 8-1" stroke="#b5735e" stroke-width="1.6"/></svg></div><span>얼굴 45도</span></div>
-            <div class="angle"><div class="frame"><svg viewBox="0 0 80 80" fill="none" stroke="#5a3e2b" stroke-linecap="round"><path d="M50 16c-16 0-26 12-26 27 0 14 9 25 20 25 6 0 9-4 10-8l1-4 2-1-1-2 1-2-1-2 4-4-4-6c0-14-2-23-6-23z" stroke="#c8b3a2" stroke-width="1.4"/><path d="M47 36c3-2 6-2 9 0" stroke-width="2.6"/><path d="M50 42h4" stroke-width="1.6"/><circle cx="33" cy="44" r="4" stroke="#c8b3a2" stroke-width="1.4"/></svg></div><span>얼굴 측면</span></div>
+            <div class="angle"><div class="frame"><svg viewBox="0 0 80 80" fill="none" stroke="#0b0b0c" stroke-linecap="round"><ellipse cx="40" cy="42" rx="20" ry="26" stroke="#a1a1aa" stroke-width="1.4"/><path d="M26 36c3-3 8-4 12-2M54 36c-3-3-8-4-12-2" stroke-width="3" stroke="#ff2e6e"/><path d="M28 42h7M45 42h7" stroke-width="1.6"/><path d="M35 56c3 2 7 2 10 0" stroke="#ff2e6e" stroke-width="1.8"/></svg></div><span>얼굴 정면</span></div>
+            <div class="angle"><div class="frame"><svg viewBox="0 0 80 80" fill="none" stroke="#0b0b0c" stroke-linecap="round"><path d="M44 16c-14 0-24 11-24 26 0 15 10 26 21 26 8 0 13-6 16-13l2-6-3-2 2-7c-1-14-6-24-14-24z" stroke="#a1a1aa" stroke-width="1.4"/><path d="M34 36c3-3 7-4 10-2M52 35c2-1 4-1 6 1" stroke-width="3" stroke="#ff2e6e"/><path d="M36 42h6M51 42h4" stroke-width="1.6"/><path d="M42 56c3 1 6 1 8-1" stroke="#ff2e6e" stroke-width="1.8"/></svg></div><span>얼굴 45도</span></div>
+            <div class="angle"><div class="frame"><svg viewBox="0 0 80 80" fill="none" stroke="#0b0b0c" stroke-linecap="round"><path d="M50 16c-16 0-26 12-26 27 0 14 9 25 20 25 6 0 9-4 10-8l1-4 2-1-1-2 1-2-1-2 4-4-4-6c0-14-2-23-6-23z" stroke="#a1a1aa" stroke-width="1.4"/><path d="M47 36c3-2 6-2 9 0" stroke-width="3" stroke="#ff2e6e"/><path d="M50 42h4" stroke-width="1.6"/><circle cx="33" cy="44" r="4" stroke="#a1a1aa" stroke-width="1.4"/></svg></div><span>얼굴 측면</span></div>
           </div>
         </div>
         <div class="guide-card">
@@ -374,9 +376,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
             <li>평소 분위기와 매력이 드러나는 사진 추천</li>
           </ol>
           <div class="angles">
-            <div class="angle"><div class="frame" style="background:linear-gradient(160deg,#fdf2ec,#f3dccf)"><svg viewBox="0 0 80 80" fill="none" stroke="#9a4f3e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="22" y="14" width="36" height="52" rx="7"/><circle cx="40" cy="36" r="8"/><path d="M28 58c3-7 21-7 24 0"/></svg></div><span>자연스러운</span></div>
-            <div class="angle"><div class="frame" style="background:linear-gradient(160deg,#fdf2ec,#f3dccf)"><svg viewBox="0 0 80 80" fill="none" stroke="#9a4f3e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 62s-18-11-18-24a10 10 0 0 1 18-6 10 10 0 0 1 18 6c0 13-18 24-18 24z"/></svg></div><span>매력 어필</span></div>
-            <div class="angle"><div class="frame" style="background:linear-gradient(160deg,#fdf2ec,#f3dccf)"><svg viewBox="0 0 80 80" fill="none" stroke="#9a4f3e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 18l5.5 12 13 1.5-9.7 8.8 2.7 12.9L40 46.6l-11.5 6.6 2.7-12.9-9.7-8.8 13-1.5z"/></svg></div><span>베스트 컷</span></div>
+            <div class="angle"><div class="frame" style="background:#ffe6ee"><svg viewBox="0 0 80 80" fill="none" stroke="#ff2e6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="22" y="14" width="36" height="52" rx="7"/><circle cx="40" cy="36" r="8"/><path d="M28 58c3-7 21-7 24 0"/></svg></div><span>자연스러운</span></div>
+            <div class="angle"><div class="frame" style="background:#ffe6ee"><svg viewBox="0 0 80 80" fill="none" stroke="#ff2e6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 62s-18-11-18-24a10 10 0 0 1 18-6 10 10 0 0 1 18 6c0 13-18 24-18 24z"/></svg></div><span>매력 어필</span></div>
+            <div class="angle"><div class="frame" style="background:#ffe6ee"><svg viewBox="0 0 80 80" fill="none" stroke="#ff2e6e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M40 18l5.5 12 13 1.5-9.7 8.8 2.7 12.9L40 46.6l-11.5 6.6 2.7-12.9-9.7-8.8 13-1.5z"/></svg></div><span>베스트 컷</span></div>
           </div>
           <p class="warn-note">* 안내된 사항에 부합하지 않는 경우 모델 선정에서 제외될 수 있습니다.</p>
         </div>
