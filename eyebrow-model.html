@@ -49,12 +49,14 @@ a{color:inherit}
 .cta svg{width:18px;height:18px}
 .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
 .hero-tags span{font-size:.85rem;font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#e4e4e7}
-.hero-photos{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:min(520px,64vw);position:relative}
-.hero-photos::before{content:"";position:absolute;inset:12% -6% -6% 10%;background:radial-gradient(closest-side,rgba(255,46,110,.55),transparent);filter:blur(30px);z-index:0}
-.ph{margin:0;position:relative;z-index:1;border-radius:20px;overflow:hidden;background:#1b1b1f;box-shadow:0 24px 50px -20px rgba(0,0,0,.8)}
-.ph img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
-.ph-main{grid-row:span 2;outline:3px solid var(--brow);outline-offset:-3px}
-.ph figcaption{position:absolute;left:14px;bottom:14px;font-size:.72rem;font-weight:700;letter-spacing:.14em;color:#fff;background:var(--brow);padding:6px 10px;border-radius:6px}
+.hero-photo{position:relative;justify-self:end;width:min(100%,420px)}
+.hero-photo::before{content:"";position:absolute;inset:8% -10% -8% -10%;background:radial-gradient(closest-side,rgba(255,46,110,.6),transparent);filter:blur(36px);z-index:0}
+.ph{margin:0;position:relative;z-index:1;aspect-ratio:4/5;border-radius:28px;overflow:hidden;background:#1b1b1f;outline:3px solid var(--brow);outline-offset:8px;box-shadow:0 30px 60px -24px rgba(0,0,0,.9)}
+.ph img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.float{position:absolute;z-index:2;font-weight:700;white-space:nowrap;border-radius:999px;box-shadow:0 12px 24px -10px rgba(0,0,0,.6)}
+.f1{left:-22px;top:28px;font-size:.78rem;letter-spacing:.14em;color:#fff;background:var(--brow);padding:9px 16px}
+.f2{right:-18px;bottom:36px;font-size:.88rem;color:var(--ink);background:#fff;padding:10px 18px}
+.f2 b{color:var(--brow);font-size:.7rem;margin-right:4px;vertical-align:1px}
 
 /* ---------- KEY INFO ---------- */
 .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:-44px;position:relative;z-index:2}
@@ -212,7 +214,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
 
 @media (max-width:900px){
   .hero-inner{grid-template-columns:1fr;padding-block:64px 80px;gap:36px}
-  .hero-photos{height:min(460px,80vw)}
+  .hero-photo{justify-self:center;width:min(100%,380px)}
   .keys{grid-template-columns:1fr 1fr}
   .must,.guide{grid-template-columns:1fr}
   .steps{grid-template-columns:1fr 1fr;gap:28px 0}
@@ -222,10 +224,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
   body{font-size:15px}
   .wrap{padding-inline:16px}
   .hero-inner{padding-block:44px 72px}
-  .hero-photos{height:auto;grid-template-columns:repeat(3,1fr);grid-template-rows:auto;gap:8px}
-  .hero-photos .ph{aspect-ratio:3/4;border-radius:14px}
-  .ph-main{grid-row:auto}
-  .ph figcaption{left:8px;bottom:8px;font-size:.6rem;padding:4px 6px}
+  .hero-photo{width:min(80%,320px);justify-self:center}
+  .ph{border-radius:22px;outline-offset:6px}
+  .f1{left:-6px;top:18px;font-size:.7rem;padding:7px 12px}
+  .f2{right:-6px;bottom:22px;font-size:.8rem;padding:8px 14px}
   .keys{gap:10px}
   .key{padding:18px 16px}
   section.block{padding-block:64px 0}
@@ -267,10 +269,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       <div class="hero-tags"><span>#눈썹모델</span><span>#리얼모델</span><span>#숏폼촬영</span><span>#인천</span><span>#서울</span></div>
     </div>
-    <div class="hero-photos" aria-hidden="true">
-      <figure class="ph ph-main"><img src="img/model-1.webp" alt="" width="900" height="1200" fetchpriority="high"><figcaption>REAL MODEL</figcaption></figure>
-      <figure class="ph"><img src="img/model-2.webp" alt="" width="900" height="900"></figure>
-      <figure class="ph"><img src="img/model-3.webp" alt="" width="900" height="1109"></figure>
+    <div class="hero-photo" aria-hidden="true">
+      <figure class="ph"><img src="img/model-1.webp" alt="" width="900" height="1200" fetchpriority="high"></figure>
+      <span class="float f1">REAL MODEL</span>
+      <span class="float f2"><b>●</b> 숏폼 촬영 · 약 1시간</span>
     </div>
   </div>
 </header>
