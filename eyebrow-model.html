@@ -173,6 +173,7 @@ textarea{min-height:110px;resize:vertical}
 .choice-row.two{grid-template-columns:repeat(2,1fr)}
 .choice-row.compact{grid-template-columns:repeat(4,1fr)}
 .choice-row.compact label{padding:14px 16px}
+#channelEtc{margin-top:2px}
 
 .uploads{display:grid;grid-template-columns:repeat(3,minmax(0,190px));gap:14px}
 .up{position:relative}
@@ -525,10 +526,11 @@ footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--faint);f
               <div class="choice-row compact">
                 <div class="choice"><input type="radio" id="c1" name="channel" value="뷰티 카페"><label for="c1"><b>뷰티 카페</b></label></div>
                 <div class="choice"><input type="radio" id="c2" name="channel" value="인스타그램"><label for="c2"><b>인스타그램</b></label></div>
-                <div class="choice"><input type="radio" id="c3" name="channel" value="대행사 연계"><label for="c3"><b>대행사 연계</b></label></div>
                 <div class="choice"><input type="radio" id="c4" name="channel" value="지인 소개"><label for="c4"><b>지인 소개</b></label></div>
+                <div class="choice"><input type="radio" id="c5" name="channel" value="기타"><label for="c5"><b>기타</b></label></div>
               </div>
-              <span class="err">지원 경로를 선택해 주세요.</span>
+              <input type="text" id="channelEtc" name="channel_etc" maxlength="30" placeholder="어디서 보셨는지 짧게 적어주세요 (예: 블로그)" hidden>
+              <span class="err">지원 경로를 선택해 주세요. 기타를 고른 경우 내용을 적어주세요.</span>
             </div>
             <div class="field" data-req data-rule="group" data-group="brow_history">
               <span class="label">눈썹 반영구 / 문신 이력 <span class="req">*</span> <span class="help">잔흔 여부 확인용</span></span>
@@ -676,6 +678,13 @@ const agreeBoxes = [...form.querySelectorAll('fieldset:last-of-type [data-rule="
 allBox.addEventListener('change', () => { const v = allBox.checked; agreeBoxes.forEach(b => { b.checked = v; b.closest('[data-req]')?.classList.toggle('invalid', !v && b.closest('[data-req]').classList.contains('invalid')); }); });
 form.addEventListener('change', e => { if (agreeBoxes.includes(e.target)) allBox.checked = agreeBoxes.every(b => b.checked); });
 
+/* --- 지원 경로: 기타 선택 시 입력칸 --- */
+const etc = document.getElementById('channelEtc');
+form.querySelectorAll('[name="channel"]').forEach(r => r.addEventListener('change', () => {
+  etc.hidden = !document.getElementById('c5').checked;
+  if (!etc.hidden) etc.focus();
+}));
+
 /* --- 검증 --- */
 const rules = {
   birth: v => /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v),
@@ -685,7 +694,11 @@ const rules = {
 function validField(f){
   const rule = f.dataset.rule;
   if (rule === 'file') return !!files[f.querySelector('input').name];
-  if (rule === 'group') return !!form.querySelector(`[name="${f.dataset.group}"]:checked`);
+  if (rule === 'group') {
+    const c = form.querySelector(`[name="${f.dataset.group}"]:checked`);
+    if (c && c.value === '기타' && f.dataset.group === 'channel') return !!etc.value.trim();
+    return !!c;
+  }
   if (rule === 'check') return f.querySelector('input').checked;
   const v = f.querySelector('input,textarea').value.trim();
   if (!v) return false;
@@ -714,7 +727,7 @@ form.addEventListener('submit', async e => {
     name: fd.get('name').trim(), birth: fd.get('birth'), phone: fd.get('phone'),
     email: fd.get('email').trim(), instagram: fd.get('instagram').trim(),
     region: fd.getAll('region').join(', '),
-    channel: fd.get('channel'), brow_history: fd.get('brow_history'), appeal: (fd.get('appeal')||'').trim(),
+    channel: fd.get('channel') === '기타' ? `기타: ${(fd.get('channel_etc')||'').trim()}` : fd.get('channel'), brow_history: fd.get('brow_history'), appeal: (fd.get('appeal')||'').trim(),
     agree_makeup: 'Y', agree_time: 'Y', agree_photo: 'Y', agree_media: 'Y', agree_privacy: 'Y',
     photos: files,
   };
